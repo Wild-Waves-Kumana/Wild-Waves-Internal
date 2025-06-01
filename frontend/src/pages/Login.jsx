@@ -16,6 +16,9 @@ const Login = ({ onLogin }) => {
         password,
       });
 
+      localStorage.setItem('token', res.data.token);
+      localStorage.setItem('username', username);
+
       //alert(res.data.message);
       if (res.data.success === false) {
       alert(res.data.message || 'Login failed');
