@@ -5,6 +5,10 @@ import { UserContext } from '../context/UserContext';
 const AdminDashboard = () => {
   const navigate = useNavigate();
   const { username, logout } = useContext(UserContext);
+  const token = localStorage.getItem('token');
+
+  //Display token in console
+  console.log('JWT Token:', token);
 
   const handleLogout = () => {
     logout();            // clear login state
