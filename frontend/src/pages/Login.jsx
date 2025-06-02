@@ -16,8 +16,16 @@ const Login = ({ onLogin }) => {
         password,
       });
 
-      alert(res.data.message);
-      onLogin(username);           // Update login state
+      localStorage.setItem('token', res.data.token);
+      localStorage.setItem('username', username);
+
+      //alert(res.data.message);
+      if (res.data.success === false) {
+      alert(res.data.message || 'Login failed');
+      return;
+    }
+
+      onLogin(username);              // Update login state
       navigate('/admindashboard'); // 🔁 Redirect user
     } catch (err) {
       alert(err.response?.data?.message || 'Login failed');
