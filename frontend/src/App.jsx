@@ -14,21 +14,24 @@ function App() {
 
   // 🔁 Determine where to redirect on login
   const getDashboardRedirect = () => {
+    if (role === 'user') return '/userdashboard';
     if (role === 'admin') return '/admindashboard';
-    if (role === 'superadmin') return '/superadminpanel'; // if used
-    return '/userdashboard';
+    if (role === 'superadmin') return '/superadminpanel';  // if used
+    return '/unauthorized';
   };
 
   return (
     <Routes>
-      <Route 
-        path="/" 
-        element={isLoggedIn ? <Navigate to={getDashboardRedirect()} /> : <Login onLogin={login} />} 
-      />
-      <Route path="/unauthorized" element={<Unauthorized />} />
-
+      <Route  path="/" element={isLoggedIn ? <Navigate to={getDashboardRedirect()} /> : <Login onLogin={login} />} />
+      
 
       //Protected routes
+      <Route path="/unauthorized" 
+        element={
+        <ProtectedRoute>
+          <Unauthorized />
+        </ProtectedRoute>} />
+
       <Route
         path="/admindashboard"
         element={
