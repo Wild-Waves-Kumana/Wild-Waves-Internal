@@ -23,13 +23,13 @@ export const loginUser = async (req, res) => {
 
     // 3. Generate JWT token
     const token = jwt.sign(
-      { id: user._id, username: user.username },
+      { id: user._id, username: user.username, role: user.role },
       process.env.JWT_SECRET,
       { expiresIn: process.env.JWT_EXPIRES_IN }
     );
 
     // 3. Success
-    res.json({ message: 'Login successful', token, user: { username: user.username, _id: user._id } });
+    res.json({ message: 'Login successful', token, user: { username: user.username, _id: user._id, role: user.role } });
     } 
     catch (err) {
         console.error(err);
@@ -39,7 +39,7 @@ export const loginUser = async (req, res) => {
 
 //sign up
 export const registerUser = async (req, res) => {
-    const { username, password } = req.body;
+    const { username, password, role } = req.body;
 
     try {
         const existingUser = await User.findOne({ username });
@@ -50,7 +50,7 @@ export const registerUser = async (req, res) => {
     const salt = await bcrypt.genSalt(10); // generate salt
     const hashedPassword = await bcrypt.hash(password, salt); // hash password
 
-    const newUser = new User({ username, password: hashedPassword });
+    const newUser = new User({ username, password: hashedPassword, role });
     await newUser.save();
 
     res.status(201).json({ message: 'User created successfully' });
