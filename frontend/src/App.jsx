@@ -6,20 +6,43 @@ import ProtectedRoute from './components/ProtectedRoute';
 import Login from './pages/Login';
 import Signup from './pages/Signup';
 import AdminDashboard from './pages/AdminDashboard';
+import Unauthorized from './pages/unauthorized';
+import UserDashboard from './pages/UserDashboard';
 
 function App() {
-  const { isLoggedIn, login } = useContext(UserContext);
+  const { isLoggedIn, login, role } = useContext(UserContext);
+
+  // 🔁 Determine where to redirect on login
+  const getDashboardRedirect = () => {
+    if (role === 'admin') return '/admindashboard';
+    if (role === 'superadmin') return '/superadminpanel'; // if used
+    return '/userdashboard';
+  };
 
   return (
     <Routes>
-      <Route path="/" element={ isLoggedIn ? <Navigate to="/admindashboard" /> : <Login onLogin={login} />}/>
-      
+      <Route 
+        path="/" 
+        element={isLoggedIn ? <Navigate to={getDashboardRedirect()} /> : <Login onLogin={login} />} 
+      />
+      <Route path="/unauthorized" element={<Unauthorized />} />
+
+
       //Protected routes
       <Route
         path="/admindashboard"
         element={
-          <ProtectedRoute>
+          <ProtectedRoute allowedRoles={['admin', 'superadmin']}>
             <AdminDashboard />
+          </ProtectedRoute>
+        }
+      />
+
+       <Route
+        path="/userdashboard"
+        element={
+          <ProtectedRoute allowedRoles={['user', 'admin', 'superadmin']}>
+            <UserDashboard />
           </ProtectedRoute>
         }
       />
