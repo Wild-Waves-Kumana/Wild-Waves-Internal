@@ -7,6 +7,7 @@ const Signup = () => {
     username: '',
     password: '',
     confirmPassword: '',
+    role: 'user', // default role
   });
 
   const [message, setMessage] = useState('');
@@ -43,6 +44,7 @@ const Signup = () => {
       const res = await axios.post('http://localhost:5000/api/auth/register', {
         username: formData.username,
         password: formData.password,
+        role: formData.role, // ✅ send selected role
       });
 
       setMessage(res.data.message);
@@ -58,6 +60,18 @@ const Signup = () => {
         <h2 className="text-2xl font-semibold text-center">Sign Up</h2>
         {message && <p className="text-center text-sm text-red-600">{message}</p>}
 
+         {/* ✅ Role Selection Dropdown */}
+        <select
+          name="role"
+          value={formData.role}
+          onChange={handleChange}
+          required
+          className="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring"
+        >
+          <option value="user">User</option>
+          <option value="admin">Admin</option>
+        </select>
+        
         <input
           type="text"
           name="username"
