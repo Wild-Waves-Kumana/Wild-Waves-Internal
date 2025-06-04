@@ -35,7 +35,7 @@ const Login = ({ onLogin }) => {
       } else if (role === 'admin'){
         navigate('/admindashboard');
       }else if (role === 'superadmin') {
-        navigate('/superadminpanel');
+        navigate('/superadmindashboard');
       } else {
         navigate('/unauthorized')
       }
