@@ -10,6 +10,7 @@ import Unauthorized from './pages/unauthorized';
 import UserDashboard from './pages/UserDashboard';
 import Layout from './components/Layout';
 import SuperAdminDashboard from './pages/SuperAdminDashboard';
+import AdminCreation from './pages/AdminCreation';
 
 function App() {
   const { isLoggedIn, login, role } = useContext(UserContext);
@@ -41,6 +42,17 @@ function App() {
           <ProtectedRoute allowedRoles={['superadmin']}>
             <Layout>
               <SuperAdminDashboard />
+            </Layout>
+            
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/admincreation"
+        element={
+          <ProtectedRoute allowedRoles={['superadmin']}>
+            <Layout>
+              <AdminCreation />
             </Layout>
             
           </ProtectedRoute>
