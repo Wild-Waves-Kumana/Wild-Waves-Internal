@@ -9,6 +9,7 @@ import AdminDashboard from './pages/AdminDashboard';
 import Unauthorized from './pages/unauthorized';
 import UserDashboard from './pages/UserDashboard';
 import Layout from './components/Layout';
+import SuperAdminDashboard from './pages/SuperAdminDashboard';
 
 function App() {
   const { isLoggedIn, login, role } = useContext(UserContext);
@@ -17,7 +18,7 @@ function App() {
   const getDashboardRedirect = () => {
     if (role === 'user') return '/userdashboard';
     if (role === 'admin') return '/admindashboard';
-    if (role === 'superadmin') return '/superadminpanel';  // if used
+    if (role === 'superadmin') return '/superadmindashboard';  
     return '/unauthorized';
   };
 
@@ -31,7 +32,20 @@ function App() {
         element={
         <ProtectedRoute>
           <Unauthorized />
-        </ProtectedRoute>} />
+        </ProtectedRoute>} 
+      />
+
+      <Route
+        path="/superadmindashboard"
+        element={
+          <ProtectedRoute allowedRoles={['superadmin']}>
+            <Layout>
+              <SuperAdminDashboard />
+            </Layout>
+            
+          </ProtectedRoute>
+        }
+      />
 
       <Route
         path="/admindashboard"
@@ -49,7 +63,9 @@ function App() {
         path="/userdashboard"
         element={
           <ProtectedRoute allowedRoles={['user', 'admin', 'superadmin']}>
-            <UserDashboard />
+            <Layout>
+              <UserDashboard />
+            </Layout>
           </ProtectedRoute>
         }
       />
