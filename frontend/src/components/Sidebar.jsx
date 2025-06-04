@@ -33,7 +33,7 @@ const Sidebar = () => {
   };
 
   return (
-    <aside className="w-64 bg-slate-200 dark:bg-slate-800 min-h-screen p-6 flex flex-col">
+    <aside className="w-64 bg-slate-200 min-h-screen p-6 flex flex-col">
         <h1 className="text-3xl pb-4 font-bold">Welcome, {username} 👋</h1>
       {/* <div className="flex justify-center mb-2">
         <NavLink to="/dashboard">
@@ -44,7 +44,7 @@ const Sidebar = () => {
         <ul className="space-y-6">
           <li>
             <NavLink
-              to="/dashboard"
+              to={userRole === 'user' ? "/userdashboard": userRole === 'admin' ? "/admindashboard" : userRole === 'superadmin' ? "/superadmindashboard" : "/unauthorized"}
               className={({ isActive }) =>
                 isActive
                   ? " text-blue-600 flex items-center gap-4 dark:text-blue-400"
@@ -54,7 +54,7 @@ const Sidebar = () => {
               <FaHome /> Dashboard
             </NavLink>
           </li>
-          {userRole !== 'SuperAdmin' && (
+          {userRole !== 'user' && (
             <>
               <li>
                 <NavLink
