@@ -16,17 +16,30 @@ const Login = ({ onLogin }) => {
         password,
       });
 
-      localStorage.setItem('token', res.data.token);
-      localStorage.setItem('username', username);
+      console.log("Login response:", res.data); // ⬅️ Add this line
 
-      //alert(res.data.message);
-      if (res.data.success === false) {
-      alert(res.data.message || 'Login failed');
-      return;
-    }
+      
+      const { token, user } = res.data;
+      const { role } = user;
 
-      onLogin(username);              // Update login state
-      navigate('/admindashboard'); // 🔁 Redirect user
+      
+
+      //localStorage.setItem('token', token);
+       localStorage.setItem('token', token);
+
+      onLogin(token);
+      
+      // ✅ Redirect based on role
+      if (role === 'user') {
+        navigate('/userdashboard');
+      } else if (role === 'admin'){
+        navigate('/admindashboard');
+      }else if (role === 'superadmin') {
+        navigate('/superadmindashboard');
+      } else {
+        navigate('/unauthorized')
+      }
+
     } catch (err) {
       alert(err.response?.data?.message || 'Login failed');
     }
