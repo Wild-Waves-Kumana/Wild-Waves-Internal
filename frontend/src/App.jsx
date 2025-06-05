@@ -4,13 +4,14 @@ import { UserContext } from './context/UserContext';
 import ProtectedRoute from './components/ProtectedRoute';
 
 import Login from './pages/Login';
-import Signup from './pages/Signup';
+import Signup from './pages/UserCreation';
 import AdminDashboard from './pages/AdminDashboard';
 import Unauthorized from './pages/unauthorized';
 import UserDashboard from './pages/UserDashboard';
 import Layout from './components/Layout';
 import SuperAdminDashboard from './pages/SuperAdminDashboard';
 import AdminCreation from './pages/AdminCreation';
+import UserCreation from './pages/UserCreation';
 
 function App() {
   const { isLoggedIn, login, role } = useContext(UserContext);
@@ -82,10 +83,10 @@ function App() {
         }
       />
       <Route
-        path="/signup"
+        path="/usercreation"
         element={
           <ProtectedRoute>
-            <Signup />
+            <UserCreation />
           </ProtectedRoute>
         }
       />

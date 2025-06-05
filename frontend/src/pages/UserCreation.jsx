@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 
-const Signup = () => {
+const UserCreation = () => {
   const [formData, setFormData] = useState({
     username: '',
     password: '',
@@ -113,4 +113,4 @@ const Signup = () => {
   );
 };
 
-export default Signup;
+export default UserCreation;

@@ -15,8 +15,8 @@ const AdminDashboard = () => {
     navigate('/');       // go back to login
   };
 
-   const signup = () => {
-    navigate('/signup');
+   const usercreation= () => {
+    navigate('/usercreation'); // Navigate to user creation page
   };
 
   return (
@@ -46,9 +46,9 @@ const AdminDashboard = () => {
       </button>
 
       <button
-        onClick={signup}
+        onClick={usercreation}
         className="px-6 py-2 my-3 bg-blue-600 text-white rounded hover:bg-blue-700">
-        Go to Signup
+        Create User
       </button>
 
     </div>
