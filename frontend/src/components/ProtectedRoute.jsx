@@ -3,8 +3,8 @@ import { Navigate, useLocation } from 'react-router-dom';
 import {jwtDecode} from 'jwt-decode';
 import { UserContext } from '../context/UserContext';
 
-const ProtectedRoute = ({ children }) => {
-  const { isLoggedIn, logout } = useContext(UserContext);
+const ProtectedRoute = ({ children, allowedRoles }) => {
+  const { isLoggedIn, logout, role } = useContext(UserContext);
   const location = useLocation();
   const alertShownRef = useRef(false);
 
@@ -36,6 +36,11 @@ const ProtectedRoute = ({ children }) => {
 
   if (!isLoggedIn) {
     return <Navigate to="/" replace />;
+  }
+    
+  // ⛔ If role is not allowed
+  if (allowedRoles && !allowedRoles.includes(role)) {
+    return <Navigate to="/unauthorized" replace />;
   }
 
   return children;

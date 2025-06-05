@@ -1,6 +1,7 @@
 // routes/protectedRoutes.js
 import express from 'express';
 import { authenticateToken } from '../middleware/auth.js';
+import { authorizeRole } from '../middleware/authorizeRole.js';
 
 const router = express.Router();
 
@@ -14,6 +15,8 @@ router.get('/dashboard', authenticateToken, (req, res) => {
 
 // routes/protectedRoutes.js
 router.get('/admin-data', authenticateToken, (req, res) => {
+  authenticateToken,
+  authorizeRole('admin', 'superadmin'), // Only admins and superadmins
   res.json({
     message: 'Here is your protected admin data',
     user: req.user

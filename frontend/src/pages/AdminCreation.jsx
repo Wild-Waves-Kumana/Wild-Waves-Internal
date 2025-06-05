@@ -2,11 +2,13 @@ import React, { useState } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 
-const Signup = () => {
+const AdminCreation = () => {
   const [formData, setFormData] = useState({
     username: '',
+    email: '',
     password: '',
     confirmPassword: '',
+    role: 'admin', // default role
   });
 
   const [message, setMessage] = useState('');
@@ -19,6 +21,12 @@ const Signup = () => {
     }));
   };
 
+  const isEmailValid = (email) => {
+    // Simple email regex
+    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+  };
+
+
   const isPasswordValid = (password) => {
     const lengthCheck = password.length >= 8;
     const numberCheck = /\d/.test(password);
@@ -29,6 +37,11 @@ const Signup = () => {
   const handleSignup = async (e) => {
     e.preventDefault();
 
+    if (!isEmailValid(formData.email)) {
+      setMessage('Please enter a valid email address.');
+      return;
+    }
+ 
     if (formData.password !== formData.confirmPassword) {
       setMessage('Passwords do not match');
       return;
@@ -40,15 +53,25 @@ const Signup = () => {
     }
 
     try {
-      const res = await axios.post('http://localhost:5000/api/auth/register', {
+      const res = await axios.post('http://localhost:5000/api/auth/adminregister', {
         username: formData.username,
+        email: formData.email,
         password: formData.password,
+        role: formData.role, // ✅ send selected role
       });
 
       setMessage(res.data.message);
-      navigate('/admindashboard');
+      navigate('/superadmindashboard');
     } catch (err) {
       setMessage(err.response?.data?.message || 'Something went wrong');
+    }
+  };
+
+  const handleEmailBlur = () => {
+    if (formData.email && !isEmailValid(formData.email)) {
+      setMessage('Please enter a valid email address.');
+    } else {
+      setMessage('');
     }
   };
 
@@ -58,6 +81,18 @@ const Signup = () => {
         <h2 className="text-2xl font-semibold text-center">Sign Up</h2>
         {message && <p className="text-center text-sm text-red-600">{message}</p>}
 
+         {/* ✅ Role Selection Dropdown */}
+        <select
+          name="role"
+          value={formData.role}
+          onChange={handleChange}
+          required
+          className="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring"
+        >
+          <option value="admin">Admin</option>
+          <option value="superadmin">Super Admin</option>
+        </select>
+        
         <input
           type="text"
           name="username"
@@ -67,7 +102,17 @@ const Signup = () => {
           required
           className="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring"
         />
-
+        <input
+          type="text"
+          name="email"
+          placeholder="Email"
+          value={formData.email}
+          onChange={handleChange}
+          onBlur={handleEmailBlur} // <-- Add this line
+          required
+          className="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring"
+        />
+        
         <input
           type="password"
           name="password"
@@ -99,4 +144,4 @@ const Signup = () => {
   );
 };
 
-export default Signup;
+export default AdminCreation;
