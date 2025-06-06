@@ -1,126 +1,146 @@
-# 💻 Frontend – Smart Hotel Management System
-
-This is the frontend of the **Smart Hotel Management System with Integrated Machine Learning and IoT**, built using **React 19**, **Vite**, and **Tailwind CSS**. It offers web-based interfaces for both hotel guests and administrators with responsive design and role-based features.
-
----
-
-## 🌐 Live Preview
-
-_Deploy your project on platforms like Vercel or Netlify and add the link here._
+# 🏨 Wild Wave Smart Hotel Management System
+A full‑stack, AI‑powered hotel management platform that combines **Node/Express**, **React 19 + Vite**, **MongoDB**, Machine‑Learning micro‑services and **IoT** hardware to deliver contact‑less check‑in, smart‑room automation and dynamic pricing for **Wild Waves Kumana Safari Surf Resort**.
 
 ---
 
-## ✨ Features
-
-### 👤 Guest Panel
-- 🔐 Face recognition login (via backend API)
-- 🌡️ IoT-powered room controls for AC (IR blaster) and lights (relay switches)
-- 🍽️ Mobile-responsive food ordering system
-- 📱 Web-based interface – no app installation required
-
-### 🛠 Admin Panel
-- 📊 Real-time room access tracking
-- 🧑‍💼 User and sub-user management
-- 🏷️ AI-based Dynamic Pricing dashboard
-- 🏨 Room access control and food order management
+## ✨ Core Features
+| Area | Feature |
+|------|---------|
+| **Guest** | 🔐 Face‑recognition room access • 🌡️ AC & 💡 Light control via phone • 🍽️ In‑room food ordering |
+| **Admin** | 📊 Real‑time guest & room dashboards • 🏷️ Dynamic pricing engine • 👥 Role & sub‑user management |
+| **AI / ML** | CNN‑based face recognition • LSTM/ARIMA/Random Forest for revenue‑optimised room pricing |
+| **IoT** | ESP32‑powered door locks (solenoid + RFID backup), IR‑blaster AC control, relay‑driven lighting |
 
 ---
 
-## 🛠 Tech Stack
+## 🖥️ Tech Stack
 
-- **React 19**
-- **Vite** – fast dev server & build tool
-- **Tailwind CSS 4** + Material Tailwind
-- **React Router v7** – for routing
-- **Axios** – for HTTP requests
-- **jwt-decode** – for handling JWTs
-- **Heroicons & React Icons** – for UI icons
+### Frontend _(📁 `frontend/`)_
+- React 19, Vite 6, React Router 7  
+- Tailwind CSS 4 + Material‑Tailwind, Heroicons & React‑Icons  
+- Axios, jwt‑decode  
+- ESLint, Prettier
+
+### Backend _(📁 `backend/`)_
+- Node.js 18+, Express 5.1  
+- MongoDB 7 + Mongoose 8.15  
+- JWT, bcryptjs, cors, dotenv, nodemon
+
+### Machine Learning _(📁 `ml-services/`)_  <!-- hypothetical folder -->
+- Python 3.11, TensorFlow, scikit‑learn, OpenCV  
+- REST &/or MQTT bridges to Node API
+
+### Hardware / Firmware _(📁 `firmware/`)_  
+- ESP32, Arduino C++, MQTT
 
 ---
 
-## 📦 Installation
+## 📁 Repository Structure
 
-### ⚙️ Prerequisites
-- Node.js ≥ 18.x
-- Backend server running on `http://localhost:5000` (or your configured URL)
+```text
+Wild-Waves-Internal/
+├── backend/           # Node / Express API
+│   ├── server.js
+│   └── package.json
+├── frontend/          # React + Vite web app
+│   ├── vite.config.js
+│   └── package.json
+├── ml-services/       # Python ML micro-services (models & endpoints)
+│   ├── app.py
+│   └── requirements.txt
+├── firmware/          # ESP32 sketches and Arduino code
+│   └── (your .ino/.cpp files)
+└── Readme.md          # ← you are here
+```
 
-### 🚀 Steps
+---
 
+## ⚙️ Prerequisites
+- **Node.js** ≥ 18.x & **npm** ≥ 9  
+- **MongoDB** instance (local or Atlas)  
+- **Python** ≥ 3.10 (for ML services)  
+- **ESP32** boards & sensors (for IoT layer)  
+
+---
+
+## 🔧 Local Installation
+
+### 1. Clone the repo
 ```bash
-# Clone the project
-git clone https://github.com/your-username/shms-frontend.git
-cd shms-frontend
+git clone https://github.com/chathuradissanayake/Wild-Waves-Internal.git
+cd Wild-Waves-Internal
+```
 
-# Install dependencies
+### 2. Backend Setup
+```bash
+cd backend
 npm install
 
-# Start the development server
-npm run dev
+# Create environment file
+cp .env.example .env        # or create manually
+# .env keys
+# PORT=5000
+# MONGO_URI=your_mongodb_uri
+# JWT_SECRET=super_secret_key
+
+npm start                   # launches nodemon on http://localhost:5000
 ```
 
----
-
-## 🧾 Project Structure
-
+### 3. Frontend Setup (new terminal)
 ```bash
-src/
-├── components/        # Reusable UI components
-├── pages/             # Route pages (Dashboard, Login, Admin, etc.)
-├── context/           # Auth context & role-based access
-├── hooks/             # Custom hooks
-├── assets/            # Images and static files
-├── App.jsx            # Main app entry
-├── main.jsx           # Renders the app
-└── index.css          # TailwindCSS & base styles
+cd frontend
+npm install
+
+# Frontend env file
+echo "VITE_API_BASE_URL=http://localhost:5000/api" > .env
+
+npm run dev                # opens Vite dev server on http://localhost:5173
 ```
 
----
-
-## 📋 Environment Variables
-
-Create a `.env` file at the root of your frontend folder:
-
-```env
-VITE_API_BASE_URL=http://localhost:5000/api
-```
-
-Make sure this matches your backend's base URL.
-
----
-
-## 🧪 Testing
-
-_Not included yet, but the following are recommended:_
-- **React Testing Library** for component tests
-- **Cypress** or **Playwright** for end-to-end tests
-
----
-
-## 📦 Build for Production
-
+### 4. (Optional) ML Services
 ```bash
-npm run build
-```
-
-To preview the production build locally:
-
-```bash
-npm run preview
+cd ml-services
+python -m venv venv && source venv/bin/activate
+pip install -r requirements.txt
+python app.py              # serves ML endpoints on http://localhost:8000
 ```
 
 ---
 
-## 📄 License
+## 🧪 Scripts
 
-This project is licensed under the MIT License.
+| Location | Command | Purpose |
+|----------|---------|---------|
+| `backend/` | `npm start` | Start API with nodemon |
+| | `npm test` | (add Jest tests) |
+| `frontend/` | `npm run dev` | Vite dev server |
+| | `npm run build` | Production build to `dist/` |
+| | `npm run preview` | Preview prod build |
+| `ml-services/` | `pytest` | Unit tests for ML models |
+
+---
+
+## 🌍 Deployment
+
+| Layer | Suggestion |
+|-------|------------|
+| **Backend** | Render, Railway, DigitalOcean, or Docker on VPS |
+| **Frontend** | Vercel, Netlify, or static bucket |
+| **Database** | MongoDB Atlas cluster |
+| **ML** | GPU VM, AWS SageMaker, or containerised micro‑service |
+| **CI/CD** | GitHub Actions → Docker build / push → host |
+
+---
+
+## 📜 License
+[MIT](LICENSE)
 
 ---
 
 ## 👥 Authors
+- D.K.R.C.K. Dissanayake  
+- W.M.N.S. Weerasekara  
+- L.W.S.T. Weerasinghe  
+- W.D.M. Wickramage  
 
-- **D.K.R.C.K. Dissanayake**
-- **W.M.N.S. Weerasekara**
-- **L.W.S.T. Weerasinghe**
-- **W.D.M. Wickramage**
-
-> University of Ruhuna – Department of Electrical and Information Engineering
+> Final‑year undergraduate project – Department of Electrical & Information Engineering, **University of Ruhuna**, Sri Lanka
