@@ -46,11 +46,11 @@ const Login = ({ onLogin }) => {
   };
 
   return (
-    <div className="min-h-screen flex border-4 border-blue-600">
+    <div className="min-h-screen flex ">
       {/* ◀︎ Left pane – form */}
       <div className="w-full md:w-1/2 flex flex-col items-center justify-center px-6 py-10 bg-white">
         {/* logo */}
-        <img src={Logo} alt="Wild Waves Kumana" className="w-32 mb-6 select-none" />
+        <img src={Logo} alt="Wild Waves Kumana" className="w-40 mb-4 select-none" />
 
         <h1 className="text-4xl font-extrabold text-gray-800 tracking-wider mb-1 text-center">
           LOG IN
