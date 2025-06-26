@@ -50,7 +50,7 @@ const Login = ({ onLogin }) => {
       {/* ◀︎ Left pane – form */}
       <div className="w-full md:w-1/2 flex flex-col items-center justify-center px-6 py-10 bg-white">
         {/* logo */}
-        <img src={Logo} alt="Wild Waves Kumana" className="w-40 mb-4 select-none" />
+        <img src={Logo} alt="Wild Waves Kumana" className="w-40 mb-2 select-none" />
 
         <h1 className="text-4xl font-extrabold text-gray-800 tracking-wider mb-1 text-center">
           LOG IN
