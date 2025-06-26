@@ -21,7 +21,7 @@ const EquipmentCreate = () => {
   useEffect(() => {
     const fetchUsers = async () => {
       try {
-        const res = await axios.get("http://localhost:5000//api/users"); // adjust URL
+        const res = await axios.get("http://localhost:5000/api/users"); // adjust URL
         setUsers(res.data);
       } catch (err) {
         console.error("Failed to load users", err);
@@ -50,14 +50,14 @@ const EquipmentCreate = () => {
     }
 
     try {
-      await axios.post("http://localhost:5000/api/equipment", {
+      await axios.post("http://localhost:5000/api/equipment/create", {
         category,
         itemName,
         itemCode,
         assignedTo,
         status,
       });
-      navigate("/equipment-list");        // or wherever you show the list
+      navigate("/AdminDashboard");        // or wherever you show the list
     } catch (err) {
       setMessage(err.response?.data?.message || "Failed to create equipment.");
     }
@@ -119,7 +119,7 @@ const EquipmentCreate = () => {
           <option value="">-- Select User --</option>
           {users.map((u) => (
             <option key={u._id} value={u._id}>
-              {u.username}
+              {u.roomname}
             </option>
           ))}
         </select>
