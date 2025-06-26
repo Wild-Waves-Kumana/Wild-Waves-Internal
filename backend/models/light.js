@@ -3,7 +3,8 @@ import mongoose from 'mongoose';
 const lightSchema = new mongoose.Schema({
   itemName: String,
   itemCode: { type: String, unique: true },
-  username: String,
+  roomname: String,
+  assignedTo: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
   status: { type: String, enum: ['ON', 'OFF'], default: 'ON' }
 });
 
