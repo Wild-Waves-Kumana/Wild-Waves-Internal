@@ -53,7 +53,7 @@ export const loginUser = async (req, res) => {
 
 //sign up
 export const registerUser = async (req, res) => {
-    const { username, password, role } = req.body;
+    const { roomname, roomid, username, password, role } = req.body;
 
     try {
         const existingUser = await User.findOne({ username });
@@ -64,7 +64,7 @@ export const registerUser = async (req, res) => {
     const salt = await bcrypt.genSalt(10); // generate salt
     const hashedPassword = await bcrypt.hash(password, salt); // hash password
 
-    const newUser = new User({ username, password: hashedPassword, role });
+    const newUser = new User({ roomname, roomid, username, password: hashedPassword, role });
     await newUser.save();
 
     res.status(201).json({ message: 'User created successfully' });
