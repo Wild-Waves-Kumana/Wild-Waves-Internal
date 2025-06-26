@@ -19,6 +19,10 @@ const AdminDashboard = () => {
     navigate('/usercreation'); // Navigate to user creation page
   };
 
+  const equipmentcreation = () => {
+    navigate('/equipment-create'); // Navigate to equipment creation page  
+  };
+
   return (
     <div className="min-h-screen bg-gray-100 flex flex-col items-center justify-center px-4">
       <h1 className="text-4xl font-bold mb-6 text-blue-700">Welcome to Admin Dashboard</h1>
@@ -49,6 +53,12 @@ const AdminDashboard = () => {
         onClick={usercreation}
         className="px-6 py-2 my-3 bg-blue-600 text-white rounded hover:bg-blue-700">
         Create User
+      </button>
+
+      <button
+        onClick={equipmentcreation}
+        className="px-6 py-2 my-3 bg-blue-600 text-white rounded hover:bg-blue-700">
+        Create Equipment
       </button>
 
     </div>
