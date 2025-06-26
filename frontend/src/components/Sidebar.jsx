@@ -58,7 +58,7 @@ const Sidebar = () => {
             <>
               <li>
                 <NavLink
-                  to="/users"
+                  to="/userlist"
                   className={({ isActive }) =>
                     isActive
                       ? " text-blue-600 flex items-center gap-4 dark:text-blue-400"

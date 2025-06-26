@@ -12,6 +12,8 @@ import Layout from './components/Layout';
 import SuperAdminDashboard from './pages/SuperAdminDashboard';
 import AdminCreation from './pages/AdminCreation';
 import UserCreation from './pages/UserCreation';
+import EquipmentCreate from './pages/EquipmentCreate';
+import UserList from './pages/UserList';
 
 function App() {
   const { isLoggedIn, login, role } = useContext(UserContext);
@@ -90,7 +92,31 @@ function App() {
           </ProtectedRoute>
         }
       />
+
+      <Route
+        path="/equipment-create"
+        element={
+          <ProtectedRoute allowedRoles={['admin', 'superadmin']}>
+            <Layout>
+              <EquipmentCreate />
+            </Layout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/userlist"
+        element={
+          <ProtectedRoute allowedRoles={['admin', 'superadmin']}>
+            <Layout>
+              <UserList />
+            </Layout>
+          </ProtectedRoute>
+        }
+      />
+
     </Routes>
+
+    
   );
 }
 

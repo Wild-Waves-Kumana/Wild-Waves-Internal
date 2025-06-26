@@ -4,6 +4,8 @@ import { useNavigate } from 'react-router-dom';
 
 const UserCreation = () => {
   const [formData, setFormData] = useState({
+    roomname: '',
+    roomnid: '', // new field for room number
     username: '',
     password: '',
     confirmPassword: '',
@@ -42,6 +44,8 @@ const UserCreation = () => {
 
     try {
       const res = await axios.post('http://localhost:5000/api/auth/register', {
+        roomname: formData.roomname,      // <-- add this
+        roomid: formData.roomid,  // <-- and this
         username: formData.username,
         password: formData.password,
         role: formData.role, // ✅ send selected role
@@ -60,6 +64,25 @@ const UserCreation = () => {
         <h2 className="text-2xl font-semibold text-center">Sign Up</h2>
         {message && <p className="text-center text-sm text-red-600">{message}</p>}
 
+
+        <input
+          type="text"
+          name="roomname"
+          placeholder="Room Name"
+          value={formData.roomname}
+          onChange={handleChange}
+          required
+          className="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring"
+        />
+        <input
+          type="text" 
+          name="roomid"
+          placeholder="Room ID"
+          value={formData.roomid}
+          onChange={handleChange}
+          required
+          className="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring"
+        />
         <input
           type="text"
           name="username"
