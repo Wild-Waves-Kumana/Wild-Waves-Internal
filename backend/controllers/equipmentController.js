@@ -17,7 +17,7 @@ export const createEquipment = async (req, res) => {
   try {
     // 1️⃣ Validate itemCode uniqueness
     if (await isItemCodeTaken(itemCode)) {
-      return res.status(400).json({ message: 'itemCode must be unique across all equipment.' });
+      return res.status(400).json({ message: 'Item Code Already Used !' });
     }
 
     // 2️⃣ Validate assigned user exists and get roomname
