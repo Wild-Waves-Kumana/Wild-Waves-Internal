@@ -2,8 +2,6 @@ import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import { FaUser, FaLock } from "react-icons/fa";
-
-//Adjust these paths so they point to the actual files in your project
 import Logo from "../assets/logo.png"; // hotel logo
 import VillaImg from "../assets/login.jpg"; // right‑hand hero image
 
