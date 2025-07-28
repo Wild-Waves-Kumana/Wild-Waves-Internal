@@ -28,16 +28,30 @@ const Login = ({ onLogin }) => {
       localStorage.setItem("token", token);
       onLogin(token);
 
-      // Store adminId if admin logs in, otherwise remove it
+      // Store IDs based on role
       if (role === "admin") {
         localStorage.setItem("adminId", user._id);
+        localStorage.removeItem("userId");
+        localStorage.removeItem("superAdminId");
+      } else if (role === "user") {
+        localStorage.setItem("userId", user._id);
+        localStorage.removeItem("adminId");
+        localStorage.removeItem("superAdminId");
+      } else if (role === "superadmin") {
+        localStorage.setItem("superAdminId", user._id);
+        localStorage.removeItem("adminId");
+        localStorage.removeItem("userId");
       } else {
         localStorage.removeItem("adminId");
+        localStorage.removeItem("userId");
+        localStorage.removeItem("superAdminId");
       }
+
 
       // ➡️ Role‑based redirects
       if (role === "user") {
         navigate("/userdashboard");
+        
       } else if (role === "admin") {
         navigate("/admindashboard");
       } else if (role === "superadmin") {
