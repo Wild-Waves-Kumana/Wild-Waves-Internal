@@ -6,9 +6,12 @@ const AdminDashboard = () => {
   const navigate = useNavigate();
   const { username, logout } = useContext(UserContext);
   const token = localStorage.getItem('token');
-
+  const adminId = localStorage.getItem('adminId');
+  
+  console.log('Admin ID:', adminId);
   //Display token in console
   console.log('JWT Token:', token);
+ 
 
   const handleLogout = () => {
     logout();            // clear login state

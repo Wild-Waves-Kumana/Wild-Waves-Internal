@@ -12,7 +12,7 @@ const isItemCodeTaken = async (itemCode) => {
 };
 
 export const createEquipment = async (req, res) => {
-  const { category, itemName, itemCode, assignedTo, status } = req.body;
+  const { category, itemName, itemCode, assignedTo, status, adminId } = req.body; // <-- include adminId
 
   try {
     // 1️⃣ Validate itemCode uniqueness
@@ -40,9 +40,10 @@ export const createEquipment = async (req, res) => {
     const newEquipment = new EquipmentModel({
       itemName,
       itemCode,
-      roomname: user.roomname,         // use user's roomname
-      assignedTo: user._id,            // store reference
+      roomname: user.roomname,
+      assignedTo: user._id,
       status,
+      adminId, // <-- store adminId
     });
 
     await newEquipment.save();
@@ -50,5 +51,15 @@ export const createEquipment = async (req, res) => {
   } catch (err) {
     console.error('Equipment creation error:', err);
     res.status(500).json({ message: 'Server error while creating equipment.' });
+  }
+};
+
+export const displaydoors = async (req, res) => {
+  try {
+    // Populate assignedTo with username
+    const doors = await Door.find().populate('assignedTo', 'username');
+    res.json(doors);
+  } catch (err) {
+    res.status(500).json({ message: 'Failed to fetch doors' });
   }
 };

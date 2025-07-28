@@ -6,9 +6,10 @@ const airConditionerSchema = new mongoose.Schema({
   roomname: String,
   assignedTo: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
   status: { type: String, enum: ['ON', 'OFF'], default: 'ON' },
-  temperaturelevel: { type: Number, default: 24 }, // Temperature level in Celsius
-  mode: { type: String, enum: ['Cool', 'Heat', 'Fan', 'Dry'], default: 'Cool' }, // Mode of operation
-  fanSpeed: { type: String, enum: ['Low', 'Medium', 'High'], default: 'Medium' } // Fan speed setting 
+  temperaturelevel: { type: Number, default: 24 },
+  mode: { type: String, enum: ['Cool', 'Heat', 'Fan', 'Dry'], default: 'Cool' },
+  fanSpeed: { type: String, enum: ['Low', 'Medium', 'High'], default: 'Medium' },
+  adminId: { type: mongoose.Schema.Types.ObjectId, ref: 'Admin' }, // <-- added
 });
 
 export default mongoose.model('AirConditioner', airConditionerSchema);

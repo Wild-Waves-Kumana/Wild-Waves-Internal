@@ -9,6 +9,9 @@ const EquipmentCreate = () => {
   const [users, setUsers] = useState([]);            // dropdown list
   const [message, setMessage] = useState("");
 
+  // Get adminId from localStorage (or wherever you store it)
+  const adminId = localStorage.getItem("adminId");
+
   const [formData, setFormData] = useState({
     category: "Doors",
     itemName: "",
@@ -56,6 +59,7 @@ const EquipmentCreate = () => {
         itemCode,
         assignedTo,
         status,
+        adminId, // Pass adminId here
       });
       navigate("/AdminDashboard");        // or wherever you show the list
     } catch (err) {

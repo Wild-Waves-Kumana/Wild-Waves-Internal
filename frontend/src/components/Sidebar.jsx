@@ -54,6 +54,22 @@ const Sidebar = () => {
               <FaHome /> Dashboard
             </NavLink>
           </li>
+           {userRole == 'user' && (
+            <>
+              <li>
+                <NavLink
+                  to="/equipment"
+                  className={({ isActive }) =>
+                    isActive
+                      ? " text-blue-600 flex items-center gap-4 dark:text-blue-400"
+                      : "text-gray-600 flex items-center gap-2 dark:text-slate-400"
+                  }
+                >
+                  <FaUserFriends /> Equipments
+                </NavLink>
+              </li>
+              </>
+          )}
           {userRole !== 'user' && (
             <>
               <li>
