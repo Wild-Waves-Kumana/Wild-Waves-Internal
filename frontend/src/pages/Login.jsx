@@ -28,6 +28,13 @@ const Login = ({ onLogin }) => {
       localStorage.setItem("token", token);
       onLogin(token);
 
+      // Store adminId if admin logs in, otherwise remove it
+      if (role === "admin") {
+        localStorage.setItem("adminId", user._id);
+      } else {
+        localStorage.removeItem("adminId");
+      }
+
       // ➡️ Role‑based redirects
       if (role === "user") {
         navigate("/userdashboard");
