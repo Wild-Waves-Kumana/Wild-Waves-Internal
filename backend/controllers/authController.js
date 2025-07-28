@@ -53,21 +53,22 @@ export const loginUser = async (req, res) => {
 
 //sign up
 export const registerUser = async (req, res) => {
-    const { roomname, roomid, username, password, role } = req.body;
+    const { roomname, roomid, username, password, role, adminId } = req.body; // <-- add adminId
 
     try {
         const existingUser = await User.findOne({ username });
-    if (existingUser) {
-        return res.status(400).json({ message: 'Username already exists' });
-}
+        if (existingUser) {
+            return res.status(400).json({ message: 'Username already exists' });
+        }
 
-    const salt = await bcrypt.genSalt(10); // generate salt
-    const hashedPassword = await bcrypt.hash(password, salt); // hash password
+        const salt = await bcrypt.genSalt(10); // generate salt
+        const hashedPassword = await bcrypt.hash(password, salt); // hash password
 
-    const newUser = new User({ roomname, roomid, username, password: hashedPassword, role });
-    await newUser.save();
+        // Save adminId with the new user
+        const newUser = new User({ roomname, roomid, username, password: hashedPassword, role, adminId });
+        await newUser.save();
 
-    res.status(201).json({ message: 'User created successfully' });
+        res.status(201).json({ message: 'User created successfully' });
     }
     catch (err) {
         res.status(500).json({ message: 'Server error' });

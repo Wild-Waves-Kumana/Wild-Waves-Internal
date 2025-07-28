@@ -12,6 +12,7 @@ const UserCreation = () => {
     role: 'user', // default role
   });
 
+  const adminId = localStorage.getItem("adminId");
   const [message, setMessage] = useState('');
   const navigate = useNavigate();
 
@@ -49,6 +50,7 @@ const UserCreation = () => {
         username: formData.username,
         password: formData.password,
         role: formData.role, // ✅ send selected role
+        adminId: adminId, // Pass the adminId from localStorage
       });
 
       setMessage(res.data.message);
