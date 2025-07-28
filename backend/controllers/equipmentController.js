@@ -53,3 +53,13 @@ export const createEquipment = async (req, res) => {
     res.status(500).json({ message: 'Server error while creating equipment.' });
   }
 };
+
+export const displaydoors = async (req, res) => {
+  try {
+    // Populate assignedTo with username
+    const doors = await Door.find().populate('assignedTo', 'username');
+    res.json(doors);
+  } catch (err) {
+    res.status(500).json({ message: 'Failed to fetch doors' });
+  }
+};
