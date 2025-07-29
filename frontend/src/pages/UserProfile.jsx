@@ -7,6 +7,7 @@ const UserProfile = () => {
   const { userId } = useParams();
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
+  const adminId = localStorage.getItem('adminId');
 
   useEffect(() => {
     const fetchUser = async () => {
@@ -27,29 +28,23 @@ const UserProfile = () => {
 
   return (
     <div>
-    <div className="max-w-md mx-auto mt-10 bg-white shadow rounded p-6">
-      <h2 className="text-2xl font-bold mb-4">User Profile</h2>
-      <div className="mb-2"><strong>Username:</strong> {user.username}</div>
-      <div className="mb-2"><strong>Room Name:</strong> {user.roomname}</div>
-      <div className="mb-2"><strong>Room ID:</strong> {user.roomid}</div>
-      <div className="mb-2"><strong>Role:</strong> {user.role}</div>
-      {/* Add more fields as needed */}
-    
-    
+      <div className="max-w-md mx-auto mt-10 bg-white shadow rounded p-6">
+        <h2 className="text-2xl font-bold mb-4">User Profile</h2>
+        <div className="mb-2"><strong>Username:</strong> {user.username}</div>
+        <div className="mb-2"><strong>Room Name:</strong> {user.roomname}</div>
+        <div className="mb-2"><strong>Room ID:</strong> {user.roomid}</div>
+        <div className="mb-2"><strong>Role:</strong> {user.role}</div>
         <button
-            onClick={() => window.history.back()}
-            className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+          onClick={() => window.history.back()}
+          className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
         >
-            Back to User List
+          Back to User List
         </button>
-    
+      </div>
+      <div className="mt-4">
+        <UserACList userId={userId} adminId={adminId} />
+      </div>
     </div>
-
-    <div className="mt-4">
-        <UserACList/>
-    </div>
-    </div>
-
   );
 };
 
