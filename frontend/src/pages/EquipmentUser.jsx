@@ -1,6 +1,7 @@
 import React from 'react'
 import UserDoorList from '../components/UserDoorList'
 import UserLightList from '../components/UserLightList'
+import UserACList from '../components/UserACList'
 
 const EquipmentUser = () => {
   return (
@@ -8,6 +9,8 @@ const EquipmentUser = () => {
       <UserDoorList/>
 
       <UserLightList/>
+
+      <UserACList/>
     </div>
   )
 }
