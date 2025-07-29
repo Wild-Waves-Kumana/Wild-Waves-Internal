@@ -18,13 +18,30 @@ const UserACList = ({ userId, adminId }) => {
               (ac.assignedTo && (ac.assignedTo._id === userId || ac.assignedTo === userId)) &&
               (ac.adminId && (ac.adminId._id === adminId || ac.adminId === adminId))
           );
-        } else {
-          // For non-admin, show only ACs assigned to userId
-          filteredACs = res.data.filter(
+        } 
+        if (role === 'superadmin') {
+            filteredACs = res.data.filter(
+            (ac) =>
+              ac.assignedTo && (ac.assignedTo._id === userId || ac.assignedTo === userId)
+          );
+
+        }
+        if (role === 'user') {
+            filteredACs = res.data.filter(
             (ac) =>
               ac.assignedTo && (ac.assignedTo._id === userId || ac.assignedTo === userId)
           );
         }
+        else {
+          <div className='text-red-500'>
+            Unable to fetch air conditioners for this user.
+          </div>// For non-admin, show only ACs assigned to userId
+          
+        }
+         // ✅ Log assignedTo for debugging
+  filteredACs.forEach((ac) => {
+    console.log("AssignedTo field:", ac.assignedTo);
+  });
         setAcs(filteredACs);
       } catch (err) {
         console.error('Failed to fetch air conditioners:', err);
