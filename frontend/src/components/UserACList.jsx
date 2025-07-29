@@ -1,20 +1,30 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 
-const UserACList = () => {
+const UserACList = ({ userId, adminId }) => {
   const [acs, setAcs] = useState([]);
   const [loading, setLoading] = useState(true);
-  const userId = localStorage.getItem('userId');  // Get the logged-in user's ID from localStorage
+  const role = localStorage.getItem('role'); // Get current role
 
   useEffect(() => {
     const fetchACs = async () => {
       try {
         const res = await axios.get('http://localhost:5000/api/equipment/air-conditioners');
-        // Filter doors where assignedTo equals userId
-        const filteredACs = res.data.filter(
-          (airconditioner) =>
-            (airconditioner.assignedTo && (airconditioner.assignedTo._id === userId || airconditioner.assignedTo === userId))
-        );
+        let filteredACs = [];
+        if (role === 'admin') {
+          // Show ACs where assignedTo equals userId AND adminId equals adminId
+          filteredACs = res.data.filter(
+            (ac) =>
+              (ac.assignedTo && (ac.assignedTo._id === userId || ac.assignedTo === userId)) &&
+              (ac.adminId && (ac.adminId._id === adminId || ac.adminId === adminId))
+          );
+        } else {
+          // For non-admin, show only ACs assigned to userId
+          filteredACs = res.data.filter(
+            (ac) =>
+              ac.assignedTo && (ac.assignedTo._id === userId || ac.assignedTo === userId)
+          );
+        }
         setAcs(filteredACs);
       } catch (err) {
         console.error('Failed to fetch air conditioners:', err);
@@ -23,7 +33,7 @@ const UserACList = () => {
       }
     };
     fetchACs();
-  }, [userId]);
+  }, [userId, adminId, role]);
 
   return (
     <div className="p-4">
