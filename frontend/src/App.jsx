@@ -15,6 +15,7 @@ import UserCreation from './pages/UserCreation';
 import EquipmentCreate from './pages/EquipmentCreate';
 import UserList from './pages/UserList';
 import EquipmentUser from './pages/EquipmentUser';
+import UserProfile from './pages/UserProfile';
 
 function App() {
   const { isLoggedIn, login, role } = useContext(UserContext);
@@ -81,6 +82,18 @@ function App() {
           <ProtectedRoute allowedRoles={['admin', 'superadmin']}>
             <Layout>
               <AdminDashboard />
+            </Layout>
+            
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/user-profile/:userId"
+        element={
+          <ProtectedRoute allowedRoles={['user', 'admin', 'superadmin']}>
+            <Layout>
+              <UserProfile />
             </Layout>
             
           </ProtectedRoute>
