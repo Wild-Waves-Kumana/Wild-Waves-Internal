@@ -2,6 +2,8 @@ import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import axios from 'axios';
 import UserACList from '../components/UserACList';
+import UserDoorList from '../components/UserDoorList';
+import UserLightList from '../components/UserLightList';
 
 const UserProfile = () => {
   const { userId } = useParams();
@@ -43,6 +45,12 @@ const UserProfile = () => {
       </div>
       <div className="mt-4">
         <UserACList userId={userId} adminId={adminId} />
+
+        <UserDoorList userId={userId} adminId={adminId} />
+
+        <UserLightList userId={userId} adminId={adminId} />
+
+        
       </div>
     </div>
   );

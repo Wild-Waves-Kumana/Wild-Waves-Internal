@@ -1,31 +1,61 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 
-const UserLightList = () => {
+const UserLightList = ({userId, adminId}) => {
   const [lights, setLights] = useState([]);
   const [loading, setLoading] = useState(true);
-    // Get the logged-in user's ID from localStorage
-  const userId = localStorage.getItem('userId');
+  const role = localStorage.getItem('role'); // Get current role
 
   useEffect(() => {
     const fetchLights = async () => {
       try {
         const res = await axios.get('http://localhost:5000/api/equipment/lights');
-        
-        // Filter doors where assignedTo equals userId
-        const filteredLights = res.data.filter(
-          (light) =>
-            (light.assignedTo && (light.assignedTo._id === userId || light.assignedTo === userId))
+        let filteredLights=[]
+        // Filter light where assignedTo equals userId
+        if (role === 'admin') {
+            // Show Lights where assignedTo equals userId AND adminId equals adminId
+            filteredLights = res.data.filter(
+              (light) =>
+                (light.assignedTo && (light.assignedTo._id === userId || light.assignedTo === userId)) &&
+                (light.adminId && (light.adminId._id === adminId || light.adminId === adminId))
+            );
+          } 
+        if (role === 'superadmin') {
+            filteredLights = res.data.filter(
+            (light) =>
+            light.assignedTo && (light.assignedTo._id === userId || light.assignedTo === userId)
         );
-        setLights(filteredLights);
-      } catch (err) {
-        console.error('Failed to fetch lights:', err);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchLights();
-  }, [userId]);
+        }
+        if (role === 'user') {
+              filteredLights = res.data.filter(
+              (light) =>
+                light.assignedTo && (light.assignedTo._id === userId || light.assignedTo === userId)
+            );
+          }
+          else {
+            <div className='text-red-500'>
+              Unable to fetch Doors for this user.
+            </div>// For non-admin, show only ACs assigned to userId
+            
+          }
+         // Log assignedTo for debugging
+        filteredLights.forEach((light) => {
+            console.log("AssignedTo field:", light.assignedTo);
+        });
+            setLights(filteredLights);
+          } catch (err) {
+            console.error('Failed to fetch Lights:', err);
+          } finally {
+            setLoading(false);
+          }
+        };
+        fetchLights();
+      }, [userId, adminId, role]);
+
+
+
+
+
 
   return (
     <div className="p-4">
