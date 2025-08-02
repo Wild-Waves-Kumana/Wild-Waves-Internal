@@ -12,7 +12,7 @@ const SuperAdminDashboard = () => {
   };
 
   const handleCreateCompany = () => {
-    navigate("/companycreation");
+    navigate("/create-company");
   };
 
   return (
@@ -28,7 +28,7 @@ const SuperAdminDashboard = () => {
             onClick={handleCreateCompany}
             className="mt-4 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
           >
-            Create Admin
+            Create Company
           </button>
         </div>
         <div className="bg-white  rounded-lg shadow p-6 flex flex-col items-center">
