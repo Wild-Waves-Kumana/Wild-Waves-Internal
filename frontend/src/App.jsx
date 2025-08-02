@@ -17,6 +17,7 @@ import UserList from './pages/UserList';
 import EquipmentUser from './pages/EquipmentUser';
 import UserProfile from './pages/UserProfile';
 import CreateCompany from './pages/CreateCompany';
+import CompanyList from './pages/CompanyList';
 
 function App() {
   const { isLoggedIn, login, role } = useContext(UserContext);
@@ -60,6 +61,17 @@ function App() {
           <ProtectedRoute allowedRoles={['superadmin']}>
             <Layout>
               <CreateCompany />
+            </Layout>
+            
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/company-list"
+        element={
+          <ProtectedRoute allowedRoles={['superadmin']}>
+            <Layout>
+              <CompanyList />
             </Layout>
             
           </ProtectedRoute>
