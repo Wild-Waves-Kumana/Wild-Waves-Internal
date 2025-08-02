@@ -1,5 +1,6 @@
 import User from '../models/user.js';
 import Admin from '../models/admin.js';
+import Company from '../models/company.js';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import dotenv from 'dotenv';
@@ -77,7 +78,7 @@ export const registerUser = async (req, res) => {
 
 // Admin registration
 export const registerAdmin = async (req, res) => {
-    const { username, email, password, role } = req.body;
+    const { username, email, password, role, companyId } = req.body; // <-- add companyId
 
     try {
         const existingAdmin = await Admin.findOne({ username });
@@ -88,8 +89,15 @@ export const registerAdmin = async (req, res) => {
         const salt = await bcrypt.genSalt(10);
         const hashedPassword = await bcrypt.hash(password, salt);
 
-        const newAdmin = new Admin({ username, email, password: hashedPassword, role });
+        // Save admin with companyId as ObjectId
+        const newAdmin = new Admin({ username, email, password: hashedPassword, role, companyId });
         await newAdmin.save();
+
+        // Push admin's _id to the company's admins array
+        await Company.findByIdAndUpdate(
+          companyId,
+          { $push: { admins: newAdmin._id } }
+        );
 
         res.status(201).json({ message: 'Admin created successfully' });
     } catch (err) {
