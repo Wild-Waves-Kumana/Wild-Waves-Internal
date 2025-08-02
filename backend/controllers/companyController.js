@@ -18,3 +18,12 @@ export const createCompany = async (req, res) => {
     res.status(500).json({ message: 'Server error' });
   }
 };
+
+export const getCompanies = async (req, res) => {
+  try {
+    const companies = await Company.find();
+    res.json(companies);
+  } catch (err) {
+    res.status(500).json({ message: 'Failed to fetch companies' });
+  }
+};
