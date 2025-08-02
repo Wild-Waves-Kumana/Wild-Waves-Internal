@@ -7,7 +7,7 @@ const userSchema = new mongoose.Schema({
   password: { type: String, required: true },
   role: { type: String, required: true,  default: 'user' },
   adminId: { type: mongoose.Schema.Types.ObjectId, ref: 'Admin' }, // <-- added
-  
+  companyId: { type: mongoose.Schema.Types.ObjectId, ref: 'Company' },
 });
 
 export default mongoose.model('User', userSchema);

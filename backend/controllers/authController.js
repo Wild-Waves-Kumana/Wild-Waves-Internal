@@ -54,7 +54,7 @@ export const loginUser = async (req, res) => {
 
 //sign up
 export const registerUser = async (req, res) => {
-    const { roomname, roomid, username, password, role, adminId } = req.body; // <-- add adminId
+    const { roomname, roomid, username, password, role, adminId} = req.body;
 
     try {
         const existingUser = await User.findOne({ username });
@@ -62,12 +62,32 @@ export const registerUser = async (req, res) => {
             return res.status(400).json({ message: 'Username already exists' });
         }
 
-        const salt = await bcrypt.genSalt(10); // generate salt
-        const hashedPassword = await bcrypt.hash(password, salt); // hash password
+        // Fetch the admin to get the companyId
+        const admin = await Admin.findById(adminId);
+        if (!admin) {
+            return res.status(400).json({ message: 'Admin not found' });
+        }
 
-        // Save adminId with the new user
-        const newUser = new User({ roomname, roomid, username, password: hashedPassword, role, adminId });
+        const salt = await bcrypt.genSalt(10);
+        const hashedPassword = await bcrypt.hash(password, salt);
+
+        // Save adminId and companyId with the new user
+        const newUser = new User({
+            roomname,
+            roomid,
+            username,
+            password: hashedPassword,
+            role,
+            adminId,
+            companyId: admin.companyId // <-- add companyId from admin
+        });
         await newUser.save();
+
+        // Push user's _id to the company's users array
+        await Company.findByIdAndUpdate(
+          admin.companyId,
+          { $push: { users: newUser._id } }
+        );
 
         res.status(201).json({ message: 'User created successfully' });
     }
