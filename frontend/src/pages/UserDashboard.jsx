@@ -10,6 +10,11 @@ const UserDashboard = () => {
     logout();            // clear login state
     navigate('/');       // go back to login
   };
+
+  // Get user id from localStorage and log it
+  const userId = localStorage.getItem('userId');
+  console.log('User ID:', userId);
+  
   return (
     <div className="min-h-screen bg-gray-100 flex flex-col items-center justify-center px-4">
       <h1 className="text-4xl font-bold text-green-800">Welcome to User Dashboard 🎉</h1>

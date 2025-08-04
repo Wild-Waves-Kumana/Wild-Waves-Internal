@@ -12,6 +12,12 @@ import Layout from './components/Layout';
 import SuperAdminDashboard from './pages/SuperAdminDashboard';
 import AdminCreation from './pages/AdminCreation';
 import UserCreation from './pages/UserCreation';
+import EquipmentCreate from './pages/EquipmentCreate';
+import UserList from './pages/UserList';
+import EquipmentUser from './pages/EquipmentUser';
+import UserProfile from './pages/UserProfile';
+import CreateCompany from './pages/CreateCompany';
+import CompanyList from './pages/CompanyList';
 
 function App() {
   const { isLoggedIn, login, role } = useContext(UserContext);
@@ -48,6 +54,41 @@ function App() {
           </ProtectedRoute>
         }
       />
+
+      <Route
+        path="/create-company"
+        element={
+          <ProtectedRoute allowedRoles={['superadmin']}>
+            <Layout>
+              <CreateCompany />
+            </Layout>
+            
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/company-list"
+        element={
+          <ProtectedRoute allowedRoles={['superadmin']}>
+            <Layout>
+              <CompanyList />
+            </Layout>
+            
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/equipment"
+        element={
+          <ProtectedRoute allowedRoles={['user']}>
+            <Layout>
+              <EquipmentUser />
+            </Layout>
+            
+          </ProtectedRoute>
+        }
+      />
       <Route
         path="/admincreation"
         element={
@@ -72,6 +113,18 @@ function App() {
         }
       />
 
+      <Route
+        path="/user-profile/:userId"
+        element={
+          <ProtectedRoute allowedRoles={['user', 'admin', 'superadmin']}>
+            <Layout>
+              <UserProfile />
+            </Layout>
+            
+          </ProtectedRoute>
+        }
+      />
+
        <Route
         path="/userdashboard"
         element={
@@ -90,7 +143,31 @@ function App() {
           </ProtectedRoute>
         }
       />
+
+      <Route
+        path="/equipment-create"
+        element={
+          <ProtectedRoute allowedRoles={['admin', 'superadmin']}>
+            <Layout>
+              <EquipmentCreate />
+            </Layout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/userlist"
+        element={
+          <ProtectedRoute allowedRoles={['admin', 'superadmin']}>
+            <Layout>
+              <UserList />
+            </Layout>
+          </ProtectedRoute>
+        }
+      />
+
     </Routes>
+
+    
   );
 }
 

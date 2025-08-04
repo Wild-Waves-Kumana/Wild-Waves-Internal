@@ -6,9 +6,12 @@ const AdminDashboard = () => {
   const navigate = useNavigate();
   const { username, logout } = useContext(UserContext);
   const token = localStorage.getItem('token');
-
+  const adminId = localStorage.getItem('adminId');
+  
+  console.log('Admin ID:', adminId);
   //Display token in console
   console.log('JWT Token:', token);
+ 
 
   const handleLogout = () => {
     logout();            // clear login state
@@ -17,6 +20,10 @@ const AdminDashboard = () => {
 
    const usercreation= () => {
     navigate('/usercreation'); // Navigate to user creation page
+  };
+
+  const equipmentcreation = () => {
+    navigate('/equipment-create'); // Navigate to equipment creation page  
   };
 
   return (
@@ -49,6 +56,12 @@ const AdminDashboard = () => {
         onClick={usercreation}
         className="px-6 py-2 my-3 bg-blue-600 text-white rounded hover:bg-blue-700">
         Create User
+      </button>
+
+      <button
+        onClick={equipmentcreation}
+        className="px-6 py-2 my-3 bg-blue-600 text-white rounded hover:bg-blue-700">
+        Create Equipment
       </button>
 
     </div>

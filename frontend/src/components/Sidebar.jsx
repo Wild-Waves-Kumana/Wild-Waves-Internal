@@ -54,11 +54,27 @@ const Sidebar = () => {
               <FaHome /> Dashboard
             </NavLink>
           </li>
-          {userRole !== 'user' && (
+           {userRole == 'user' && (
             <>
               <li>
                 <NavLink
-                  to="/users"
+                  to="/equipment"
+                  className={({ isActive }) =>
+                    isActive
+                      ? " text-blue-600 flex items-center gap-4 dark:text-blue-400"
+                      : "text-gray-600 flex items-center gap-2 dark:text-slate-400"
+                  }
+                >
+                  <FaUserFriends /> Equipments
+                </NavLink>
+              </li>
+              </>
+          )}
+          {userRole === 'admin' && (
+            <>
+              <li>
+                <NavLink
+                  to="/userlist"
                   className={({ isActive }) =>
                     isActive
                       ? " text-blue-600 flex items-center gap-4 dark:text-blue-400"
@@ -94,11 +110,11 @@ const Sidebar = () => {
               </li> */}
             </>
           )}
-          {userRole === 'SuperAdmin' && (
+          {userRole === 'superadmin' && (
             <>
               <li>
                 <NavLink
-                  to="/companies"
+                  to="/company-list"
                   className={({ isActive }) =>
                     isActive
                       ? " text-blue-600 flex items-center gap-4 dark:text-blue-400"
