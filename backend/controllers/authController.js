@@ -18,7 +18,7 @@ export const loginUser = async (req, res) => {
 
     // If not found in User, check Admin collection
     if (!user) {
-      user = await Admin.findOne({ username });
+      user = await Admin.findOne({ email: username });
       userType = 'admin';
     }
 
