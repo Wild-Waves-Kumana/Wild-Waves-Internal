@@ -1,31 +1,60 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 
-const UserDoorList = () => {
+const UserDoorList = ({userId, adminId}) => {
    const [doors, setDoors] = useState([]);
   const [loading, setLoading] = useState(true);
+  const role = localStorage.getItem('role'); // Get current role
 
-  // Get the logged-in user's ID from localStorage
-  const userId = localStorage.getItem('userId');
 
   useEffect(() => {
     const fetchDoors = async () => {
       try {
         const res = await axios.get('http://localhost:5000/api/equipment/doors');
-        // Filter doors where assignedTo equals userId
-        const filteredDoors = res.data.filter(
-          (door) =>
-            (door.assignedTo && (door.assignedTo._id === userId || door.assignedTo === userId))
-        );
-        setDoors(filteredDoors);
-      } catch (err) {
-        console.error('Failed to fetch doors:', err);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchDoors();
-  }, [userId]);
+        
+        let filteredDoors=[];// Filter doors where assignedTo equals userId
+        if (role === 'admin') {
+          // Show ACs where assignedTo equals userId AND adminId equals adminId
+          filteredDoors = res.data.filter(
+            (door) =>
+              (door.assignedTo && (door.assignedTo._id === userId || door.assignedTo === userId)) &&
+              (door.adminId && (door.adminId._id === adminId || door.adminId === adminId))
+          );
+        } 
+        if (role === 'superadmin') {
+            filteredDoors = res.data.filter(
+            (door) =>
+              door.assignedTo && (door.assignedTo._id === userId || door.assignedTo === userId)
+          );
+
+        }
+        if (role === 'user') {
+            filteredDoors = res.data.filter(
+            (door) =>
+              door.assignedTo && (door.assignedTo._id === userId || door.assignedTo === userId)
+          );
+        }
+        else {
+          <div className='text-red-500'>
+            Unable to fetch Doors for this user.
+          </div>// For non-admin, show only ACs assigned to userId
+          
+        }
+      // ✅ Log assignedTo for debugging
+    filteredDoors.forEach((door) => {
+      console.log("AssignedTo field:", door.assignedTo);
+    });
+          setDoors(filteredDoors);
+        } catch (err) {
+          console.error('Failed to fetch Doors:', err);
+        } finally {
+          setLoading(false);
+        }
+      };
+      fetchDoors();
+    }, [userId, adminId, role]);
+        
+       
 
   return (
     <div className="p-4">

@@ -1,9 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 
 const AdminCreation = () => {
   const [formData, setFormData] = useState({
+    companyId: '',
     username: '',
     email: '',
     password: '',
@@ -11,6 +12,7 @@ const AdminCreation = () => {
     role: 'admin', // default role
   });
 
+  const [companies, setCompanies] = useState([]);
   const [message, setMessage] = useState('');
   const navigate = useNavigate();
 
@@ -20,6 +22,13 @@ const AdminCreation = () => {
       [e.target.name]: e.target.value,
     }));
   };
+
+  useEffect(() => {
+    // Fetch companies for dropdown
+    axios.get('http://localhost:5000/api/company/all')
+      .then(res => setCompanies(res.data))
+      .catch(() => setCompanies([]));
+  }, []);
 
   const isEmailValid = (email) => {
     // Simple email regex
@@ -57,7 +66,8 @@ const AdminCreation = () => {
         username: formData.username,
         email: formData.email,
         password: formData.password,
-        role: formData.role, // ✅ send selected role
+        role: formData.role, // send selected role
+        companyId: formData.companyId, // send selected company ID
       });
 
       setMessage(res.data.message);
@@ -91,6 +101,22 @@ const AdminCreation = () => {
         >
           <option value="admin">Admin</option>
           <option value="superadmin">Super Admin</option>
+        </select>
+
+         {/* Company Dropdown */}
+        <select
+          name="companyId"
+          value={formData.companyId}
+          onChange={handleChange}
+          required
+          className="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring"
+        >
+          <option value="">Select Company</option>
+          {companies.map((c) => (
+            <option key={c._id} value={c._id}>
+              {c.companyName}
+            </option>
+          ))}
         </select>
         
         <input

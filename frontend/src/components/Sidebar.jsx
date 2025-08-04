@@ -70,7 +70,7 @@ const Sidebar = () => {
               </li>
               </>
           )}
-          {userRole !== 'user' && (
+          {userRole === 'admin' && (
             <>
               <li>
                 <NavLink
@@ -110,11 +110,11 @@ const Sidebar = () => {
               </li> */}
             </>
           )}
-          {userRole === 'SuperAdmin' && (
+          {userRole === 'superadmin' && (
             <>
               <li>
                 <NavLink
-                  to="/companies"
+                  to="/company-list"
                   className={({ isActive }) =>
                     isActive
                       ? " text-blue-600 flex items-center gap-4 dark:text-blue-400"

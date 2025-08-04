@@ -6,6 +6,7 @@ import authRoutes from './routes/authRoutes.js';
 import protectedRoutes from './routes/protectedRoutes.js';
 import equipmentRoutes from './routes/equipmentRoutes.js';
 import userRoutes from './routes/userRoutes.js';
+import companyRoutes from './routes/companyRoutes.js';
 
 
 
@@ -28,6 +29,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/protected', protectedRoutes); 
 app.use('/api/equipment', equipmentRoutes);
 app.use('/api/users', userRoutes);
+app.use('/api/company', companyRoutes);
 
 
 app.listen(PORT, () => {
