@@ -9,19 +9,31 @@ import {
 } from "react-icons/fa";
 import { NavLink, useNavigate } from "react-router-dom";
 import { UserContext } from '../context/UserContext';
-//import logo from "../assets/logo.png";
-//import { clearAuthData } from '../utils/auth';
+import {jwtDecode} from 'jwt-decode';
 
 const Sidebar = () => {
   const [showLogoutModal, setShowLogoutModal] = useState(false);
   const navigate = useNavigate();
-  const userRole = localStorage.getItem('role'); // Assuming you store the role in localStorage
+  const token = localStorage.getItem('token');
+  let userRole = null;
+  let username = null;
 
-  const { username, logout } = useContext(UserContext);
+  if (token) {
+    try {
+      const decoded = jwtDecode(token);
+      userRole = decoded.role;
+      username = decoded.username;
+    } catch {
+      userRole = null;
+      username = null;
+    }
+  }
+
+  const { logout } = useContext(UserContext);
 
   const handleLogout = () => {
-    logout();            // clear login state
-    navigate('/');       // go back to login
+    logout();
+    navigate('/');
   };
 
   const confirmLogout = () => {
@@ -34,12 +46,7 @@ const Sidebar = () => {
 
   return (
     <aside className="w-64 bg-slate-200 min-h-screen p-6 flex flex-col">
-        <h1 className="text-3xl pb-4 font-bold">Welcome, {username} 👋</h1>
-      {/* <div className="flex justify-center mb-2">
-        <NavLink to="/dashboard">
-          <img src={logo} alt="Logo" className="" />
-        </NavLink>
-      </div> */}
+      <h1 className="text-3xl pb-4 font-bold">Welcome, {username} 👋</h1>
       <nav className="flex-1">
         <ul className="space-y-6">
           <li>
@@ -54,7 +61,7 @@ const Sidebar = () => {
               <FaHome /> Dashboard
             </NavLink>
           </li>
-           {userRole == 'user' && (
+           {userRole === 'user' && (
             <>
               <li>
                 <NavLink
@@ -96,18 +103,6 @@ const Sidebar = () => {
                   <FaDoorOpen /> Doors
                 </NavLink>
               </li>
-              {/* <li>
-                <NavLink
-                  to="/settings"
-                  className={({ isActive }) =>
-                    isActive
-                      ? " text-blue-600 flex items-center gap-4 dark:text-blue-400"
-                      : "text-gray-600 flex items-center gap-2 dark:text-slate-400"
-                  }
-                >
-                  <FaCog /> Settings
-                </NavLink>
-              </li> */}
             </>
           )}
           {userRole === 'superadmin' && (
