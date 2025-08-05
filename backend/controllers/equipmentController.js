@@ -43,10 +43,32 @@ export const createEquipment = async (req, res) => {
       roomname: user.roomname,
       assignedTo: user._id,
       status,
-      adminId, // <-- store adminId
+      createdAdminId: adminId, // <-- store adminId
     });
 
     await newEquipment.save();
+
+    // Push equipment _id to user's array if it's a Door
+    if (category === 'Doors') {
+      await User.findByIdAndUpdate(
+        user._id,
+        { $push: { doors: newEquipment._id } }
+      );
+    }
+    if (category === 'Lights') {
+      await User.findByIdAndUpdate(
+        user._id,
+        { $push: { lights: newEquipment._id } }
+      );
+    }
+    if (category === 'Air Conditioner') {
+      await User.findByIdAndUpdate(
+        user._id,     
+        { $push: { airConditioners: newEquipment._id } }
+      );
+    }  
+
+
     res.status(201).json({ message: `${category} item created.` });
   } catch (err) {
     console.error('Equipment creation error:', err);
