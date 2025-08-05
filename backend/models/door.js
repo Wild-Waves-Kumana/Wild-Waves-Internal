@@ -6,7 +6,7 @@ const doorSchema = new mongoose.Schema({
   roomname: String,
   assignedTo: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
   status: { type: String, enum: ['ON', 'OFF'], default: 'ON' },
-  adminId: { type: mongoose.Schema.Types.ObjectId, ref: 'Admin' }, // <-- added
+  createdAdminId: { type: mongoose.Schema.Types.ObjectId, ref: 'Admin' }, // <-- added
 });
 
 export default mongoose.model('Door', doorSchema);

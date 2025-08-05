@@ -9,7 +9,7 @@ const airConditionerSchema = new mongoose.Schema({
   temperaturelevel: { type: Number, default: 24 },
   mode: { type: String, enum: ['Cool', 'Heat', 'Fan', 'Dry'], default: 'Cool' },
   fanSpeed: { type: String, enum: ['Low', 'Medium', 'High'], default: 'Medium' },
-  adminId: { type: mongoose.Schema.Types.ObjectId, ref: 'Admin' }, // <-- added
+  createdAdminId: { type: mongoose.Schema.Types.ObjectId, ref: 'Admin' }, // <-- added
 });
 
 export default mongoose.model('AirConditioner', airConditionerSchema);

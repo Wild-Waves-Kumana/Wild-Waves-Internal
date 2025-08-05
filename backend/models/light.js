@@ -7,7 +7,7 @@ const lightSchema = new mongoose.Schema({
   assignedTo: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
   status: { type: String, enum: ['ON', 'OFF'], default: 'ON' },
   brightness: { type: Number, default: 100 },
-  adminId: { type: mongoose.Schema.Types.ObjectId, ref: 'Admin' }, // <-- added
+  createdAdminId: { type: mongoose.Schema.Types.ObjectId, ref: 'Admin' }, // <-- added
 });
 
 export default mongoose.model('Light', lightSchema);
