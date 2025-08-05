@@ -77,7 +77,7 @@ const Sidebar = () => {
               </li>
               </>
           )}
-          {userRole === 'admin' && (
+          {userRole !== 'user' && (
             <>
               <li>
                 <NavLink
@@ -91,6 +91,19 @@ const Sidebar = () => {
                   <FaUserFriends /> Users List
                 </NavLink>
               </li>
+              <li>
+                <NavLink
+                  to="/admin-profile"
+                  className={({ isActive }) =>
+                    isActive
+                      ? " text-blue-600 flex items-center gap-4 dark:text-blue-400"
+                      : "text-gray-600 flex items-center gap-2 dark:text-slate-400"
+                  }
+                >
+                  <FaUser /> Admin Profile
+                </NavLink>
+              </li>
+
               <li>
                 <NavLink
                   to="/doors"
