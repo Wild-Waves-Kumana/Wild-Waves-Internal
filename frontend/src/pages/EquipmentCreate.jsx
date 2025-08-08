@@ -2,23 +2,36 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
+import {jwtDecode} from 'jwt-decode';
 
 const EquipmentCreate = () => {
   const navigate = useNavigate();
 
   const [users, setUsers] = useState([]);            // dropdown list
   const [message, setMessage] = useState("");
+  const token = localStorage.getItem('token');
 
-  // Get adminId from localStorage (or wherever you store it)
-  const adminId = localStorage.getItem("adminId");
+ 
 
   const [formData, setFormData] = useState({
     category: "Doors",
     itemName: "",
     itemCode: "",
     assignedTo: "",
-    status: "ON",                                     // default ON
+    access: "Enabled",                                     // default Enabled
   });
+
+      // Decode token to get adminId and role
+  let adminId = null;
+  if (token) {
+    try {
+      const decoded = jwtDecode(token);
+      adminId = decoded.id; // or decoded._id depending on your backend
+      console.log('Admin ID (from token):', adminId);
+    } catch (err) {
+      console.error('Invalid token:', err);
+    }
+  }
 
   // ⬇️ fetch users for the dropdown
   useEffect(() => {
@@ -44,7 +57,7 @@ const EquipmentCreate = () => {
   // submit handler
   const handleSubmit = async (e) => {
     e.preventDefault();
-    const { category, itemName, itemCode, assignedTo, status } = formData;
+    const { category, itemName, itemCode, assignedTo, access } = formData;
 
     // simple client-side required-field check
     if (!itemName || !itemCode || !assignedTo) {
@@ -58,7 +71,7 @@ const EquipmentCreate = () => {
         itemName,
         itemCode,
         assignedTo,
-        status,
+        access,
         adminId, // Pass adminId here
       });
       navigate("/AdminDashboard");        // or wherever you show the list
@@ -130,13 +143,13 @@ const EquipmentCreate = () => {
 
         {/* Status */}
         <select
-          name="status"
-          value={formData.status}
+          name="access"
+          value={formData.access}
           onChange={handleChange}
           className="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring"
         >
-          <option value="ON">ON</option>
-          <option value="OFF">OFF</option>
+          <option value="Enabled">Enable</option>
+          <option value="Disabled">Disable</option>
         </select>
 
         {/* Submit */}
