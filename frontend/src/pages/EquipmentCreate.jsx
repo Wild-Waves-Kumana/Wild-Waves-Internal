@@ -2,49 +2,52 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
-import {jwtDecode} from 'jwt-decode';
+import { jwtDecode } from 'jwt-decode';
 
 const EquipmentCreate = () => {
   const navigate = useNavigate();
-
-  const [users, setUsers] = useState([]);            // dropdown list
+  const [users, setUsers] = useState([]);
   const [message, setMessage] = useState("");
   const token = localStorage.getItem('token');
-
- 
 
   const [formData, setFormData] = useState({
     category: "Doors",
     itemName: "",
     itemCode: "",
     assignedUser: "",
-    access: "Enabled",                                     // default Enabled
+    access: "Enabled",
   });
 
-      // Decode token to get adminId and role
-  let adminId = null;
-  if (token) {
-    try {
-      const decoded = jwtDecode(token);
-      adminId = decoded.id; // or decoded._id depending on your backend
-      console.log('Admin ID (from token):', adminId);
-    } catch (err) {
-      console.error('Invalid token:', err);
-    }
-  }
-
-  // ⬇️ fetch users for the dropdown
+  // Filtering logic for users (same as UserList)
   useEffect(() => {
     const fetchUsers = async () => {
       try {
-        const res = await axios.get("http://localhost:5000/api/users"); // adjust URL
-        setUsers(res.data);
+        // Get adminId from token
+        if (!token) return;
+        const decoded = jwtDecode(token);
+        const adminId = decoded.id;
+
+        // Fetch admin details to get companyId
+        const adminRes = await axios.get(`http://localhost:5000/api/admin/${adminId}`);
+        const companyId = adminRes.data.companyId?._id || adminRes.data.companyId;
+
+        // Fetch all users
+        const usersRes = await axios.get("http://localhost:5000/api/users");
+
+        // Filter users by companyId (same as UserList)
+        const filteredUsers = usersRes.data.filter(
+          (u) =>
+            u.companyId === companyId ||
+            u.companyId?._id === companyId
+        );
+        setUsers(filteredUsers);
       } catch (err) {
+        setUsers([]);
         console.error("Failed to load users", err);
       }
     };
     fetchUsers();
-  }, []);
+  }, [token]);
 
   // form change handler
   const handleChange = (e) => {
@@ -65,6 +68,16 @@ const EquipmentCreate = () => {
       return;
     }
 
+    let adminId = null;
+    if (token) {
+      try {
+        const decoded = jwtDecode(token);
+        adminId = decoded.id;
+      } catch (err) {
+        console.error('Invalid token:', err);
+      }
+    }
+
     try {
       await axios.post("http://localhost:5000/api/equipment/create", {
         category,
@@ -72,7 +85,7 @@ const EquipmentCreate = () => {
         itemCode,
         assignedUser,
         access,
-        adminId, // Pass adminId here
+        adminId,
       });
       navigate("/AdminDashboard");        // or wherever you show the list
     } catch (err) {
