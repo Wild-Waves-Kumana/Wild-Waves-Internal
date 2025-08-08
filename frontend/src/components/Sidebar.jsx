@@ -104,7 +104,7 @@ const Sidebar = () => {
                 </NavLink>
               </li>
 
-              <li>
+              {/* <li>
                 <NavLink
                   to="/doors"
                   className={({ isActive }) =>
@@ -115,7 +115,7 @@ const Sidebar = () => {
                 >
                   <FaDoorOpen /> Doors
                 </NavLink>
-              </li>
+              </li> */}
             </>
           )}
           {userRole === 'superadmin' && (
