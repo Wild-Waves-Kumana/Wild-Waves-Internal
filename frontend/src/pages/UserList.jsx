@@ -6,7 +6,7 @@ import { useNavigate } from 'react-router-dom';
 const UserList = () => {
   const [users, setUsers] = useState([]);
   const [companies, setCompanies] = useState([]);
-  const [adminCompanyId, setAdminCompanyId] = useState(null);
+  //const [adminCompanyId, setAdminCompanyId] = useState(null);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
 
@@ -22,12 +22,14 @@ const UserList = () => {
         // Fetch admin details to get companyId
         const adminRes = await axios.get(`http://localhost:5000/api/admin/${adminId}`);
         const companyId = adminRes.data.companyId?._id || adminRes.data.companyId;
-        setAdminCompanyId(companyId);
+        
+        //setAdminCompanyId(companyId);
 
         // Fetch all users
-        const usersRes = await axios.get('http://localhost:5000/api/users');
-        // Fetch all companies
-        const companiesRes = await axios.get('http://localhost:5000/api/company/all');
+        const [usersRes, companiesRes] = await Promise.all([
+          axios.get('http://localhost:5000/api/users'),
+          axios.get('http://localhost:5000/api/company/all')
+        ]);
         setCompanies(companiesRes.data);
 
         // Filter users by companyId
@@ -37,7 +39,8 @@ const UserList = () => {
             u.companyId?._id === companyId
         );
         setUsers(filteredUsers);
-      } catch {
+      } catch (err) {
+        console.error('Failed to fetch users or companies:', err);
         setUsers([]);
       } finally {
         setLoading(false);
