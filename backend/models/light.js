@@ -4,7 +4,7 @@ const lightSchema = new mongoose.Schema({
   itemName: String,
   itemCode: { type: String, unique: true },
   roomname: String,
-  assignedTo: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+  assignedUser: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
   status: { type: String, enum: ['ON', 'OFF'], default: 'ON' },
   brightness: { type: Number, default: 100 },
   access: { type: String, enum: ['Enabled', 'Disabled'], default: 'Enabled' },

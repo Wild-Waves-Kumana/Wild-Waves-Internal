@@ -14,7 +14,7 @@ const isItemCodeTaken = async (itemCode) => {
 };
 
 export const createEquipment = async (req, res) => {
-  const { category, itemName, itemCode, assignedTo, access, adminId } = req.body;
+  const { category, itemName, itemCode, assignedUser, access, adminId } = req.body;
 
   try {
     // 1️⃣ Validate itemCode uniqueness
@@ -23,7 +23,7 @@ export const createEquipment = async (req, res) => {
     }
 
     // 2️⃣ Validate assigned user exists and get roomname
-    const user = await User.findById(assignedTo);
+    const user = await User.findById(assignedUser);
     if (!user) {
       return res.status(400).json({ message: 'Assigned user does not exist.' });
     }
@@ -50,7 +50,7 @@ export const createEquipment = async (req, res) => {
       itemName,
       itemCode,
       roomname: user.roomname,
-      assignedTo: user._id,
+      assignedUser: user._id,
       access,
       createdAdminId: adminId,
       companyId // <-- add companyId from admin
@@ -109,8 +109,8 @@ export const createEquipment = async (req, res) => {
 //display doors
 export const displaydoors = async (req, res) => {
   try {
-    // Populate assignedTo with username
-    const doors = await Door.find().populate('assignedTo', 'username');
+    // Populate assignedUser with username
+    const doors = await Door.find().populate('assignedUser', 'username');
     res.json(doors);
   } catch (err) {
     res.status(500).json({ message: 'Failed to fetch doors' });
@@ -120,8 +120,8 @@ export const displaydoors = async (req, res) => {
 //display ACs
 export const displaylights = async (req, res) => {
   try {
-    // Populate assignedTo with username
-    const lights = await Light.find().populate('assignedTo', 'username');
+    // Populate assignedUser with username
+    const lights = await Light.find().populate('assignedUser', 'username');
     res.json(lights);
   } catch (err) {
     res.status(500).json({ message: 'Failed to fetch lights' });
@@ -132,8 +132,8 @@ export const displaylights = async (req, res) => {
 //display ACs
 export const displayACs = async (req, res) => {
   try {
-    // Populate assignedTo with username
-    const airconditioners = await AirConditioner.find().populate('assignedTo', 'username');
+    // Populate assignedUser with username
+    const airconditioners = await AirConditioner.find().populate('assignedUser', 'username');
     res.json(airconditioners);
   } catch (err) {
     res.status(500).json({ message: 'Failed to fetch airconditioners' });

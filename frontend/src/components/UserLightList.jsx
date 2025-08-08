@@ -11,25 +11,25 @@ const UserLightList = ({userId, adminId}) => {
       try {
         const res = await axios.get('http://localhost:5000/api/equipment/lights');
         let filteredLights=[]
-        // Filter light where assignedTo equals userId
+        // Filter light where assignedUser equals userId
         if (role === 'admin') {
-            // Show Lights where assignedTo equals userId AND adminId equals adminId
+            // Show Lights where assignedUser equals userId AND adminId equals adminId
             filteredLights = res.data.filter(
               (light) =>
-                (light.assignedTo && (light.assignedTo._id === userId || light.assignedTo === userId)) &&
+                (light.assignedUser && (light.assignedUser._id === userId || light.assignedUser === userId)) &&
                 (light.adminId && (light.adminId._id === adminId || light.adminId === adminId))
             );
           } 
         if (role === 'superadmin') {
             filteredLights = res.data.filter(
             (light) =>
-            light.assignedTo && (light.assignedTo._id === userId || light.assignedTo === userId)
+            light.assignedUser && (light.assignedUser._id === userId || light.assignedUser === userId)
         );
         }
         if (role === 'user') {
               filteredLights = res.data.filter(
               (light) =>
-                light.assignedTo && (light.assignedTo._id === userId || light.assignedTo === userId)
+                light.assignedUser && (light.assignedUser._id === userId || light.assignedUser === userId)
             );
           }
           else {
@@ -38,9 +38,9 @@ const UserLightList = ({userId, adminId}) => {
             </div>// For non-admin, show only ACs assigned to userId
             
           }
-         // Log assignedTo for debugging
+         // Log assignedUser for debugging
         filteredLights.forEach((light) => {
-            console.log("AssignedTo field:", light.assignedTo);
+            console.log("assignedUser field:", light.assignedUser);
         });
             setLights(filteredLights);
           } catch (err) {
@@ -83,7 +83,7 @@ const UserLightList = ({userId, adminId}) => {
                 <td className="py-2 px-4 border-b">{light.status}</td>
                 <td className="py-2 px-4 border-b">{light.brightness}</td>
                 <td className="py-2 px-4 border-b">
-                  {light.assignedTo?.username || light.assignedTo || 'N/A'}
+                  {light.assignedUser?.username || light.assignedUser || 'N/A'}
                 </td>
               </tr>
             ))}

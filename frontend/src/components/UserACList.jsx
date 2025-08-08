@@ -12,24 +12,24 @@ const UserACList = ({ userId, adminId }) => {
         const res = await axios.get('http://localhost:5000/api/equipment/air-conditioners');
         let filteredACs = [];
         if (role === 'admin') {
-          // Show ACs where assignedTo equals userId AND adminId equals adminId
+          // Show ACs where assignedUser equals userId AND adminId equals adminId
           filteredACs = res.data.filter(
             (ac) =>
-              (ac.assignedTo && (ac.assignedTo._id === userId || ac.assignedTo === userId)) &&
+              (ac.assignedUser && (ac.assignedUser._id === userId || ac.assignedUser === userId)) &&
               (ac.adminId && (ac.adminId._id === adminId || ac.adminId === adminId))
           );
         } 
         if (role === 'superadmin') {
             filteredACs = res.data.filter(
             (ac) =>
-              ac.assignedTo && (ac.assignedTo._id === userId || ac.assignedTo === userId)
+              ac.assignedUser && (ac.assignedUser._id === userId || ac.assignedUser === userId)
           );
 
         }
         if (role === 'user') {
             filteredACs = res.data.filter(
             (ac) =>
-              ac.assignedTo && (ac.assignedTo._id === userId || ac.assignedTo === userId)
+              ac.assignedUser && (ac.assignedUser._id === userId || ac.assignedUser === userId)
           );
         }
         else {
@@ -38,9 +38,9 @@ const UserACList = ({ userId, adminId }) => {
           </div>// For non-admin, show only ACs assigned to userId
           
         }
-         // ✅ Log assignedTo for debugging
+         // ✅ Log assignedUser for debugging
   filteredACs.forEach((ac) => {
-    console.log("AssignedTo field:", ac.assignedTo);
+    console.log("assignedUser field:", ac.assignedUser);
   });
         setAcs(filteredACs);
       } catch (err) {
@@ -82,7 +82,7 @@ const UserACList = ({ userId, adminId }) => {
                 <td className="py-2 px-4 border-b">{ac.mode}</td>
                 <td className="py-2 px-4 border-b">{ac.fanSpeed}</td>
                 <td className="py-2 px-4 border-b">
-                  {ac.assignedTo?.username || ac.assignedTo || 'N/A'}
+                  {ac.assignedUser?.username || ac.assignedUser || 'N/A'}
                 </td>
               </tr>
             ))}

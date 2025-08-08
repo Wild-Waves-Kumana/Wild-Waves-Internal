@@ -17,7 +17,7 @@ const EquipmentCreate = () => {
     category: "Doors",
     itemName: "",
     itemCode: "",
-    assignedTo: "",
+    assignedUser: "",
     access: "Enabled",                                     // default Enabled
   });
 
@@ -57,10 +57,10 @@ const EquipmentCreate = () => {
   // submit handler
   const handleSubmit = async (e) => {
     e.preventDefault();
-    const { category, itemName, itemCode, assignedTo, access } = formData;
+    const { category, itemName, itemCode, assignedUser, access } = formData;
 
     // simple client-side required-field check
-    if (!itemName || !itemCode || !assignedTo) {
+    if (!itemName || !itemCode || !assignedUser) {
       setMessage("Please fill in all required fields.");
       return;
     }
@@ -70,7 +70,7 @@ const EquipmentCreate = () => {
         category,
         itemName,
         itemCode,
-        assignedTo,
+        assignedUser,
         access,
         adminId, // Pass adminId here
       });
@@ -127,8 +127,8 @@ const EquipmentCreate = () => {
 
         {/* Assigned User */}
         <select
-          name="assignedTo"
-          value={formData.assignedTo}
+          name="assignedUser"
+          value={formData.assignedUser}
           onChange={handleChange}
           required
           className="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring"

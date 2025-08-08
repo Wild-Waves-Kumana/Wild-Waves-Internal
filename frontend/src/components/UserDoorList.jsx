@@ -12,26 +12,26 @@ const UserDoorList = ({userId, adminId}) => {
       try {
         const res = await axios.get('http://localhost:5000/api/equipment/doors');
         
-        let filteredDoors=[];// Filter doors where assignedTo equals userId
+        let filteredDoors=[];// Filter doors where assignedUser equals userId
         if (role === 'admin') {
-          // Show ACs where assignedTo equals userId AND adminId equals adminId
+          // Show ACs where assignedUser equals userId AND adminId equals adminId
           filteredDoors = res.data.filter(
             (door) =>
-              (door.assignedTo && (door.assignedTo._id === userId || door.assignedTo === userId)) &&
+              (door.assignedUser && (door.assignedUser._id === userId || door.assignedUser === userId)) &&
               (door.adminId && (door.adminId._id === adminId || door.adminId === adminId))
           );
         } 
         if (role === 'superadmin') {
             filteredDoors = res.data.filter(
             (door) =>
-              door.assignedTo && (door.assignedTo._id === userId || door.assignedTo === userId)
+              door.assignedUser && (door.assignedUser._id === userId || door.assignedUser === userId)
           );
 
         }
         if (role === 'user') {
             filteredDoors = res.data.filter(
             (door) =>
-              door.assignedTo && (door.assignedTo._id === userId || door.assignedTo === userId)
+              door.assignedUser && (door.assignedUser._id === userId || door.assignedUser === userId)
           );
         }
         else {
@@ -40,9 +40,9 @@ const UserDoorList = ({userId, adminId}) => {
           </div>// For non-admin, show only ACs assigned to userId
           
         }
-      // ✅ Log assignedTo for debugging
+      // ✅ Log assignedUser for debugging
     filteredDoors.forEach((door) => {
-      console.log("AssignedTo field:", door.assignedTo);
+      console.log("assignedUser field:", door.assignedUser);
     });
           setDoors(filteredDoors);
         } catch (err) {
