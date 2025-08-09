@@ -4,9 +4,11 @@ const doorSchema = new mongoose.Schema({
   itemName: String,
   itemCode: { type: String, unique: true },
   roomname: String,
-  assignedTo: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
   status: { type: String, enum: ['ON', 'OFF'], default: 'ON' },
-  adminId: { type: mongoose.Schema.Types.ObjectId, ref: 'Admin' }, // <-- added
+  access: { type: String, enum: ['Enabled', 'Disabled'], default: 'Enabled' },
+  assignedUser: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+  companyId: { type: mongoose.Schema.Types.ObjectId, ref: 'Company' },
+  createdAdminId: { type: mongoose.Schema.Types.ObjectId, ref: 'Admin' }, // <-- added
 });
 
 export default mongoose.model('Door', doorSchema);

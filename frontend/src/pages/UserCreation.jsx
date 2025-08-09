@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
+import {jwtDecode} from 'jwt-decode';
+
 
 const UserCreation = () => {
   const [formData, setFormData] = useState({
@@ -12,9 +14,22 @@ const UserCreation = () => {
     role: 'user', // default role
   });
 
-  const adminId = localStorage.getItem("adminId");
   const [message, setMessage] = useState('');
+  const token = localStorage.getItem('token');
   const navigate = useNavigate();
+
+    // Decode token to get adminId and role
+  let adminId = null;
+  if (token) {
+    try {
+      const decoded = jwtDecode(token);
+      adminId = decoded.id; // or decoded._id depending on your backend
+      console.log('Admin ID (from token):', adminId);
+    } catch (err) {
+      console.error('Invalid token:', err);
+    }
+  }
+
 
   const handleChange = (e) => {
     setFormData(prev => ({

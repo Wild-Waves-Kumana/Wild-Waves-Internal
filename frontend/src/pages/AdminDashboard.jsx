@@ -1,14 +1,25 @@
 import React, { useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { UserContext } from '../context/UserContext';
+import {jwtDecode} from 'jwt-decode';
 
 const AdminDashboard = () => {
   const navigate = useNavigate();
   const { username, logout } = useContext(UserContext);
   const token = localStorage.getItem('token');
-  const adminId = localStorage.getItem('adminId');
-  
-  console.log('Admin ID:', adminId);
+
+  // Decode token to get adminId and role
+  let adminId = null;
+  if (token) {
+    try {
+      const decoded = jwtDecode(token);
+      adminId = decoded.id; // or decoded._id depending on your backend
+      console.log('Admin ID (from token):', adminId);
+    } catch (err) {
+      console.error('Invalid token:', err);
+    }
+  }
+
   //Display token in console
   console.log('JWT Token:', token);
  

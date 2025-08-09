@@ -16,6 +16,7 @@ import EquipmentCreate from './pages/EquipmentCreate';
 import UserList from './pages/UserList';
 import EquipmentUser from './pages/EquipmentUser';
 import UserProfile from './pages/UserProfile';
+import AdminProfile from './pages/AdminProfile';
 import CreateCompany from './pages/CreateCompany';
 import CompanyList from './pages/CompanyList';
 
@@ -121,6 +122,17 @@ function App() {
               <UserProfile />
             </Layout>
             
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/admin-profile"
+        element={
+          <ProtectedRoute allowedRoles={['admin', 'superadmin']}>
+            <Layout>
+              <AdminProfile />
+            </Layout>
           </ProtectedRoute>
         }
       />

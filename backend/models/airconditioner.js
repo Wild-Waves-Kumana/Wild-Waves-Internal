@@ -4,12 +4,14 @@ const airConditionerSchema = new mongoose.Schema({
   itemName: String,
   itemCode: { type: String, unique: true },
   roomname: String,
-  assignedTo: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
-  status: { type: String, enum: ['ON', 'OFF'], default: 'ON' },
   temperaturelevel: { type: Number, default: 24 },
   mode: { type: String, enum: ['Cool', 'Heat', 'Fan', 'Dry'], default: 'Cool' },
   fanSpeed: { type: String, enum: ['Low', 'Medium', 'High'], default: 'Medium' },
-  adminId: { type: mongoose.Schema.Types.ObjectId, ref: 'Admin' }, // <-- added
+  status: { type: String, enum: ['ON', 'OFF'], default: 'ON' },
+  access: { type: String, enum: ['Enabled', 'Disabled'], default: 'Enabled' },
+  assignedUser: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+  companyId: { type: mongoose.Schema.Types.ObjectId, ref: 'Company' },
+  createdAdminId: { type: mongoose.Schema.Types.ObjectId, ref: 'Admin' }, // <-- added
 });
 
 export default mongoose.model('AirConditioner', airConditionerSchema);

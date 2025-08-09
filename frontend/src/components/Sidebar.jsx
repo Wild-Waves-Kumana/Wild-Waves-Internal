@@ -9,19 +9,34 @@ import {
 } from "react-icons/fa";
 import { NavLink, useNavigate } from "react-router-dom";
 import { UserContext } from '../context/UserContext';
-//import logo from "../assets/logo.png";
-//import { clearAuthData } from '../utils/auth';
+import {jwtDecode} from 'jwt-decode';
 
 const Sidebar = () => {
   const [showLogoutModal, setShowLogoutModal] = useState(false);
   const navigate = useNavigate();
-  const userRole = localStorage.getItem('role'); // Assuming you store the role in localStorage
+  const token = localStorage.getItem('token');
+  let userRole = null;
+  let username = null;
+  let userId = null;
 
-  const { username, logout } = useContext(UserContext);
+  if (token) {
+    try {
+      const decoded = jwtDecode(token);
+      userRole = decoded.role;
+      username = decoded.username;
+      userId = decoded.id || decoded.userId || null; // Adjust according to your token structure
+    } catch {
+      userRole = null;
+      username = null;
+      userId = null;
+    }
+  }
+
+  const { logout } = useContext(UserContext);
 
   const handleLogout = () => {
-    logout();            // clear login state
-    navigate('/');       // go back to login
+    logout();
+    navigate('/');
   };
 
   const confirmLogout = () => {
@@ -34,12 +49,7 @@ const Sidebar = () => {
 
   return (
     <aside className="w-64 bg-slate-200 min-h-screen p-6 flex flex-col">
-        <h1 className="text-3xl pb-4 font-bold">Welcome, {username} 👋</h1>
-      {/* <div className="flex justify-center mb-2">
-        <NavLink to="/dashboard">
-          <img src={logo} alt="Logo" className="" />
-        </NavLink>
-      </div> */}
+      <h1 className="text-3xl pb-4 font-bold">Welcome, {username} 👋</h1>
       <nav className="flex-1">
         <ul className="space-y-6">
           <li>
@@ -54,8 +64,20 @@ const Sidebar = () => {
               <FaHome /> Dashboard
             </NavLink>
           </li>
-           {userRole == 'user' && (
+           {userRole === 'user' && (
             <>
+              <li>
+                <NavLink
+                  to={`/user-profile/${userId}`}
+                  className={({ isActive }) =>
+                    isActive
+                      ? " text-blue-600 flex items-center gap-4 dark:text-blue-400"
+                      : "text-gray-600 flex items-center gap-2 dark:text-slate-400"
+                  }
+                >
+                  <FaUser /> Profile
+                </NavLink>
+              </li>
               <li>
                 <NavLink
                   to="/equipment"
@@ -70,7 +92,7 @@ const Sidebar = () => {
               </li>
               </>
           )}
-          {userRole === 'admin' && (
+          {userRole !== 'user' && (
             <>
               <li>
                 <NavLink
@@ -86,6 +108,19 @@ const Sidebar = () => {
               </li>
               <li>
                 <NavLink
+                  to="/admin-profile"
+                  className={({ isActive }) =>
+                    isActive
+                      ? " text-blue-600 flex items-center gap-4 dark:text-blue-400"
+                      : "text-gray-600 flex items-center gap-2 dark:text-slate-400"
+                  }
+                >
+                  <FaUser /> Admin Profile
+                </NavLink>
+              </li>
+
+              {/* <li>
+                <NavLink
                   to="/doors"
                   className={({ isActive }) =>
                     isActive
@@ -94,18 +129,6 @@ const Sidebar = () => {
                   }
                 >
                   <FaDoorOpen /> Doors
-                </NavLink>
-              </li>
-              {/* <li>
-                <NavLink
-                  to="/settings"
-                  className={({ isActive }) =>
-                    isActive
-                      ? " text-blue-600 flex items-center gap-4 dark:text-blue-400"
-                      : "text-gray-600 flex items-center gap-2 dark:text-slate-400"
-                  }
-                >
-                  <FaCog /> Settings
                 </NavLink>
               </li> */}
             </>

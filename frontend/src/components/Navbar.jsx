@@ -1,8 +1,21 @@
 import React from "react";
+import {jwtDecode} from "jwt-decode";
 
 const Navbar = () => {
-  const username = localStorage.getItem("username");
-  const role = localStorage.getItem("role");
+  const token = localStorage.getItem("token");
+  let username = "";
+  let role = "";
+
+  if (token) {
+    try {
+      const decoded = jwtDecode(token);
+      username = decoded.username;
+      role = decoded.role;
+    } catch {
+      username = "";
+      role = "";
+    }
+  }
 
   return (
     <nav className="flex items-center justify-between bg-white shadow px-6 py-4">
