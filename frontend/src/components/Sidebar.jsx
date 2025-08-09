@@ -17,15 +17,18 @@ const Sidebar = () => {
   const token = localStorage.getItem('token');
   let userRole = null;
   let username = null;
+  let userId = null;
 
   if (token) {
     try {
       const decoded = jwtDecode(token);
       userRole = decoded.role;
       username = decoded.username;
+      userId = decoded.id || decoded.userId || null; // Adjust according to your token structure
     } catch {
       userRole = null;
       username = null;
+      userId = null;
     }
   }
 
@@ -63,6 +66,18 @@ const Sidebar = () => {
           </li>
            {userRole === 'user' && (
             <>
+              <li>
+                <NavLink
+                  to={`/user-profile/${userId}`}
+                  className={({ isActive }) =>
+                    isActive
+                      ? " text-blue-600 flex items-center gap-4 dark:text-blue-400"
+                      : "text-gray-600 flex items-center gap-2 dark:text-slate-400"
+                  }
+                >
+                  <FaUser /> Profile
+                </NavLink>
+              </li>
               <li>
                 <NavLink
                   to="/equipment"
