@@ -1,96 +1,107 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
+import { jwtDecode } from 'jwt-decode';
+import { useNavigate } from 'react-router-dom';
 
-const UserDoorList = ({userId, adminId}) => {
-   const [doors, setDoors] = useState([]);
+const UserDoorList = ({ userId: propUserId }) => {
+  const [doors, setDoors] = useState([]);
   const [loading, setLoading] = useState(true);
-  const role = localStorage.getItem('role'); // Get current role
-
+  const [role, setRole] = useState("");
+  const navigate = useNavigate();
 
   useEffect(() => {
     const fetchDoors = async () => {
       try {
-        const res = await axios.get('http://localhost:5000/api/equipment/doors');
-        
-        let filteredDoors=[];// Filter doors where assignedUser equals userId
-        if (role === 'admin') {
-          // Show ACs where assignedUser equals userId AND adminId equals adminId
-          filteredDoors = res.data.filter(
-            (door) =>
-              (door.assignedUser && (door.assignedUser._id === userId || door.assignedUser === userId)) &&
-              (door.adminId && (door.adminId._id === adminId || door.adminId === adminId))
-          );
-        } 
-        if (role === 'superadmin') {
-            filteredDoors = res.data.filter(
-            (door) =>
-              door.assignedUser && (door.assignedUser._id === userId || door.assignedUser === userId)
-          );
+        const token = localStorage.getItem("token");
+        if (!token) return setLoading(false);
+        const decoded = jwtDecode(token);
+        const loggedUserId = decoded.id;
+        const userRole = decoded.role;
+        setRole(userRole);
 
+        let userId = loggedUserId;
+        let adminCompanyId = null;
+
+        if (userRole === 'admin' || userRole === 'superadmin') {
+          userId = propUserId;
+          const adminRes = await axios.get(`http://localhost:5000/api/admin/${loggedUserId}`);
+          adminCompanyId = adminRes.data.companyId?._id || adminRes.data.companyId;
         }
-        if (role === 'user') {
-            filteredDoors = res.data.filter(
+
+        const res = await axios.get('http://localhost:5000/api/equipment/doors');
+
+        let filteredDoors = res.data.filter(
+          (door) =>
+            (door.assignedUser === userId ||
+              (door.assignedUser && door.assignedUser._id === userId))
+        );
+
+        if ((userRole === 'admin' || userRole === 'superadmin') && adminCompanyId) {
+          filteredDoors = filteredDoors.filter(
             (door) =>
-              door.assignedUser && (door.assignedUser._id === userId || door.assignedUser === userId)
+              door.companyId === adminCompanyId ||
+              (door.companyId && door.companyId._id === adminCompanyId)
           );
         }
-        else {
-          <div className='text-red-500'>
-            Unable to fetch Doors for this user.
-          </div>// For non-admin, show only ACs assigned to userId
-          
-        }
-      // ✅ Log assignedUser for debugging
-    filteredDoors.forEach((door) => {
-      console.log("assignedUser field:", door.assignedUser);
-    });
-          setDoors(filteredDoors);
-        } catch (err) {
-          console.error('Failed to fetch Doors:', err);
-        } finally {
-          setLoading(false);
-        }
-      };
-      fetchDoors();
-    }, [userId, adminId, role]);
-        
-       
+
+        setDoors(filteredDoors);
+      } catch (err) {
+        console.error("Failed to fetch doors:", err);
+        setDoors([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchDoors();
+  }, [propUserId]);
+
+  if (loading) return <div>Loading...</div>;
 
   return (
-    <div className="p-4">
-      <h2 className="text-xl font-bold mb-4">Door Equipment List</h2>
-      {loading ? (
-        <div>Loading...</div>
-      ) : (
-        <table className="min-w-full bg-white border border-gray-300">
-          <thead>
-            <tr>
-              <th className="py-2 px-4 border-b">Item Name</th>
-              <th className="py-2 px-4 border-b">Item Code</th>
-              <th className="py-2 px-4 border-b">Room Name</th>
-              <th className="py-2 px-4 border-b">Status</th>
-              <th className="py-2 px-4 border-b">Edit</th>
-            </tr>
-          </thead>
-          <tbody>
-            {doors.map((door) => (
-              <tr key={door._id}>
-                <td className="py-2 px-4 border-b">{door.itemName}</td>
-                <td className="py-2 px-4 border-b">{door.itemCode}</td>
-                <td className="py-2 px-4 border-b">{door.roomname}</td>
-                <td className="py-2 px-4 border-b">{door.status}</td>
-                <td className="py-2 px-4 border-b">
-                  <button className="text-blue-500 hover:underline">
-                    Edit
-                  </button>
+    <div className="mx-auto mt-10 bg-white shadow rounded p-6">
+      <h2 className="text-2xl font-bold mb-4">User's Doors</h2>
+      <table className="min-w-full border">
+        <thead>
+          <tr>
+            <th className="border px-4 py-2">Item Name</th>
+            <th className="border px-4 py-2">Item Code</th>
+            <th className="border px-4 py-2">Room Name</th>
+            <th className="border px-4 py-2">Status</th>
+            <th className="border px-4 py-2">Access</th>
+            {(role === "admin" || role === "superadmin") && (
+              <th className="border px-4 py-2">Edit</th>
+            )}
+          </tr>
+        </thead>
+        <tbody>
+          {doors.map((door) => (
+            <tr key={door._id}>
+              <td className="border px-4 py-2">{door.itemName}</td>
+              <td className="border px-4 py-2">{door.itemCode}</td>
+              <td className="border px-4 py-2">{door.roomname} ({door.assignedUser?.username || door.assignedUser || 'N/A'})</td>
+              <td className="border px-4 py-2">{door.status}</td>
+              <td className="border px-4 py-2">{door.access}</td>
+              {(role === "admin" || role === "superadmin") && (
+                <td className="border px-4 py-2">
+                  <div className="flex justify-center">
+                    <button
+                      className="bg-yellow-500 text-white px-3 py-1 rounded hover:bg-yellow-700 active:bg-yellow-800"
+                      onClick={() => navigate(`/edit-door/${door._id}`)}
+                    >
+                      Edit
+                    </button>
+                  </div>
                 </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+              )}
+            </tr>
+          ))}
+        </tbody>
+      </table>
+      {doors.length === 0 && (
+        <div className="mt-4 text-gray-500">No doors found for this user.</div>
       )}
     </div>
   );
-}
+};
 
-export default UserDoorList
+export default UserDoorList;
