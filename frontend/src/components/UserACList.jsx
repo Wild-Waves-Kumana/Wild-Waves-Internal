@@ -39,7 +39,7 @@ const UserACList = ({ userId: propUserId }) => {
         );
 
         // If admin, further filter by companyId
-        if (userRole === "admin" && adminCompanyId) {
+        if (userRole === "admin" &&  adminCompanyId) {
           filtered = filtered.filter(
             (ac) =>
               ac.companyId === adminCompanyId ||
@@ -84,7 +84,7 @@ const UserACList = ({ userId: propUserId }) => {
             <tr key={ac._id}>
               <td className="border px-4 py-2">{ac.itemName}</td>
               <td className="border px-4 py-2">{ac.itemCode}</td>
-              <td className="border px-4 py-2">{ac.roomname}</td>
+              <td className="border px-4 py-2">{ac.roomname} ({ac.assignedUser?.username || ac.assignedUser || 'N/A'})</td>
               <td className="border px-4 py-2">{ac.temperaturelevel}</td>
               <td className="border px-4 py-2">{ac.mode}</td>
               <td className="border px-4 py-2">{ac.fanSpeed}</td>
