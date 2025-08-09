@@ -5,6 +5,7 @@ import { jwtDecode } from "jwt-decode";
 const UserACList = ({ userId: propUserId }) => {
   const [acs, setAcs] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [role, setRole] = useState("");
 
   useEffect(() => {
     const fetchACs = async () => {
@@ -13,13 +14,14 @@ const UserACList = ({ userId: propUserId }) => {
         if (!token) return setLoading(false);
         const decoded = jwtDecode(token);
         const loggedUserId = decoded.id;
-        const role = decoded.role;
+        const userRole = decoded.role;
+        setRole(userRole);
 
         let userId = loggedUserId;
         let adminCompanyId = null;
 
-        if (role === "admin" || role === "superadmin") {
-          userId = propUserId;    // If admin, show ACs for the user profile being viewed (propUserId)
+        if (userRole === "admin" || userRole === "superadmin") {
+          userId = propUserId;
 
           // Fetch admin's companyId
           const adminRes = await axios.get(`http://localhost:5000/api/admin/${loggedUserId}`);
@@ -37,7 +39,7 @@ const UserACList = ({ userId: propUserId }) => {
         );
 
         // If admin, further filter by companyId
-        if (role === "admin" && adminCompanyId) {
+        if (userRole === "admin" && adminCompanyId) {
           filtered = filtered.filter(
             (ac) =>
               ac.companyId === adminCompanyId ||
@@ -59,7 +61,7 @@ const UserACList = ({ userId: propUserId }) => {
   if (loading) return <div>Loading...</div>;
 
   return (
-    <div className="max-w-3xl mx-auto mt-10 bg-white shadow rounded p-6">
+    <div className=" mx-auto mt-10 bg-white shadow rounded p-6">
       <h2 className="text-2xl font-bold mb-4">User's Air Conditioners</h2>
       <table className="min-w-full border">
         <thead>
@@ -72,6 +74,9 @@ const UserACList = ({ userId: propUserId }) => {
             <th className="border px-4 py-2">Fan Speed</th>
             <th className="border px-4 py-2">Status</th>
             <th className="border px-4 py-2">Access</th>
+            {(role === "admin" || role === "superadmin") && (
+              <th className="border px-4 py-2">Edit</th>
+            )}
           </tr>
         </thead>
         <tbody>
@@ -85,6 +90,16 @@ const UserACList = ({ userId: propUserId }) => {
               <td className="border px-4 py-2">{ac.fanSpeed}</td>
               <td className="border px-4 py-2">{ac.status}</td>
               <td className="border px-4 py-2">{ac.access}</td>
+              {(role === "admin" || role === "superadmin") && (
+                <td className="border px-4 py-2">
+                  <button
+                    className="bg-yellow-500 text-white px-3 py-1 rounded hover:bg-yellow-700"
+                    onClick={() => window.location.href = `/edit-ac/${ac._id}`}
+                  >
+                    Edit
+                  </button>
+                </td>
+              )}
             </tr>
           ))}
         </tbody>
