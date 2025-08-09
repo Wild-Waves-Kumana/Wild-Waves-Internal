@@ -2,36 +2,52 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
+import { jwtDecode } from 'jwt-decode';
 
 const EquipmentCreate = () => {
   const navigate = useNavigate();
-
-  const [users, setUsers] = useState([]);            // dropdown list
+  const [users, setUsers] = useState([]);
   const [message, setMessage] = useState("");
-
-  // Get adminId from localStorage (or wherever you store it)
-  const adminId = localStorage.getItem("adminId");
+  const token = localStorage.getItem('token');
 
   const [formData, setFormData] = useState({
     category: "Doors",
     itemName: "",
     itemCode: "",
-    assignedTo: "",
-    status: "ON",                                     // default ON
+    assignedUser: "",
+    access: "Enabled",
   });
 
-  // ⬇️ fetch users for the dropdown
+  // Filtering logic for users (same as UserList)
   useEffect(() => {
     const fetchUsers = async () => {
       try {
-        const res = await axios.get("http://localhost:5000/api/users"); // adjust URL
-        setUsers(res.data);
+        // Get adminId from token
+        if (!token) return;
+        const decoded = jwtDecode(token);
+        const adminId = decoded.id;
+
+        // Fetch admin details to get companyId
+        const adminRes = await axios.get(`http://localhost:5000/api/admin/${adminId}`);
+        const companyId = adminRes.data.companyId?._id || adminRes.data.companyId;
+
+        // Fetch all users
+        const usersRes = await axios.get("http://localhost:5000/api/users");
+
+        // Filter users by companyId (same as UserList)
+        const filteredUsers = usersRes.data.filter(
+          (u) =>
+            u.companyId === companyId ||
+            u.companyId?._id === companyId
+        );
+        setUsers(filteredUsers);
       } catch (err) {
+        setUsers([]);
         console.error("Failed to load users", err);
       }
     };
     fetchUsers();
-  }, []);
+  }, [token]);
 
   // form change handler
   const handleChange = (e) => {
@@ -44,12 +60,22 @@ const EquipmentCreate = () => {
   // submit handler
   const handleSubmit = async (e) => {
     e.preventDefault();
-    const { category, itemName, itemCode, assignedTo, status } = formData;
+    const { category, itemName, itemCode, assignedUser, access } = formData;
 
     // simple client-side required-field check
-    if (!itemName || !itemCode || !assignedTo) {
+    if (!itemName || !itemCode || !assignedUser) {
       setMessage("Please fill in all required fields.");
       return;
+    }
+
+    let adminId = null;
+    if (token) {
+      try {
+        const decoded = jwtDecode(token);
+        adminId = decoded.id;
+      } catch (err) {
+        console.error('Invalid token:', err);
+      }
     }
 
     try {
@@ -57,9 +83,9 @@ const EquipmentCreate = () => {
         category,
         itemName,
         itemCode,
-        assignedTo,
-        status,
-        adminId, // Pass adminId here
+        assignedUser,
+        access,
+        adminId,
       });
       navigate("/AdminDashboard");        // or wherever you show the list
     } catch (err) {
@@ -114,8 +140,8 @@ const EquipmentCreate = () => {
 
         {/* Assigned User */}
         <select
-          name="assignedTo"
-          value={formData.assignedTo}
+          name="assignedUser"
+          value={formData.assignedUser}
           onChange={handleChange}
           required
           className="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring"
@@ -130,13 +156,13 @@ const EquipmentCreate = () => {
 
         {/* Status */}
         <select
-          name="status"
-          value={formData.status}
+          name="access"
+          value={formData.access}
           onChange={handleChange}
           className="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring"
         >
-          <option value="ON">ON</option>
-          <option value="OFF">OFF</option>
+          <option value="Enabled">Enable</option>
+          <option value="Disabled">Disable</option>
         </select>
 
         {/* Submit */}
