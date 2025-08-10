@@ -2,7 +2,6 @@ import React, { useEffect, useState } from "react";
 import axios from "axios";
 import Modal from "./Modal";
 import { jwtDecode } from "jwt-decode";
-import RangeSlider from "react-range-slider-input";// Assuming you have a RangeSlider component
 
 const UserACList = ({ userId: propUserId }) => {
   const [acs, setAcs] = useState([]);
