@@ -180,3 +180,40 @@ export const updateAirConditioner = async (req, res) => {
     res.status(500).json({ message: 'Server error while updating air conditioner' });
   }
 };
+
+
+
+//update Door details
+export const updateDoor = async (req, res) => {
+  try {
+    const { doorId } = req.params;
+    const {
+      itemName,
+      itemCode,
+      status,
+      access,
+
+    } = req.body;
+
+    // Build update object
+    const updateFields = {};
+    if (itemName) updateFields.itemName = itemName;
+    if (itemCode) updateFields.itemCode = itemCode;
+    if (status) updateFields.status = status;
+    if (access) updateFields.access = access;
+
+    const updatedDoor = await Door.findByIdAndUpdate(
+      doorId,
+      { $set: updateFields },
+      { new: true, runValidators: true }
+    );
+
+    if (!updatedDoor) {
+      return res.status(404).json({ message: 'Door not found' });
+    }
+
+    res.json({ message: 'Door updated successfully', door: updatedDoor });
+  } catch (err) {
+    res.status(500).json({ message: 'Server error while updating door' });
+  }
+};
