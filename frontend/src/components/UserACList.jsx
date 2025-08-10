@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import axios from "axios";
 import Modal from "./Modal";
 import { jwtDecode } from "jwt-decode";
+import RangeSlider from "react-range-slider-input";// Assuming you have a RangeSlider component
 
 const UserACList = ({ userId: propUserId }) => {
   const [acs, setAcs] = useState([]);
@@ -112,7 +113,6 @@ const UserACList = ({ userId: propUserId }) => {
         status: "OFF",
       }));
     }
-    // Optionally, you can also clear/lock other fields if needed
   }, [editForm.access]);
 
   if (loading) return <div>Loading...</div>;
@@ -184,15 +184,23 @@ const UserACList = ({ userId: propUserId }) => {
             placeholder="Item Code"
             className="w-full border px-3 py-2 rounded"
           />
-          <input
-            type="number"
-            name="temperaturelevel"
-            value={editForm.temperaturelevel}
-            onChange={handleEditChange}
-            placeholder="Temperature Level"
-            className="w-full border px-3 py-2 rounded"
-            disabled={editForm.access === "Disabled"}
-          />
+
+          <label className="block font-medium">Temperature Level</label>
+            <div className="flex items-center gap-4 mb-2">
+              <input
+                type="range"
+                min={16}
+                max={26}
+                step={1}
+                name="temperaturelevel"
+                value={editForm.temperaturelevel || 16}
+                onChange={e => setEditForm({ ...editForm, temperaturelevel: Number(e.target.value) })}
+                className="flex-1"
+                disabled={editForm.access === "Disabled"}
+              />
+              <span className="w-12 text-center">{editForm.temperaturelevel || 16}°C</span>
+            </div>
+                
 
           {/* Mode */}
           <label className="block font-medium">Mode</label>
@@ -236,42 +244,42 @@ const UserACList = ({ userId: propUserId }) => {
             </div> 
 
           <label className="block font-medium">Status</label>
-<div className="flex gap-2 mb-2">
-  {["ON", "OFF"].map((statusOption) => (
-    <button
-      key={statusOption}
-      type="button"
-      className={`px-4 py-2 rounded border 
-        ${editForm.status === statusOption
-          ? "bg-blue-600 text-white border-blue-600"
-          : "bg-gray-100 text-gray-700 border-gray-300 hover:bg-blue-100"}
-        ${editForm.access === "Disabled" ? "opacity-50 cursor-not-allowed" : ""}
-      `}
-      onClick={() => editForm.access !== "Disabled" && setEditForm({ ...editForm, status: statusOption })}
-      disabled={editForm.access === "Disabled"}
-    >
-      {statusOption}
-    </button>
-  ))}
-</div>
+            <div className="flex gap-2 mb-2">
+              {["ON", "OFF"].map((statusOption) => (
+                <button
+                  key={statusOption}
+                  type="button"
+                  className={`px-4 py-2 rounded border 
+                    ${editForm.status === statusOption
+                      ? "bg-blue-600 text-white border-blue-600"
+                      : "bg-gray-100 text-gray-700 border-gray-300 hover:bg-blue-100"}
+                    ${editForm.access === "Disabled" ? "opacity-50 cursor-not-allowed" : ""}
+                  `}
+                  onClick={() => editForm.access !== "Disabled" && setEditForm({ ...editForm, status: statusOption })}
+                  disabled={editForm.access === "Disabled"}
+                >
+                  {statusOption}
+                </button>
+              ))}
+            </div>
 
-<label className="block font-medium">Access</label>
-<div className="flex gap-2 mb-2">
-  {["Enabled", "Disabled"].map((accessOption) => (
-    <button
-      key={accessOption}
-      type="button"
-      className={`px-4 py-2 rounded border 
-        ${editForm.access === accessOption
-          ? "bg-blue-600 text-white border-blue-600"
-          : "bg-gray-100 text-gray-700 border-gray-300 hover:bg-blue-100"}
-      `}
-      onClick={() => setEditForm({ ...editForm, access: accessOption })}
-    >
-      {accessOption}
-    </button>
-  ))}
-</div>
+            <label className="block font-medium">Access</label>
+            <div className="flex gap-2 mb-2">
+              {["Enabled", "Disabled"].map((accessOption) => (
+                <button
+                  key={accessOption}
+                  type="button"
+                  className={`px-4 py-2 rounded border 
+                    ${editForm.access === accessOption
+                      ? "bg-blue-600 text-white border-blue-600"
+                      : "bg-gray-100 text-gray-700 border-gray-300 hover:bg-blue-100"}
+                  `}
+                  onClick={() => setEditForm({ ...editForm, access: accessOption })}
+                >
+                  {accessOption}
+                </button>
+              ))}
+            </div>
           <div className="flex justify-end gap-2">
             <button
               type="button"
