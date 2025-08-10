@@ -20,56 +20,53 @@ const UserACList = ({ userId: propUserId }) => {
     access: "",
   });
 
-  useEffect(() => {
-    const fetchACs = async () => {
-      try {
-        const token = localStorage.getItem("token");
-        if (!token) return setLoading(false);
-        const decoded = jwtDecode(token);
-        const loggedUserId = decoded.id;
-        const userRole = decoded.role;
-        setRole(userRole);
+  // Move fetchACs outside useEffect so it can be called elsewhere
+  const fetchACs = React.useCallback(async () => {
+    try {
+      const token = localStorage.getItem("token");
+      if (!token) return setLoading(false);
+      const decoded = jwtDecode(token);
+      const loggedUserId = decoded.id;
+      const userRole = decoded.role;
+      setRole(userRole);
 
-        let userId = loggedUserId;
-        let adminCompanyId = null;
+      let userId = loggedUserId;
+      let adminCompanyId = null;
 
-        if (userRole === "admin" || userRole === "superadmin") {
-          userId = propUserId;
-
-          // Fetch admin's companyId
-          const adminRes = await axios.get(`http://localhost:5000/api/admin/${loggedUserId}`);
-          adminCompanyId = adminRes.data.companyId?._id || adminRes.data.companyId;
-        }
-
-        // Fetch all air conditioners
-        const res = await axios.get("http://localhost:5000/api/equipment/air-conditioners");
-
-        // Filter ACs assigned to the user
-        let filtered = res.data.filter(
-          (ac) =>
-            (ac.assignedUser === userId) ||
-            (ac.assignedUser && ac.assignedUser._id === userId)
-        );
-
-        // If admin, further filter by companyId
-        if (userRole === "admin" &&  adminCompanyId) {
-          filtered = filtered.filter(
-            (ac) =>
-              ac.companyId === adminCompanyId ||
-              (ac.companyId && ac.companyId._id === adminCompanyId)
-          );
-        }
-
-        setAcs(filtered);
-      } catch (err) {
-        console.error("Failed to fetch air conditioners:", err);
-        setAcs([]);
-      } finally {
-        setLoading(false);
+      if (userRole === "admin" || userRole === "superadmin") {
+        userId = propUserId;
+        const adminRes = await axios.get(`http://localhost:5000/api/admin/${loggedUserId}`);
+        adminCompanyId = adminRes.data.companyId?._id || adminRes.data.companyId;
       }
-    };
-    fetchACs();
+
+      const res = await axios.get("http://localhost:5000/api/equipment/air-conditioners");
+
+      let filtered = res.data.filter(
+        (ac) =>
+          (ac.assignedUser === userId) ||
+          (ac.assignedUser && ac.assignedUser._id === userId)
+      );
+
+      if (userRole === "admin" && adminCompanyId) {
+        filtered = filtered.filter(
+          (ac) =>
+            ac.companyId === adminCompanyId ||
+            (ac.companyId && ac.companyId._id === adminCompanyId)
+        );
+      }
+
+      setAcs(filtered);
+    } catch (err) {
+      console.error("Failed to fetch air conditioners:", err);
+      setAcs([]);
+    } finally {
+      setLoading(false);
+    }
   }, [propUserId]);
+
+  useEffect(() => {
+    fetchACs();
+  }, [propUserId, fetchACs]);
 
   const openEditModal = (ac) => {
     setSelectedAC(ac);
@@ -97,8 +94,8 @@ const UserACList = ({ userId: propUserId }) => {
         editForm
       );
       setShowEditModal(false);
-      // Optionally refetch AC list here
-      // fetchACs();
+      await fetchACs();
+       // <-- Refetch the AC list after saving
     } catch (err) {
       console.error("Failed to update AC:", err);
       alert("Failed to update AC.");
