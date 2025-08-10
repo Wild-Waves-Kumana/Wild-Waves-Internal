@@ -4,7 +4,7 @@ import Modal from "./Modal";
 import { jwtDecode } from "jwt-decode";
 import RangeSlider from "react-range-slider-input";// Assuming you have a RangeSlider component
 
-const UserACList = ({ userId: propUserId }) => {
+const ACList = ({ userId: propUserId }) => {
   const [acs, setAcs] = useState([]);
   const [loading, setLoading] = useState(true);
   const [role, setRole] = useState("");
@@ -298,4 +298,4 @@ const UserACList = ({ userId: propUserId }) => {
   );
 };
 
-export default UserACList;
+export default ACList;

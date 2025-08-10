@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import axios from 'axios';
-import UserACList from '../components/UserACList';
+import ACList from '../components/ACList';
 import UserDoorList from '../components/UserDoorList';
 import UserLightList from '../components/UserLightList';
 import Modal from "../components/Modal";
@@ -146,7 +146,7 @@ const UserProfile = () => {
         </div>
       </div>
       <div className="mt-4">
-        <UserACList userId={userId} adminId={adminId} />
+        <ACList userId={userId} adminId={adminId} />
         <UserDoorList userId={userId} adminId={adminId} />
         <UserLightList userId={userId} adminId={adminId} />
       </div>
