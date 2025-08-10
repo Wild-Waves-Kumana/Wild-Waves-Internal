@@ -62,7 +62,7 @@ const UserList = () => {
   if (loading) return <div>Loading...</div>;
 
   return (
-    <div className="max-w-2xl mx-auto mt-10 bg-white shadow rounded p-6">
+    <div className="mx-auto mt-10 bg-white shadow rounded p-6">
       <h2 className="text-2xl font-bold mb-4">Users in Your Company</h2>
       <table className="min-w-full border">
         <thead>
