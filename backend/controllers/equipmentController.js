@@ -217,3 +217,39 @@ export const updateDoor = async (req, res) => {
     res.status(500).json({ message: 'Server error while updating door' });
   }
 };
+
+//Update Light details
+export const updateLight = async (req, res) => {
+  try {
+    const { lightId } = req.params;
+    const {
+      itemName,
+      itemCode,
+      brightness,
+      status,
+      access
+    } = req.body;
+
+    // Build update object
+    const updateFields = {};
+    if (itemName) updateFields.itemName = itemName;
+    if (itemCode) updateFields.itemCode = itemCode;
+    if (brightness !== undefined) updateFields.brightness = brightness;
+    if (status) updateFields.status = status;
+    if (access) updateFields.access = access;
+
+    const updatedLight = await Light.findByIdAndUpdate(
+      lightId,
+      { $set: updateFields },
+      { new: true, runValidators: true }
+    );
+
+    if (!updatedLight) {
+      return res.status(404).json({ message: 'Light not found' });
+    }
+
+    res.json({ message: 'Light updated successfully', light: updatedLight });
+  } catch (err) {
+    res.status(500).json({ message: 'Server error while updating light' });
+  }
+};
