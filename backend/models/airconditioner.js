@@ -5,7 +5,7 @@ const airConditionerSchema = new mongoose.Schema({
   itemCode: { type: String, unique: true },
   roomname: String,
   temperaturelevel: { type: Number, default: 24 },
-  mode: { type: String, enum: ['Cool', 'Heat', 'Fan', 'Dry'], default: 'Cool' },
+  mode: { type: String, enum: ['No Mode', 'Cool', 'Heat', 'Fan', 'Dry'], default: 'No Mode' },
   fanSpeed: { type: String, enum: ['Low', 'Medium', 'High'], default: 'Medium' },
   status: { type: String, enum: ['ON', 'OFF'], default: 'ON' },
   access: { type: String, enum: ['Enabled', 'Disabled'], default: 'Enabled' },
