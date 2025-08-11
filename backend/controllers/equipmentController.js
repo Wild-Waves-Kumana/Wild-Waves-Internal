@@ -4,6 +4,7 @@ import AirConditioner from '../models/airconditioner.js';
 import User from '../models/user.js';
 import Admin from '../models/admin.js';
 import Company from '../models/company.js';
+import Room from '../models/room.js'; // Make sure this import is present
 
 // helper ➜ ensure global uniqueness of itemCode
 const isItemCodeTaken = async (itemCode) => {
@@ -52,8 +53,9 @@ export const createEquipment = async (req, res) => {
       villaName: user.villaName,
       assignedUser: user._id,
       access,
+      roomId: req.body.roomId, // <-- already present
       createdAdminId: adminId,
-      companyId // <-- add companyId from admin
+      companyId
     });
 
     await newEquipment.save();
@@ -98,6 +100,18 @@ export const createEquipment = async (req, res) => {
         { $push: { airconditioners: newEquipment._id } }
       );
     }  
+
+    // --- NEW: Update Room collection ---
+    if (req.body.roomId) {
+      let updateField = {};
+      if (category === "Doors") updateField = { $push: { doors: newEquipment._id } };
+      if (category === "Lights") updateField = { $push: { lights: newEquipment._id } };
+      if (category === "Air Conditioner") updateField = { $push: { airConditioners: newEquipment._id } };
+
+      if (Object.keys(updateField).length > 0) {
+        await Room.findByIdAndUpdate(req.body.roomId, updateField);
+      }
+    }
 
     res.status(201).json({ message: `${category} item created.` });
   } catch (err) {
