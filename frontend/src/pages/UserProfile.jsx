@@ -255,40 +255,40 @@ const handleAssignRooms = async (e) => {
             className="w-full border px-3 py-2 rounded"
           />
 
-                {/* Assign new rooms section */}
-<div className="border-t pt-4 mt-4">
-  <h4 className="font-semibold mb-2">Assign New Rooms</h4>
-  {roomAssignMessage && (
-    <div className="text-green-600 text-sm mb-2">{roomAssignMessage}</div>
-  )}
-  {newRooms.map((room, idx) => (
-    <div key={idx} className="flex items-center mb-2">
-      <input
-        type="text"
-        placeholder={`Room Name ${idx + 1}`}
-        value={room.roomName}
-        onChange={e => handleNewRoomChange(idx, e.target.value)}
-        className="flex-1 px-3 py-2 border rounded-md focus:outline-none focus:ring"
-      />
-      {idx === newRooms.length - 1 && (
-        <button
-          type="button"
-          onClick={addNewRoomField}
-          className="ml-2 px-3 py-2 bg-green-500 text-white rounded hover:bg-green-600"
-        >
-          +
-        </button>
-      )}
-    </div>
-  ))}
-  <button
-    type="button"
-    onClick={handleAssignRooms}
-    className="w-full mt-2 bg-blue-600 text-white py-2 rounded-md hover:bg-blue-700"
-  >
-    Assign Rooms
-  </button>
-</div>
+          {/* Assign new rooms section */}
+          <div className="border-t pt-4 mt-4">
+            <h4 className="font-semibold mb-2">Assign New Rooms</h4>
+            {roomAssignMessage && (
+              <div className="text-green-600 text-sm mb-2">{roomAssignMessage}</div>
+            )}
+            {newRooms.map((room, idx) => (
+              <div key={idx} className="flex items-center mb-2">
+                <input
+                  type="text"
+                  placeholder={`Room Name ${idx + 1}`}
+                  value={room.roomName}
+                  onChange={e => handleNewRoomChange(idx, e.target.value)}
+                  className="flex-1 px-3 py-2 border rounded-md focus:outline-none focus:ring"
+                />
+                {idx === newRooms.length - 1 && (
+                  <button
+                    type="button"
+                    onClick={addNewRoomField}
+                    className="ml-2 px-3 py-2 bg-green-500 text-white rounded hover:bg-green-600"
+                  >
+                    +
+                  </button>
+                )}
+              </div>
+            ))}
+            <button
+              type="button"
+              onClick={handleAssignRooms}
+              className="w-full mt-2 bg-blue-600 text-white py-2 rounded-md hover:bg-blue-700"
+            >
+              Assign Rooms
+            </button>
+          </div>
 
           <div className="flex justify-end gap-2">
             <button
