@@ -121,7 +121,7 @@ const UserACList = ({ userId: propUserId }) => {
           <tr>
             <th className="border px-4 py-2">Item Name</th>
             <th className="border px-4 py-2">Item Code</th>
-            <th className="border px-4 py-2">Room Name</th>
+            <th className="border px-4 py-2">Villa Name</th>
             <th className="border px-4 py-2">Temperature</th>
             <th className="border px-4 py-2">Mode</th>
             <th className="border px-4 py-2">Fan Speed</th>

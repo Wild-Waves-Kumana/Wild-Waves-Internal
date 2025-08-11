@@ -118,7 +118,7 @@ const UserDoorList = ({ userId: propUserId }) => {
           <tr>
             <th className="border px-4 py-2">Item Name</th>
             <th className="border px-4 py-2">Item Code</th>
-            <th className="border px-4 py-2">Room Name</th>
+            <th className="border px-4 py-2">Villa Name</th>
             <th className="border px-4 py-2">Status</th>
             <th className="border px-4 py-2">Access</th>
             {(role === "admin" || role === "superadmin") && (

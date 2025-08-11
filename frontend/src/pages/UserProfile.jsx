@@ -109,8 +109,8 @@ const UserProfile = () => {
         <div className="flex-2 mx-3 mb-4">
           <h2 className="text-2xl font-bold mb-4">User Profile</h2>
           <div className="mb-2"><strong>Username:</strong> {user.username}</div>
-          <div className="mb-2"><strong>Room Name:</strong> {user.villaName}</div>
-          <div className="mb-2"><strong>Room ID:</strong> {user.villaId}</div>
+          <div className="mb-2"><strong>Villa Name:</strong> {user.villaName}</div>
+          <div className="mb-2"><strong>Villa ID:</strong> {user.villaId}</div>
           <div className="mb-2"><strong>Role:</strong> {user.role}</div>
           <div className="mb-2"><strong>Company:</strong> {getCompanyName(user.companyId)}</div>
         </div>
@@ -167,7 +167,7 @@ const UserProfile = () => {
             name="villaName"
             value={editForm.villaName}
             onChange={handleEditChange}
-            placeholder="Room Name"
+            placeholder="Villa Name"
             className="w-full border px-3 py-2 rounded"
           />
           <input
@@ -175,7 +175,7 @@ const UserProfile = () => {
             name="villaId"
             value={editForm.villaId}
             onChange={handleEditChange}
-            placeholder="Room ID"
+            placeholder="Villa ID"
             className="w-full border px-3 py-2 rounded"
           />
           <input
