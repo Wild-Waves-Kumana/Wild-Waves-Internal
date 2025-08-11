@@ -8,6 +8,7 @@ const userSchema = new mongoose.Schema({
   role: { type: String, required: true,  default: 'user' },
   adminId: { type: mongoose.Schema.Types.ObjectId, ref: 'Admin' }, // <-- added
   companyId: { type: mongoose.Schema.Types.ObjectId, ref: 'Company' },
+  rooms: [{ type: mongoose.Schema.Types.ObjectId, ref: "Room" }], // <-- Array of Room ObjectIds
   doors: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Door' }],
   lights: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Light' }],
   airConditioners: [{ type: mongoose.Schema.Types.ObjectId, ref: 'AirConditioner' }],
