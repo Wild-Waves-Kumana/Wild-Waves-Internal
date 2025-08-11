@@ -33,7 +33,7 @@ app.use('/api/equipment', equipmentRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/company', companyRoutes);
 app.use('/api/admin', adminRoutes); // Admin routes
-app.use('/api/room', roomRoutes);
+app.use('/api/rooms', roomRoutes);
 
 app.listen(PORT, () => {
   console.log(`Server running on http://localhost:${PORT}`);

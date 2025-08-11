@@ -97,7 +97,7 @@ const UserCreation = () => {
     try {
       for (const room of rooms) {
         if (room.roomName.trim()) {
-          await axios.post('http://localhost:5000/api/room/create', {
+          await axios.post('http://localhost:5000/api/rooms/create', {
             roomName: room.roomName,
             villaId: createdUserId, // Pass the user _id as villaId
           });
@@ -121,7 +121,7 @@ const UserCreation = () => {
         <div className="w-1/2 p-8 border-r">
           <form onSubmit={handleSignup} className="space-y-4">
             <h2 className="text-2xl font-semibold text-center">Sign Up</h2>
-            {message && <p className="text-center text-sm text-red-600">{message}</p>}
+            {message && <p className="text-center text-sm text-green-600">{message}</p>}
 
             <input
               type="text"
@@ -179,7 +179,7 @@ const UserCreation = () => {
         </div>
 
         {/* Right: Room Creation */}
-        <div className="w-1/2 p-8 flex flex-col items-center justify-center">
+        <div className="w-1/2 p-8  items-center justify-center">
           {!showRoomCreation ? (
             <div className="text-gray-400 text-center">
               <span className="text-2xl">🏠</span>
@@ -187,7 +187,7 @@ const UserCreation = () => {
             </div>
           ) : (
             <div className="w-full">
-              <h2 className="text-2xl font-semibold text-center mb-4">Add Rooms</h2>
+              <h2 className="text-2xl font-semibold text-center mb-8">Add Rooms</h2>
               {roomMessage && <p className="text-center text-green-600">{roomMessage}</p>}
               {rooms.map((room, idx) => (
                 <div key={idx} className="flex items-center mb-2">
