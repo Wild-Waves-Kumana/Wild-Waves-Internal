@@ -3,7 +3,7 @@ import mongoose from 'mongoose';
 const doorSchema = new mongoose.Schema({
   itemName: String,
   itemCode: { type: String, unique: true },
-  villaname: String,
+  villaName: String,
   status: { type: String, enum: ['ON', 'OFF'], default: 'ON' },
   access: { type: String, enum: ['Enabled', 'Disabled'], default: 'Enabled' },
   assignedUser: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },

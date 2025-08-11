@@ -78,8 +78,8 @@ const UserList = () => {
           {users.map((u) => (
             <tr key={u._id}>
               <td className="border px-4 py-2">{u.username}</td>
-              <td className="border px-4 py-2">{u.villaname}</td>
-              <td className="border px-4 py-2">{u.roomid}</td>
+              <td className="border px-4 py-2">{u.villaName}</td>
+              <td className="border px-4 py-2">{u.villaId}</td>
               <td className="border px-4 py-2">
                 {getCompanyName(u.companyId?._id || u.companyId)}
               </td>

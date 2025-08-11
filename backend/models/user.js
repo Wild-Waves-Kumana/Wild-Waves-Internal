@@ -1,8 +1,8 @@
 import mongoose from 'mongoose';
 
 const userSchema = new mongoose.Schema({
-  villaname: { type: String, required: true },
-  roomid: { type: String, required: true, unique: true },
+  villaName: { type: String, required: true },
+  villaId: { type: String, required: true, unique: true },
   username: { type: String, required: true, unique: true },
   password: { type: String, required: true },
   role: { type: String, required: true,  default: 'user' },

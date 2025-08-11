@@ -6,8 +6,8 @@ import {jwtDecode} from 'jwt-decode';
 
 const UserCreation = () => {
   const [formData, setFormData] = useState({
-    villaname: '',
-    roomnid: '', // new field for room number
+    villaName: '',
+    villaId: '', // new field for villa ID
     username: '',
     password: '',
     confirmPassword: '',
@@ -60,8 +60,8 @@ const UserCreation = () => {
 
     try {
       const res = await axios.post('http://localhost:5000/api/auth/register', {
-        villaname: formData.villaname,      // <-- add this
-        roomid: formData.roomid,  // <-- and this
+        villaName: formData.villaName,      // <-- add this
+        villaId: formData.villaId,  // <-- and this
         username: formData.username,
         password: formData.password,
         role: formData.role, // ✅ send selected role
@@ -84,18 +84,18 @@ const UserCreation = () => {
 
         <input
           type="text"
-          name="villaname"
+          name="villaName"
           placeholder="Villa Name"
-          value={formData.villaname}
+          value={formData.villaName}
           onChange={handleChange}
           required
           className="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring"
         />
         <input
           type="text" 
-          name="roomid"
-          placeholder="Room ID"
-          value={formData.roomid}
+          name="villaId"
+          placeholder="Villa ID"
+          value={formData.villaId}
           onChange={handleChange}
           required
           className="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring"

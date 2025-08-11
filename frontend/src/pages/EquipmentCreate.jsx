@@ -149,7 +149,7 @@ const EquipmentCreate = () => {
           <option value="">-- Select User --</option>
           {users.map((u) => (
             <option key={u._id} value={u._id}>
-              {u.villaname}
+              {u.villaName}
             </option>
           ))}
         </select>

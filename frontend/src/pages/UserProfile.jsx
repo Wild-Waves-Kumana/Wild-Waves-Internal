@@ -17,8 +17,8 @@ const UserProfile = () => {
   const [showEditModal, setShowEditModal] = useState(false);
   const [editForm, setEditForm] = useState({
     username: "",
-    villaname: "",
-    roomid: "",
+    villaName: "",
+    villaId: "",
     password: "",
   });
   
@@ -71,8 +71,8 @@ const UserProfile = () => {
   const openEditModal = () => {
     setEditForm({
       username: user.username || "",
-      villaname: user.villaname || "",
-      roomid: user.roomid || "",
+      villaName: user.villaName || "",
+      villaId: user.villaId || "",
       password: "",
     });
     setShowEditModal(true);
@@ -109,8 +109,8 @@ const UserProfile = () => {
         <div className="flex-2 mx-3 mb-4">
           <h2 className="text-2xl font-bold mb-4">User Profile</h2>
           <div className="mb-2"><strong>Username:</strong> {user.username}</div>
-          <div className="mb-2"><strong>Room Name:</strong> {user.villaname}</div>
-          <div className="mb-2"><strong>Room ID:</strong> {user.roomid}</div>
+          <div className="mb-2"><strong>Room Name:</strong> {user.villaName}</div>
+          <div className="mb-2"><strong>Room ID:</strong> {user.villaId}</div>
           <div className="mb-2"><strong>Role:</strong> {user.role}</div>
           <div className="mb-2"><strong>Company:</strong> {getCompanyName(user.companyId)}</div>
         </div>
@@ -164,16 +164,16 @@ const UserProfile = () => {
           />
           <input
             type="text"
-            name="villaname"
-            value={editForm.villaname}
+            name="villaName"
+            value={editForm.villaName}
             onChange={handleEditChange}
             placeholder="Room Name"
             className="w-full border px-3 py-2 rounded"
           />
           <input
             type="text"
-            name="roomid"
-            value={editForm.roomid}
+            name="villaId"
+            value={editForm.villaId}
             onChange={handleEditChange}
             placeholder="Room ID"
             className="w-full border px-3 py-2 rounded"

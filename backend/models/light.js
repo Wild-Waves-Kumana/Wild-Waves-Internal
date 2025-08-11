@@ -3,7 +3,7 @@ import mongoose from 'mongoose';
 const lightSchema = new mongoose.Schema({
   itemName: String,
   itemCode: { type: String, unique: true },
-  villaname: String,
+  villaName: String,
   brightness: { type: Number, default: 100 },
   status: { type: String, enum: ['ON', 'OFF'], default: 'ON' },
   access: { type: String, enum: ['Enabled', 'Disabled'], default: 'Enabled' },

@@ -131,7 +131,7 @@ const UserDoorList = ({ userId: propUserId }) => {
             <tr key={door._id}>
               <td className="border px-4 py-2">{door.itemName}</td>
               <td className="border px-4 py-2">{door.itemCode}</td>
-              <td className="border px-4 py-2">{door.villaname} ({door.assignedUser?.username || door.assignedUser || 'N/A'})</td>
+              <td className="border px-4 py-2">{door.villaName} ({door.assignedUser?.username || door.assignedUser || 'N/A'})</td>
               <td className="border px-4 py-2">{door.status}</td>
               <td className="border px-4 py-2">{door.access}</td>
               {(role === "admin" || role === "superadmin") && (
