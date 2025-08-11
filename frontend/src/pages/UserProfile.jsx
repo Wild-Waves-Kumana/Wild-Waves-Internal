@@ -21,7 +21,10 @@ const UserProfile = () => {
     villaId: "",
     password: "",
   });
-  
+  const [userRooms, setUserRooms] = useState([]);
+  const [newRooms, setNewRooms] = useState([{ roomName: '' }]);
+  const [roomAssignMessage, setRoomAssignMessage] = useState('');
+
 
   useEffect(() => {
     const token = localStorage.getItem('token');
@@ -53,6 +56,20 @@ const UserProfile = () => {
     fetchUser();
   }, [userId]);
 
+  // Fetch rooms assigned to this user
+  useEffect(() => {
+    const fetchRooms = async () => {
+      try {
+        const res = await axios.get(`http://localhost:5000/api/rooms/user/${userId}`);
+        setUserRooms(res.data);
+      } catch (err) {
+        console.error('Failed to fetch user rooms:', err);
+        setUserRooms([]);
+      }
+    };
+    fetchRooms();
+  }, [userId]);
+  
   // Get company name by ID
   const getCompanyName = (companyId) => {
     if (!companyId) return 'N/A';
@@ -97,6 +114,39 @@ const UserProfile = () => {
     }
   };
 
+  const handleNewRoomChange = (idx, value) => {
+  setNewRooms(rooms =>
+    rooms.map((room, i) => (i === idx ? { ...room, roomName: value } : room))
+  );
+};
+
+const addNewRoomField = () => {
+  setNewRooms([...newRooms, { roomName: '' }]);
+};
+
+const handleAssignRooms = async (e) => {
+  e.preventDefault();
+  try {
+    for (const room of newRooms) {
+      if (room.roomName.trim()) {
+        await axios.post('http://localhost:5000/api/rooms/create', {
+          roomName: room.roomName,
+          villaId: userId, // assign to this user
+        });
+      }
+    }
+    setRoomAssignMessage('Rooms assigned successfully!');
+    setNewRooms([{ roomName: '' }]);
+    // Optionally refetch rooms
+    const res = await axios.get(`http://localhost:5000/api/rooms/user/${userId}`);
+    setUserRooms(res.data);
+    setTimeout(() => setRoomAssignMessage(''), 1500);
+  } catch (err) {
+    console.error('Failed to assign rooms:', err);
+    setRoomAssignMessage('Failed to assign rooms.');
+  }
+};
+
   if (loading) return <div>Loading...</div>;
   if (!user) return <div>User not found.</div>;
 
@@ -106,13 +156,31 @@ const UserProfile = () => {
         <div className='flex-1 mx-3'> 
           <img src={user.profilePicture} alt={`${user.username}'s profile`} className="w-24 h-24 rounded-full mx-auto" />
         </div>
-        <div className="flex-2 mx-3 mb-4">
+        <div className="flex-2 mx-3 mb-2">
           <h2 className="text-2xl font-bold mb-4">User Profile</h2>
           <div className="mb-2"><strong>Username:</strong> {user.username}</div>
           <div className="mb-2"><strong>Villa Name:</strong> {user.villaName}</div>
           <div className="mb-2"><strong>Villa ID:</strong> {user.villaId}</div>
           <div className="mb-2"><strong>Role:</strong> {user.role}</div>
           <div className="mb-2"><strong>Company:</strong> {getCompanyName(user.companyId)}</div>
+          {/* Room names list */}
+          <div className="my-4">
+            {" "}
+            {userRooms.length === 0 ? (
+              <span className="text-gray-400">No rooms assigned</span>
+            ) : (
+              <div className="flex flex-wrap gap-2 mt-2">
+                {userRooms.map(room => (
+                  <div
+                    key={room._id}
+                    className="px-4 py-2 bg-blue-100 text-blue-800 rounded shadow text-sm font-medium"
+                  >
+                    {room.roomName}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
 
         <div className="flex-1 mx-3 mb-4 my-5 "> 
@@ -186,6 +254,42 @@ const UserProfile = () => {
             placeholder="New Password (leave blank to keep current)"
             className="w-full border px-3 py-2 rounded"
           />
+
+                {/* Assign new rooms section */}
+<div className="border-t pt-4 mt-4">
+  <h4 className="font-semibold mb-2">Assign New Rooms</h4>
+  {roomAssignMessage && (
+    <div className="text-green-600 text-sm mb-2">{roomAssignMessage}</div>
+  )}
+  {newRooms.map((room, idx) => (
+    <div key={idx} className="flex items-center mb-2">
+      <input
+        type="text"
+        placeholder={`Room Name ${idx + 1}`}
+        value={room.roomName}
+        onChange={e => handleNewRoomChange(idx, e.target.value)}
+        className="flex-1 px-3 py-2 border rounded-md focus:outline-none focus:ring"
+      />
+      {idx === newRooms.length - 1 && (
+        <button
+          type="button"
+          onClick={addNewRoomField}
+          className="ml-2 px-3 py-2 bg-green-500 text-white rounded hover:bg-green-600"
+        >
+          +
+        </button>
+      )}
+    </div>
+  ))}
+  <button
+    type="button"
+    onClick={handleAssignRooms}
+    className="w-full mt-2 bg-blue-600 text-white py-2 rounded-md hover:bg-blue-700"
+  >
+    Assign Rooms
+  </button>
+</div>
+
           <div className="flex justify-end gap-2">
             <button
               type="button"
