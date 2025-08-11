@@ -52,3 +52,8 @@ export const getAllRooms = async (req, res) => {
     res.status(500).json({ message: "Server error" });
   }
 };
+
+export const getRoomsByUser =  async (req, res) => {
+  const rooms = await Room.find({ villaId: req.params.userId });
+  res.json(rooms);
+};
