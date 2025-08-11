@@ -147,8 +147,10 @@ export const displaylights = async (req, res) => {
 export const displayACs = async (req, res) => {
   try {
     // Populate assignedUser with username
-    const airconditioners = await AirConditioner.find().populate('assignedUser', 'username');
-    res.json(airconditioners);
+    const airconditioners = await AirConditioner.find()
+    .populate('assignedUser', 'username')
+    .populate('roomId', 'roomName');    
+     res.json(airconditioners);
   } catch (err) {
     res.status(500).json({ message: 'Failed to fetch airconditioners' });
   }

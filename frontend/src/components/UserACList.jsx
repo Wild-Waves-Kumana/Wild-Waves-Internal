@@ -122,6 +122,7 @@ const UserACList = ({ userId: propUserId }) => {
             <th className="border px-4 py-2">Item Name</th>
             <th className="border px-4 py-2">Item Code</th>
             <th className="border px-4 py-2">Villa Name</th>
+            <th className="border px-4 py-2">Room</th>
             <th className="border px-4 py-2">Temperature</th>
             <th className="border px-4 py-2">Mode</th>
             <th className="border px-4 py-2">Fan Speed</th>
@@ -138,6 +139,7 @@ const UserACList = ({ userId: propUserId }) => {
               <td className="border px-4 py-2">{ac.itemName}</td>
               <td className="border px-4 py-2">{ac.itemCode}</td>
               <td className="border px-4 py-2">{ac.villaName} ({ac.assignedUser?.username || ac.assignedUser || 'N/A'})</td>
+              <td className="border px-4 py-2">{ac.roomId?.roomName || "N/A"}</td>
               <td className="border px-4 py-2">{ac.temperaturelevel}</td>
               <td className="border px-4 py-2">{ac.mode}</td>
               <td className="border px-4 py-2">{ac.fanSpeed}</td>
