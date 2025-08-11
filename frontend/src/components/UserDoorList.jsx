@@ -16,6 +16,7 @@ const UserDoorList = ({ userId: propUserId }) => {
     access: "",
   });
   
+  
 
   // Fetch doors logic
   const fetchDoors = React.useCallback(async () => {
@@ -119,6 +120,7 @@ const UserDoorList = ({ userId: propUserId }) => {
             <th className="border px-4 py-2">Item Name</th>
             <th className="border px-4 py-2">Item Code</th>
             <th className="border px-4 py-2">Villa Name</th>
+            <th className="border px-4 py-2">Room Name</th>
             <th className="border px-4 py-2">Status</th>
             <th className="border px-4 py-2">Access</th>
             {(role === "admin" || role === "superadmin") && (
@@ -132,6 +134,7 @@ const UserDoorList = ({ userId: propUserId }) => {
               <td className="border px-4 py-2">{door.itemName}</td>
               <td className="border px-4 py-2">{door.itemCode}</td>
               <td className="border px-4 py-2">{door.villaName} ({door.assignedUser?.username || door.assignedUser || 'N/A'})</td>
+              <td className="border px-4 py-2">{door.roomId?.roomName || "N/A"}</td>
               <td className="border px-4 py-2">{door.status}</td>
               <td className="border px-4 py-2">{door.access}</td>
               {(role === "admin" || role === "superadmin") && (

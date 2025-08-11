@@ -124,7 +124,9 @@ export const createEquipment = async (req, res) => {
 export const displaydoors = async (req, res) => {
   try {
     // Populate assignedUser with username
-    const doors = await Door.find().populate('assignedUser', 'username');
+    const doors = await Door.find()
+    .populate('assignedUser', 'username')
+    .populate('roomId', 'roomName');
     res.json(doors);
   } catch (err) {
     res.status(500).json({ message: 'Failed to fetch doors' });
@@ -135,7 +137,9 @@ export const displaydoors = async (req, res) => {
 export const displaylights = async (req, res) => {
   try {
     // Populate assignedUser with username
-    const lights = await Light.find().populate('assignedUser', 'username');
+    const lights = await Light.find()
+    .populate('assignedUser', 'username')
+    .populate('roomId', 'roomName');
     res.json(lights);
   } catch (err) {
     res.status(500).json({ message: 'Failed to fetch lights' });
