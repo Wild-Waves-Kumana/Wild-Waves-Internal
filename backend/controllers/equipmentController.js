@@ -22,7 +22,7 @@ export const createEquipment = async (req, res) => {
       return res.status(400).json({ message: 'Item Code Already Used !' });
     }
 
-    // 2️⃣ Validate assigned user exists and get roomname
+    // 2️⃣ Validate assigned user exists and get villaname
     const user = await User.findById(assignedUser);
     if (!user) {
       return res.status(400).json({ message: 'Assigned user does not exist.' });
@@ -49,7 +49,7 @@ export const createEquipment = async (req, res) => {
     const newEquipment = new EquipmentModel({
       itemName,
       itemCode,
-      roomname: user.roomname,
+      villaname: user.villaname,
       assignedUser: user._id,
       access,
       createdAdminId: adminId,

@@ -134,7 +134,7 @@ const UserLightList = ({ userId: propUserId }) => {
             <tr key={light._id}>
               <td className="border px-4 py-2">{light.itemName}</td>
               <td className="border px-4 py-2">{light.itemCode}</td>
-              <td className="border px-4 py-2">{light.roomname} ({light.assignedUser?.username || light.assignedUser || 'N/A'})</td>
+              <td className="border px-4 py-2">{light.villaname} ({light.assignedUser?.username || light.assignedUser || 'N/A'})</td>
               <td className="border px-4 py-2">{light.brightness}</td>
               <td className="border px-4 py-2">{light.status}</td>
               <td className="border px-4 py-2">{light.access}</td>

@@ -17,7 +17,7 @@ const UserProfile = () => {
   const [showEditModal, setShowEditModal] = useState(false);
   const [editForm, setEditForm] = useState({
     username: "",
-    roomname: "",
+    villaname: "",
     roomid: "",
     password: "",
   });
@@ -71,7 +71,7 @@ const UserProfile = () => {
   const openEditModal = () => {
     setEditForm({
       username: user.username || "",
-      roomname: user.roomname || "",
+      villaname: user.villaname || "",
       roomid: user.roomid || "",
       password: "",
     });
@@ -109,7 +109,7 @@ const UserProfile = () => {
         <div className="flex-2 mx-3 mb-4">
           <h2 className="text-2xl font-bold mb-4">User Profile</h2>
           <div className="mb-2"><strong>Username:</strong> {user.username}</div>
-          <div className="mb-2"><strong>Room Name:</strong> {user.roomname}</div>
+          <div className="mb-2"><strong>Room Name:</strong> {user.villaname}</div>
           <div className="mb-2"><strong>Room ID:</strong> {user.roomid}</div>
           <div className="mb-2"><strong>Role:</strong> {user.role}</div>
           <div className="mb-2"><strong>Company:</strong> {getCompanyName(user.companyId)}</div>
@@ -164,8 +164,8 @@ const UserProfile = () => {
           />
           <input
             type="text"
-            name="roomname"
-            value={editForm.roomname}
+            name="villaname"
+            value={editForm.villaname}
             onChange={handleEditChange}
             placeholder="Room Name"
             className="w-full border px-3 py-2 rounded"

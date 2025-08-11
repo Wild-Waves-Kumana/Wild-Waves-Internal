@@ -54,7 +54,7 @@ export const loginUser = async (req, res) => {
 
 //sign up
 export const registerUser = async (req, res) => {
-    const { roomname, roomid, username, password, role, adminId} = req.body;
+    const { villaname, roomid, username, password, role, adminId} = req.body;
 
     try {
         const existingUser = await User.findOne({ username });
@@ -73,7 +73,7 @@ export const registerUser = async (req, res) => {
 
         // Save adminId and companyId with the new user
         const newUser = new User({
-            roomname,
+            villaname,
             roomid,
             username,
             password: hashedPassword,
