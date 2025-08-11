@@ -139,3 +139,117 @@ export const displayACs = async (req, res) => {
     res.status(500).json({ message: 'Failed to fetch airconditioners' });
   }
 };
+
+
+// Update Air Conditioner details
+export const updateAirConditioner = async (req, res) => {
+  try {
+    const { acId } = req.params;
+    const {
+      itemName,
+      itemCode,
+      temperaturelevel,
+      mode,
+      fanSpeed,
+      status,
+      access
+    } = req.body;
+
+    // Build update object
+    const updateFields = {};
+    if (itemName) updateFields.itemName = itemName;
+    if (itemCode) updateFields.itemCode = itemCode;
+    if (temperaturelevel !== undefined) updateFields.temperaturelevel = temperaturelevel;
+    if (mode) updateFields.mode = mode;
+    if (fanSpeed) updateFields.fanSpeed = fanSpeed;
+    if (status) updateFields.status = status;
+    if (access) updateFields.access = access;
+
+    const updatedAC = await AirConditioner.findByIdAndUpdate(
+      acId,
+      { $set: updateFields },
+      { new: true, runValidators: true }
+    );
+
+    if (!updatedAC) {
+      return res.status(404).json({ message: 'Air Conditioner not found' });
+    }
+
+    res.json({ message: 'Air Conditioner updated successfully', airConditioner: updatedAC });
+  } catch (err) {
+    res.status(500).json({ message: 'Server error while updating air conditioner' });
+  }
+};
+
+
+
+//update Door details
+export const updateDoor = async (req, res) => {
+  try {
+    const { doorId } = req.params;
+    const {
+      itemName,
+      itemCode,
+      status,
+      access,
+
+    } = req.body;
+
+    // Build update object
+    const updateFields = {};
+    if (itemName) updateFields.itemName = itemName;
+    if (itemCode) updateFields.itemCode = itemCode;
+    if (status) updateFields.status = status;
+    if (access) updateFields.access = access;
+
+    const updatedDoor = await Door.findByIdAndUpdate(
+      doorId,
+      { $set: updateFields },
+      { new: true, runValidators: true }
+    );
+
+    if (!updatedDoor) {
+      return res.status(404).json({ message: 'Door not found' });
+    }
+
+    res.json({ message: 'Door updated successfully', door: updatedDoor });
+  } catch (err) {
+    res.status(500).json({ message: 'Server error while updating door' });
+  }
+};
+
+//Update Light details
+export const updateLight = async (req, res) => {
+  try {
+    const { lightId } = req.params;
+    const {
+      itemName,
+      itemCode,
+      brightness,
+      status,
+      access
+    } = req.body;
+
+    // Build update object
+    const updateFields = {};
+    if (itemName) updateFields.itemName = itemName;
+    if (itemCode) updateFields.itemCode = itemCode;
+    if (brightness !== undefined) updateFields.brightness = brightness;
+    if (status) updateFields.status = status;
+    if (access) updateFields.access = access;
+
+    const updatedLight = await Light.findByIdAndUpdate(
+      lightId,
+      { $set: updateFields },
+      { new: true, runValidators: true }
+    );
+
+    if (!updatedLight) {
+      return res.status(404).json({ message: 'Light not found' });
+    }
+
+    res.json({ message: 'Light updated successfully', light: updatedLight });
+  } catch (err) {
+    res.status(500).json({ message: 'Server error while updating light' });
+  }
+};

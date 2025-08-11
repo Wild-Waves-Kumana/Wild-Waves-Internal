@@ -10,7 +10,9 @@ import { jwtDecode } from 'jwt-decode';
 const UserProfile = () => {
   const { userId } = useParams();
   const [user, setUser] = useState(null);
+  const [companies, setCompanies] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [adminId, setAdminId] = useState("");
   const [role, setRole] = useState("");
   const [showEditModal, setShowEditModal] = useState(false);
   const [editForm, setEditForm] = useState({
@@ -19,15 +21,15 @@ const UserProfile = () => {
     roomid: "",
     password: "",
   });
-  const adminId = localStorage.getItem('adminId');
+  
 
   useEffect(() => {
-    // Get role from token
     const token = localStorage.getItem('token');
     if (token) {
       try {
         const decoded = jwtDecode(token);
         setRole(decoded.role);
+        setAdminId(decoded.adminId);
       } catch {
         setRole('');
       }
@@ -37,6 +39,11 @@ const UserProfile = () => {
       try {
         const res = await axios.get(`http://localhost:5000/api/users/${userId}`);
         setUser(res.data);
+
+        // Fetch companies after user is loaded
+        const companiesRes = await axios.get('http://localhost:5000/api/company/all');
+        setCompanies(companiesRes.data);
+
       } catch (err) {
         console.error('Failed to fetch user:', err);
       } finally {
@@ -46,6 +53,21 @@ const UserProfile = () => {
     fetchUser();
   }, [userId]);
 
+  // Get company name by ID
+  const getCompanyName = (companyId) => {
+    if (!companyId) return 'N/A';
+    // If already populated object
+    if (typeof companyId === 'object') {
+      return companyId.companyName || companyId.companyId || companyId._id || 'N/A';
+    }
+    // If just an ID, find in companies array
+    const found = companies.find(
+      (c) => c._id === companyId || c.companyId === companyId
+    );
+    return found ? found.companyName : 'N/A';
+  };
+
+  // Open edit modal with pre-filled data
   const openEditModal = () => {
     setEditForm({
       username: user.username || "",
@@ -56,6 +78,7 @@ const UserProfile = () => {
     setShowEditModal(true);
   };
 
+  // Handle changes in the edit form
   const handleEditChange = (e) => {
     setEditForm({ ...editForm, [e.target.name]: e.target.value });
   };
@@ -89,11 +112,7 @@ const UserProfile = () => {
           <div className="mb-2"><strong>Room Name:</strong> {user.roomname}</div>
           <div className="mb-2"><strong>Room ID:</strong> {user.roomid}</div>
           <div className="mb-2"><strong>Role:</strong> {user.role}</div>
-          <strong>Company:</strong> 
-          {user.companyId && typeof user.companyId === 'object'
-            ? `${user.companyId.companyName} (${user.companyId.companyId || user.companyId._id})`
-            : user.companyId || 'N/A'
-          }
+          <div className="mb-2"><strong>Company:</strong> {getCompanyName(user.companyId)}</div>
         </div>
 
         <div className="flex-1 mx-3 mb-4 my-5 "> 
@@ -107,7 +126,9 @@ const UserProfile = () => {
           <div className='mb-2'>
             <button
               onClick={openEditModal}
-              className="px-4 py-2 w-30 bg-yellow-500 text-white rounded hover:bg-yellow-600 disabled:opacity-50 disabled:cursor-not-allowed"
+              className={`px-4 py-2 w-30 bg-yellow-500 text-white rounded 
+                ${role !== "user" ? "hover:bg-yellow-600" : ""} 
+                disabled:opacity-50 disabled:cursor-not-allowed`}
               disabled={role === "user"}>
               Edit User
             </button>
@@ -115,7 +136,9 @@ const UserProfile = () => {
           <div className='mb-2'>
             <button
               onClick={() => window.location.href = `/delete-user/${userId}`}
-              className="px-4 py-2 w-30 bg-red-500 text-white rounded hover:bg-red-600 disabled:opacity-50 disabled:cursor-not-allowed"
+              className={`px-4 py-2 w-30 bg-red-500 text-white rounded 
+                ${role !== "user" ? "hover:bg-red-600" : ""} 
+                disabled:opacity-50 disabled:cursor-not-allowed`}
               disabled={role === "user"}>
               Delete User
             </button>
@@ -128,7 +151,7 @@ const UserProfile = () => {
         <UserLightList userId={userId} adminId={adminId} />
       </div>
 
-      <Modal isVisible={showEditModal} onClose={() => setShowEditModal(false)}>
+      <Modal isVisible={showEditModal} onClose={() => setShowEditModal(false)} width="w-2/5">
         <h3 className="text-xl font-bold mb-4">Edit User</h3>
         <form onSubmit={handleEditSubmit} className="space-y-3">
           <input
