@@ -65,17 +65,11 @@ const UserDoorController = ({ doors, onDoorUpdate }) => {
                   <label className="block font-medium">Lock Status</label>
                   <div className="flex gap-2 mb-2">
                     {[
-                      {
-                        label: "Locked",
-                        value: 1
-                      },
-                      {
-                        label: "Unlocked",
-                        value: 0
-                      }
+                      { label: "Locked", value: true },
+                      { label: "Unlocked", value: false }
                     ].map((lockOption) => (
                       <button
-                        key={lockOption.value}
+                        key={lockOption.label}
                         type="button"
                         className={`px-4 py-2 rounded border 
                           ${localDoors[idx].lockStatus === lockOption.value

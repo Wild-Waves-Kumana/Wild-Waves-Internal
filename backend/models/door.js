@@ -4,7 +4,7 @@ const doorSchema = new mongoose.Schema({
   itemName: String,
   itemCode: { type: String, unique: true },
   villaName: String,
-  lockStatus: { type: Number, enum: [0, 1], default: 1 }, // 0 for unlocked, 1 for locked
+  lockStatus: { type: Boolean, default: true }, // true for locked, false for unlocked
   status: { type: String, enum: ['ON', 'OFF'], default: 'OFF' },
   access: { type: String, enum: ['Enabled', 'Disabled'], default: 'Enabled' },
   assignedUser: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
