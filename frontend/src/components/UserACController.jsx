@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 
-const UserACController = ({ acs }) => {
+const UserACController = ({ acs, onACUpdate }) => {
   // Local ACs state for instant UI update
   const [localAcs, setLocalAcs] = useState(acs);
 
@@ -25,6 +25,7 @@ const UserACController = ({ acs }) => {
         `http://localhost:5000/api/equipment/air-conditioners/${ac._id}`,
         { [field]: value }
       );
+      if (onACUpdate) onACUpdate(); // Refresh parent data after update
     } catch (err) {
       console.error('Failed to update AC:', err);
       alert("Failed to update AC.");
