@@ -210,6 +210,7 @@ export const updateDoor = async (req, res) => {
     const {
       itemName,
       itemCode,
+      lockStatus, // 0 for unlocked, 1 for locked
       status,
       access,
 
@@ -219,6 +220,7 @@ export const updateDoor = async (req, res) => {
     const updateFields = {};
     if (itemName) updateFields.itemName = itemName;
     if (itemCode) updateFields.itemCode = itemCode;
+    if (lockStatus !== undefined) updateFields.lockStatus = lockStatus;
     if (status) updateFields.status = status;
     if (access) updateFields.access = access;
 
