@@ -7,6 +7,7 @@ import { jwtDecode } from 'jwt-decode';
 const EquipmentCreate = () => {
   const navigate = useNavigate();
   const [users, setUsers] = useState([]);
+  const [rooms, setRooms] = useState([]);
   const [message, setMessage] = useState("");
   const token = localStorage.getItem('token');
 
@@ -15,6 +16,7 @@ const EquipmentCreate = () => {
     itemName: "",
     itemCode: "",
     assignedUser: "",
+    roomId: "",
     access: "Enabled",
   });
 
@@ -84,6 +86,7 @@ const EquipmentCreate = () => {
         itemName,
         itemCode,
         assignedUser,
+        roomId: formData.roomId,
         access,
         adminId,
       });
@@ -139,20 +142,57 @@ const EquipmentCreate = () => {
         />
 
         {/* Assigned User */}
-        <select
-          name="assignedUser"
-          value={formData.assignedUser}
-          onChange={handleChange}
-          required
-          className="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring"
-        >
-          <option value="">-- Select User --</option>
+        <label className="block font-medium">Assigned User</label>
+        <div className="flex flex-wrap gap-2 mb-2">
           {users.map((u) => (
-            <option key={u._id} value={u._id}>
-              {u.roomname}
-            </option>
+            <button
+              key={u._id}
+              type="button"
+              className={`px-4 py-2 rounded border
+                ${formData.assignedUser === u._id
+                  ? "bg-blue-600 text-white border-blue-600"
+                  : "bg-gray-100 text-gray-700 border-gray-300 hover:bg-blue-100"}
+              `}
+              onClick={async () => {
+                setFormData((prev) => ({ ...prev, assignedUser: u._id, roomId: "" }));
+                try {
+                  const res = await axios.get(`http://localhost:5000/api/rooms/user/${u._id}`);
+                  setRooms(res.data);
+                } catch {
+                  setRooms([]);
+                }
+              }}
+            >
+              {u.villaName}
+            </button>
           ))}
-        </select>
+        </div>
+
+        {/* Room selection - NEW CODE BLOCK */}
+        {formData.assignedUser && (
+          <>
+            <label className="block font-medium">Select Room</label>
+            <div className="flex flex-wrap gap-2 mb-2">
+              {rooms.length === 0 && (
+                <span className="text-gray-400">No rooms found for this user.</span>
+              )}
+              {rooms.map((room) => (
+                <button
+                  key={room._id}
+                  type="button"
+                  className={`px-4 py-2 rounded border
+                    ${formData.roomId === room._id
+                      ? "bg-green-600 text-white border-green-600"
+                      : "bg-gray-100 text-gray-700 border-gray-300 hover:bg-green-100"}
+                  `}
+                  onClick={() => setFormData((prev) => ({ ...prev, roomId: room._id }))}
+                >
+                  {room.roomName}
+                </button>
+              ))}
+            </div>
+          </>
+        )}
 
         {/* Status */}
         <select

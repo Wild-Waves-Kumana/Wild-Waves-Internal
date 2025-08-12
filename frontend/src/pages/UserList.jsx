@@ -62,14 +62,14 @@ const UserList = () => {
   if (loading) return <div>Loading...</div>;
 
   return (
-    <div className="max-w-2xl mx-auto mt-10 bg-white shadow rounded p-6">
+    <div className="mx-auto mt-10 bg-white shadow rounded p-6">
       <h2 className="text-2xl font-bold mb-4">Users in Your Company</h2>
       <table className="min-w-full border">
         <thead>
           <tr>
             <th className="border px-4 py-2">Username</th>
-            <th className="border px-4 py-2">Room Name</th>
-            <th className="border px-4 py-2">Room ID</th>
+            <th className="border px-4 py-2">Villa Name</th>
+            <th className="border px-4 py-2">Villa ID</th>
             <th className="border px-4 py-2">Company</th>
             <th className="border px-4 py-2">Profile</th>
           </tr>
@@ -78,8 +78,8 @@ const UserList = () => {
           {users.map((u) => (
             <tr key={u._id}>
               <td className="border px-4 py-2">{u.username}</td>
-              <td className="border px-4 py-2">{u.roomname}</td>
-              <td className="border px-4 py-2">{u.roomid}</td>
+              <td className="border px-4 py-2">{u.villaName}</td>
+              <td className="border px-4 py-2">{u.villaId}</td>
               <td className="border px-4 py-2">
                 {getCompanyName(u.companyId?._id || u.companyId)}
               </td>

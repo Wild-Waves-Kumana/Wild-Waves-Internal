@@ -121,8 +121,9 @@ const UserACList = ({ userId: propUserId }) => {
           <tr>
             <th className="border px-4 py-2">Item Name</th>
             <th className="border px-4 py-2">Item Code</th>
-            <th className="border px-4 py-2">Room Name</th>
-            <th className="border px-4 py-2">Temperature</th>
+            <th className="border px-4 py-2">Villa Name</th>
+            <th className="border px-4 py-2">Room</th>
+            <th className="border px-4 py-2">Temp</th>
             <th className="border px-4 py-2">Mode</th>
             <th className="border px-4 py-2">Fan Speed</th>
             <th className="border px-4 py-2">Status</th>
@@ -137,7 +138,8 @@ const UserACList = ({ userId: propUserId }) => {
             <tr key={ac._id}>
               <td className="border px-4 py-2">{ac.itemName}</td>
               <td className="border px-4 py-2">{ac.itemCode}</td>
-              <td className="border px-4 py-2">{ac.roomname} ({ac.assignedUser?.username || ac.assignedUser || 'N/A'})</td>
+              <td className="border px-4 py-2">{ac.villaName} ({ac.assignedUser?.username || ac.assignedUser || 'N/A'})</td>
+              <td className="border px-4 py-2">{ac.roomId?.roomName || "N/A"}</td>
               <td className="border px-4 py-2">{ac.temperaturelevel}</td>
               <td className="border px-4 py-2">{ac.mode}</td>
               <td className="border px-4 py-2">{ac.fanSpeed}</td>

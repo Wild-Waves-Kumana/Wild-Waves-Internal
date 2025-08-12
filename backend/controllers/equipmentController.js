@@ -4,6 +4,7 @@ import AirConditioner from '../models/airconditioner.js';
 import User from '../models/user.js';
 import Admin from '../models/admin.js';
 import Company from '../models/company.js';
+import Room from '../models/room.js'; // Make sure this import is present
 
 // helper ➜ ensure global uniqueness of itemCode
 const isItemCodeTaken = async (itemCode) => {
@@ -22,7 +23,7 @@ export const createEquipment = async (req, res) => {
       return res.status(400).json({ message: 'Item Code Already Used !' });
     }
 
-    // 2️⃣ Validate assigned user exists and get roomname
+    // 2️⃣ Validate assigned user exists and get villaName
     const user = await User.findById(assignedUser);
     if (!user) {
       return res.status(400).json({ message: 'Assigned user does not exist.' });
@@ -49,11 +50,12 @@ export const createEquipment = async (req, res) => {
     const newEquipment = new EquipmentModel({
       itemName,
       itemCode,
-      roomname: user.roomname,
+      villaName: user.villaName,
       assignedUser: user._id,
       access,
+      roomId: req.body.roomId, // <-- already present
       createdAdminId: adminId,
-      companyId // <-- add companyId from admin
+      companyId
     });
 
     await newEquipment.save();
@@ -99,6 +101,18 @@ export const createEquipment = async (req, res) => {
       );
     }  
 
+    // --- NEW: Update Room collection ---
+    if (req.body.roomId) {
+      let updateField = {};
+      if (category === "Doors") updateField = { $push: { doors: newEquipment._id } };
+      if (category === "Lights") updateField = { $push: { lights: newEquipment._id } };
+      if (category === "Air Conditioner") updateField = { $push: { airConditioners: newEquipment._id } };
+
+      if (Object.keys(updateField).length > 0) {
+        await Room.findByIdAndUpdate(req.body.roomId, updateField);
+      }
+    }
+
     res.status(201).json({ message: `${category} item created.` });
   } catch (err) {
     console.error('Equipment creation error:', err);
@@ -110,7 +124,9 @@ export const createEquipment = async (req, res) => {
 export const displaydoors = async (req, res) => {
   try {
     // Populate assignedUser with username
-    const doors = await Door.find().populate('assignedUser', 'username');
+    const doors = await Door.find()
+    .populate('assignedUser', 'username')
+    .populate('roomId', 'roomName');
     res.json(doors);
   } catch (err) {
     res.status(500).json({ message: 'Failed to fetch doors' });
@@ -121,7 +137,9 @@ export const displaydoors = async (req, res) => {
 export const displaylights = async (req, res) => {
   try {
     // Populate assignedUser with username
-    const lights = await Light.find().populate('assignedUser', 'username');
+    const lights = await Light.find()
+    .populate('assignedUser', 'username')
+    .populate('roomId', 'roomName');
     res.json(lights);
   } catch (err) {
     res.status(500).json({ message: 'Failed to fetch lights' });
@@ -133,8 +151,10 @@ export const displaylights = async (req, res) => {
 export const displayACs = async (req, res) => {
   try {
     // Populate assignedUser with username
-    const airconditioners = await AirConditioner.find().populate('assignedUser', 'username');
-    res.json(airconditioners);
+    const airconditioners = await AirConditioner.find()
+    .populate('assignedUser', 'username')
+    .populate('roomId', 'roomName');    
+     res.json(airconditioners);
   } catch (err) {
     res.status(500).json({ message: 'Failed to fetch airconditioners' });
   }
@@ -190,6 +210,7 @@ export const updateDoor = async (req, res) => {
     const {
       itemName,
       itemCode,
+      lockStatus, // 0 for unlocked, 1 for locked
       status,
       access,
 
@@ -199,6 +220,7 @@ export const updateDoor = async (req, res) => {
     const updateFields = {};
     if (itemName) updateFields.itemName = itemName;
     if (itemCode) updateFields.itemCode = itemCode;
+    if (lockStatus !== undefined) updateFields.lockStatus = lockStatus;
     if (status) updateFields.status = status;
     if (access) updateFields.access = access;
 

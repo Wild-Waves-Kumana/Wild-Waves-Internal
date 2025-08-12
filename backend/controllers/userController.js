@@ -4,7 +4,7 @@ import bcrypt from 'bcryptjs';
 export const getAllUsers = async (req, res) => {
   try {
     // Select companyId as well for filtering
-    const users = await User.find({}, 'roomname roomid username companyId');
+    const users = await User.find({}, 'villaName villaId username companyId');
     res.json(users);
   } catch (err) {
     res.status(500).json({ message: 'Server error' });
@@ -24,12 +24,12 @@ export const getUser =  async (req, res) => {
 export const updateUser = async (req, res) => {
   try {
     const { userId } = req.params;
-    const { roomname, roomid, username, password } = req.body;
+    const { villaName, villaId, username, password } = req.body;
 
     // Build update object
     const updateFields = {};
-    if (roomname) updateFields.roomname = roomname;
-    if (roomid) updateFields.roomid = roomid;
+    if (villaName) updateFields.villaName = villaName;
+    if (villaId) updateFields.villaId = villaId;
     if (username) updateFields.username = username;
 
     // If password is provided, hash it and update
