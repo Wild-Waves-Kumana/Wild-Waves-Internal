@@ -210,22 +210,31 @@ const EquipmentCreation = () => {
           className="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring"
         />
 
-        {/* Access */}
-        <select
-          name="access"
-          value={formData.access ?? ""}
-          onChange={e =>
-            setFormData(prev => ({
-              ...prev,
-              access: e.target.value === "true"
-            }))
-          }
-          className="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring"
-        >
-          <option value="">Select Access</option>
-          <option value="true">Enable</option>
-          <option value="false">Disable</option>
-        </select>
+        {/* Access as selectable buttons */}
+        <div>
+          <label className="block font-medium mb-1">Access</label>
+          <div className="flex flex-wrap gap-2 mb-2">
+            {[
+              { label: "Enable", value: true },
+              { label: "Disable", value: false }
+            ].map((option) => (
+              <button
+                key={option.label}
+                type="button"
+                className={`px-4 py-2 rounded border
+                  ${formData.access === option.value
+                    ? "bg-blue-600 text-white border-blue-600"
+                    : "bg-gray-100 text-gray-700 border-gray-300 hover:bg-blue-100"}
+                `}
+                onClick={() =>
+                  setFormData((prev) => ({ ...prev, access: option.value }))
+                }
+              >
+                {option.label}
+              </button>
+            ))}
+          </div>
+        </div>
         {/* Submit */}
         <button
           type="submit"
