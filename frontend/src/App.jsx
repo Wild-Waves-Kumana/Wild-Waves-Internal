@@ -12,7 +12,7 @@ import Layout from './components/Layout';
 import SuperAdminDashboard from './pages/SuperAdminDashboard';
 import AdminCreation from './pages/AdminCreation';
 import UserCreation from './pages/UserCreation';
-import EquipmentCreate from './pages/EquipmentCreate';
+import EquipmentCreate from './pages/EquipmentCreation';
 import UserList from './pages/UserList';
 import EquipmentUser from './pages/EquipmentUser';
 import UserProfile from './pages/UserProfile';

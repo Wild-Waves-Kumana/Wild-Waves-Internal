@@ -25,3 +25,16 @@ export const createVilla = async (req, res) => {
     res.status(500).json({ message: 'Failed to create villa', error: error.message });
   }
 };
+
+
+// Get all villas
+export const getVillas = async (req, res) => {
+  try {
+    const villas = await Villa.find();
+    res.status(200).json(villas);
+  } catch (error) {
+    res.status(500).json({ message: 'Failed to fetch villas', error: error.message });
+  }
+};
+
+

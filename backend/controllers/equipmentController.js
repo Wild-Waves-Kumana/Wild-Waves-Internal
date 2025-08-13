@@ -1,10 +1,10 @@
 import Door from '../models/door.js';
 import Light from '../models/light.js';
 import AirConditioner from '../models/airconditioner.js';
-import User from '../models/user.js';
 import Admin from '../models/admin.js';
 import Company from '../models/company.js';
 import Room from '../models/room.js'; // Make sure this import is present
+import Villa from '../models/villa.js'; // Import Villa model
 
 // helper ➜ ensure global uniqueness of itemCode
 const isItemCodeTaken = async (itemCode) => {
@@ -15,18 +15,12 @@ const isItemCodeTaken = async (itemCode) => {
 };
 
 export const createEquipment = async (req, res) => {
-  const { category, itemName, itemCode, assignedUser, access, adminId } = req.body;
+  const { category, itemName, itemCode, access, adminId, villaId, roomId } = req.body;
 
   try {
     // 1️⃣ Validate itemCode uniqueness
     if (await isItemCodeTaken(itemCode)) {
       return res.status(400).json({ message: 'Item Code Already Used !' });
-    }
-
-    // 2️⃣ Validate assigned user exists and get villaName
-    const user = await User.findById(assignedUser);
-    if (!user) {
-      return res.status(400).json({ message: 'Assigned user does not exist.' });
     }
 
     // 2.5️⃣ Fetch admin to get companyId
@@ -36,72 +30,54 @@ export const createEquipment = async (req, res) => {
     }
     const companyId = admin.companyId;
 
+    // Fetch the villa to get villaName
+    const villa = await Villa.findById(villaId);
+    if (!villa) {
+      return res.status(400).json({ message: 'Villa not found.' });
+    }
+
     // 3️⃣ Choose the proper collection
-    let EquipmentModel;
+    let EquipmentModel, companyField;
     switch (category) {
-      case 'Doors':               EquipmentModel = Door;              break;
-      case 'Lights':              EquipmentModel = Light;             break;
-      case 'Air Conditioner':     EquipmentModel = AirConditioner;    break;
+      case 'Doors':
+        EquipmentModel = Door;
+        companyField = 'doors';
+        break;
+      case 'Lights':
+        EquipmentModel = Light;
+        companyField = 'lights';
+        break;
+      case 'Air Conditioner':
+        EquipmentModel = AirConditioner;
+        companyField = 'airconditioners';
+        break;
       default:
         return res.status(400).json({ message: 'Invalid category.' });
     }
 
     // 4️⃣ Save document (add companyId)
-    const newEquipment = new EquipmentModel({
+    const baseEquipment = {
       itemName,
       itemCode,
-      villaName: user.villaName,
-      assignedUser: user._id,
-      access,
-      roomId: req.body.roomId, // <-- already present
+      villaName: villa.villaName,
+      access: Boolean(access),
+      roomId,
       createdAdminId: adminId,
       companyId
-    });
+    };
+
+    // Only assign user for Lights (if you want)
+    // if (category === 'Lights') {
+    //   baseEquipment.assignedUser = someUserId;
+    // }
+
+    // Do NOT set assignedUser for Doors or Air Conditioner
+
+    const newEquipment = new EquipmentModel(baseEquipment);
 
     await newEquipment.save();
 
-    // Optionally, ensure user has the correct companyId (if not already set)
-    if (!user.companyId || user.companyId.toString() !== companyId.toString()) {
-      user.companyId = companyId;
-      await user.save();
-    }
-
-    // Push equipment _id to user's array
-    if (category === 'Doors') {
-      await User.findByIdAndUpdate(
-        user._id,
-        { $push: { doors: newEquipment._id } }
-      );
-      // Push to company's doors array
-      await Company.findByIdAndUpdate(
-        companyId,
-        { $push: { doors: newEquipment._id } }
-      );
-    }
-    if (category === 'Lights') {
-      await User.findByIdAndUpdate(
-        user._id,
-        { $push: { lights: newEquipment._id } }
-      );
-      // Push to company's lights array
-      await Company.findByIdAndUpdate(
-        companyId,
-        { $push: { lights: newEquipment._id } }
-      );
-    }
-    if (category === 'Air Conditioner') {
-      await User.findByIdAndUpdate(
-        user._id,     
-        { $push: { airConditioners: newEquipment._id } }
-      );
-      // Push to company's airconditioners array
-      await Company.findByIdAndUpdate(
-        companyId,
-        { $push: { airconditioners: newEquipment._id } }
-      );
-    }  
-
-    // --- NEW: Update Room collection ---
+    // --- Update Room collection ---
     if (req.body.roomId) {
       let updateField = {};
       if (category === "Doors") updateField = { $push: { doors: newEquipment._id } };
@@ -111,6 +87,14 @@ export const createEquipment = async (req, res) => {
       if (Object.keys(updateField).length > 0) {
         await Room.findByIdAndUpdate(req.body.roomId, updateField);
       }
+    }
+
+    // --- Update Company collection ---
+    if (companyField) {
+      await Company.findByIdAndUpdate(
+        companyId,
+        { $addToSet: { [companyField]: newEquipment._id } }
+      );
     }
 
     res.status(201).json({ message: `${category} item created.` });
@@ -125,7 +109,6 @@ export const displaydoors = async (req, res) => {
   try {
     // Populate assignedUser with username
     const doors = await Door.find()
-    .populate('assignedUser', 'username')
     .populate('roomId', 'roomName');
     res.json(doors);
   } catch (err) {
@@ -138,7 +121,6 @@ export const displaylights = async (req, res) => {
   try {
     // Populate assignedUser with username
     const lights = await Light.find()
-    .populate('assignedUser', 'username')
     .populate('roomId', 'roomName');
     res.json(lights);
   } catch (err) {
@@ -152,7 +134,6 @@ export const displayACs = async (req, res) => {
   try {
     // Populate assignedUser with username
     const airconditioners = await AirConditioner.find()
-    .populate('assignedUser', 'username')
     .populate('roomId', 'roomName');    
      res.json(airconditioners);
   } catch (err) {
