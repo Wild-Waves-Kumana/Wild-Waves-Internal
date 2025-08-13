@@ -54,7 +54,7 @@ export const loginUser = async (req, res) => {
 
 //sign up
 export const registerUser = async (req, res) => {
-    const { username, password, role, adminId, checkinDate, checkoutDate } = req.body;
+    const { username, password, role, adminId, checkinDate, checkoutDate, villaId, rooms } = req.body;
 
     try {
         const existingUser = await User.findOne({ username });
@@ -71,15 +71,17 @@ export const registerUser = async (req, res) => {
         const salt = await bcrypt.genSalt(10);
         const hashedPassword = await bcrypt.hash(password, salt);
 
-        // Save adminId, companyId, checkinDate, and checkoutDate with the new user
+        // Save adminId, companyId, checkinDate, checkoutDate, villaId, and rooms with the new user
         const newUser = new User({
             username,
             password: hashedPassword,
             role,
             adminId,
             companyId: admin.companyId,
-            checkinDate,   // <-- add this
-            checkoutDate   // <-- add this
+            checkinDate,
+            checkoutDate,
+            villaId,
+            rooms // <-- save array of room ObjectIds
         });
         await newUser.save();
 

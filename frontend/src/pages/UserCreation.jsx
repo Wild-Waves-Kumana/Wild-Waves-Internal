@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import { jwtDecode } from 'jwt-decode';
@@ -10,9 +10,15 @@ const UserCreation = () => {
     role: 'user',
     checkinDate: '',
     checkoutDate: '',
+    villaId: '',
+    roomId: '',
   });
   const [username, setUsername] = useState('');
   const [message, setMessage] = useState('');
+  const [villas, setVillas] = useState([]);
+  const [rooms, setRooms] = useState([]);
+  const [selectedVillaRooms, setSelectedVillaRooms] = useState([]);
+  const [selectedRooms, setSelectedRooms] = useState([]);
   const token = localStorage.getItem('token');
   const navigate = useNavigate();
 
@@ -26,6 +32,60 @@ const UserCreation = () => {
       console.error('Invalid token:', err);
     }
   }
+
+  // Fetch villas for the admin's company
+  useEffect(() => {
+    const fetchVillas = async () => {
+      try {
+        if (!token) return;
+        const decoded = jwtDecode(token);
+        const adminId = decoded.id;
+
+        // Fetch admin details to get companyId
+        const adminRes = await axios.get(`http://localhost:5000/api/admin/${adminId}`);
+        const companyId = adminRes.data.companyId?._id || adminRes.data.companyId;
+
+        // Fetch all villas
+        const villasRes = await axios.get("http://localhost:5000/api/villas/all");
+        // Filter villas by companyId
+        const filteredVillas = villasRes.data.filter(
+          (v) =>
+            v.companyId === companyId ||
+            v.companyId?._id === companyId
+        );
+        setVillas(filteredVillas);
+      } catch (err) {
+        setVillas([]);
+        console.error("Failed to load villas", err);
+      }
+    };
+    fetchVillas();
+  }, [token]);
+
+  // Fetch rooms for all villas on mount
+  useEffect(() => {
+    const fetchRooms = async () => {
+      try {
+        const res = await axios.get("http://localhost:5000/api/rooms/all");
+        setRooms(res.data);
+      } catch (err) {
+        console.error("Failed to fetch rooms", err);
+        setRooms([]);
+      }
+    };
+    fetchRooms();
+  }, []);
+
+  // When a villa is selected, update selectedVillaRooms and clear selectedRooms
+  const handleVillaSelect = (villa) => {
+    setFormData((prev) => ({ ...prev, villaId: villa._id }));
+    // Find room objects that match the villa's rooms array
+    const villaRoomObjs = rooms.filter((room) =>
+      villa.rooms.includes(room._id)
+    );
+    setSelectedVillaRooms(villaRoomObjs);
+    setSelectedRooms([]); // Clear selected rooms when villa changes
+  };
 
   // Generate username: user-ddmmyy-xxx
   const generateUsername = () => {
@@ -57,7 +117,7 @@ const UserCreation = () => {
   };
 
   // Generate unique username on mount
-  React.useEffect(() => {
+  useEffect(() => {
     generateUniqueUsername();
     // eslint-disable-next-line
   }, []);
@@ -79,6 +139,25 @@ const UserCreation = () => {
     const numberCheck = /\d/.test(password);
     const symbolCheck = /[!@#$%^&*(),.?":{}|<>]/.test(password);
     return lengthCheck && numberCheck && symbolCheck;
+  };
+
+  // Handle room selection (multiple)
+  const handleRoomToggle = (roomId) => {
+    setSelectedRooms((prev) =>
+      prev.includes(roomId)
+        ? prev.filter((id) => id !== roomId)
+        : [...prev, roomId]
+    );
+  };
+
+  // Select all rooms for the selected villa
+  const handleSelectAllRooms = () => {
+    setSelectedRooms(selectedVillaRooms.map((room) => room._id));
+  };
+
+  // Deselect all rooms
+  const handleDeselectAllRooms = () => {
+    setSelectedRooms([]);
   };
 
   const handleSignup = async (e) => {
@@ -103,6 +182,8 @@ const UserCreation = () => {
         adminId: adminId,
         checkinDate: formData.checkinDate,
         checkoutDate: formData.checkoutDate,
+        villaId: formData.villaId,
+        rooms: selectedRooms, // <-- Pass as 'rooms' array
       });
 
       setMessage(res.data.message);
@@ -147,7 +228,67 @@ const UserCreation = () => {
               </div>
             </div>
 
-            {/* Check-in Date */}
+            {/* Villa Selection as buttons */}
+            <div>
+              <label className="block font-medium mb-1">Select Villa</label>
+              <div className="flex flex-wrap gap-2 mb-2">
+                {villas.map((villa) => (
+                  <button
+                    key={villa._id}
+                    type="button"
+                    className={`px-4 py-2 rounded border
+                      ${formData.villaId === villa._id
+                        ? "bg-blue-600 text-white border-blue-600"
+                        : "bg-gray-100 text-gray-700 border-gray-300 hover:bg-blue-100"}
+                    `}
+                    onClick={() => handleVillaSelect(villa)}
+                  >
+                    {villa.villaName} ({villa.villaId})
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Room Selection for selected villa as buttons (multiple) */}
+            {formData.villaId && (
+              <div>
+                <label className="block font-medium mb-1">Select Rooms</label>
+                <div className="flex flex-wrap gap-2 mb-2">
+                  <button
+                    type="button"
+                    className="px-4 py-2 rounded border bg-green-500 text-white border-green-600 hover:bg-green-600"
+                    onClick={handleSelectAllRooms}
+                  >
+                    Select All
+                  </button>
+                  <button
+                    type="button"
+                    className="px-4 py-2 rounded border bg-gray-300 text-gray-700 border-gray-400 hover:bg-gray-400"
+                    onClick={handleDeselectAllRooms}
+                  >
+                    Deselect All
+                  </button>
+                </div>
+                <div className="flex flex-wrap gap-2 mb-2">
+                  {selectedVillaRooms.map((room) => (
+                    <button
+                      key={room._id}
+                      type="button"
+                      className={`px-4 py-2 rounded border
+                        ${selectedRooms.includes(room._id)
+                          ? "bg-blue-600 text-white border-blue-600"
+                          : "bg-gray-100 text-gray-700 border-gray-300 hover:bg-blue-100"}
+                      `}
+                      onClick={() => handleRoomToggle(room._id)}
+                    >
+                      {room.roomName}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Check-in and Check-out Dates */}
             <div className="flex flex-col">
               <div className="flex gap-4">
                 {/* Check-in Date */}
@@ -179,8 +320,6 @@ const UserCreation = () => {
                 </div>
               </div>
             </div>
-
-
 
             <input
               type="password"
