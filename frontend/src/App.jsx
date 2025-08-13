@@ -19,6 +19,7 @@ import UserProfile from './pages/UserProfile';
 import AdminProfile from './pages/AdminProfile';
 import CreateCompany from './pages/CreateCompany';
 import CompanyList from './pages/CompanyList';
+import VillaCreate from './pages/VillaCreation';
 
 function App() {
   const { isLoggedIn, login, role } = useContext(UserContext);
@@ -110,6 +111,16 @@ function App() {
               <AdminDashboard />
             </Layout>
             
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/villa-create"
+        element={
+          <ProtectedRoute allowedRoles={['admin', 'superadmin']}>
+            <Layout>
+              <VillaCreate />
+            </Layout>
           </ProtectedRoute>
         }
       />
