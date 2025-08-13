@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import { jwtDecode } from 'jwt-decode';
+import Modal from '../components/Modal';
 
 const UserCreation = () => {
   const [formData, setFormData] = useState({
@@ -19,6 +20,8 @@ const UserCreation = () => {
   const [rooms, setRooms] = useState([]);
   const [selectedVillaRooms, setSelectedVillaRooms] = useState([]);
   const [selectedRooms, setSelectedRooms] = useState([]);
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
   const token = localStorage.getItem('token');
   const navigate = useNavigate();
 
@@ -160,6 +163,11 @@ const UserCreation = () => {
     setSelectedRooms([]);
   };
 
+  // Find selected villa and room objects for display
+  const selectedVilla = villas.find(v => v._id === formData.villaId);
+  const selectedRoomObjs = selectedVillaRooms.filter(room => selectedRooms.includes(room._id));
+
+  // Handle form submit: show confirmation modal instead of immediate submit
   const handleSignup = async (e) => {
     e.preventDefault();
 
@@ -173,8 +181,13 @@ const UserCreation = () => {
       return;
     }
 
+    setShowConfirmModal(true);
+  };
+
+  // Actual submit after confirmation
+  const handleConfirm = async () => {
+    setShowConfirmModal(false);
     try {
-      // Username is already unique at this point
       const res = await axios.post('http://localhost:5000/api/auth/register', {
         username,
         password: formData.password,
@@ -183,13 +196,12 @@ const UserCreation = () => {
         checkinDate: formData.checkinDate,
         checkoutDate: formData.checkoutDate,
         villaId: formData.villaId,
-        rooms: selectedRooms, // <-- Pass as 'rooms' array
+        rooms: selectedRooms,
       });
 
       setMessage(res.data.message);
-      setTimeout(() => {
-        navigate('/admindashboard');
-      }, 1200);
+      setShowSuccessModal(true); // Show success modal
+      // REMOVE navigation from here!
     } catch (err) {
       setMessage(err.response?.data?.message || 'Something went wrong');
       regenerateUsername();
@@ -348,6 +360,91 @@ const UserCreation = () => {
           </form>
         </div>
       </div>
+
+      {/* Confirmation Modal */}
+      <Modal isVisible={showConfirmModal} onClose={() => setShowConfirmModal(false)} width="max-w-lg">
+        <h2 className="text-xl font-bold mb-4 text-center">Confirm User Details</h2>
+        <div className="space-y-2">
+          <div>
+            <span className="font-semibold">Username:</span> {username}
+          </div>
+          <div>
+            <span className="font-semibold">Villa:</span> {selectedVilla ? `${selectedVilla.villaName} (${selectedVilla.villaId})` : '-'}
+          </div>
+          <div>
+            <span className="font-semibold">Rooms:</span>
+            <ul className="list-disc ml-6">
+              {selectedRoomObjs.length > 0
+                ? selectedRoomObjs.map(room => (
+                    <li key={room._id}>{room.roomName}</li>
+                  ))
+                : <li>-</li>
+              }
+            </ul>
+          </div>
+          <div>
+            <span className="font-semibold">Check-in Date:</span> {formData.checkinDate}
+          </div>
+          <div>
+            <span className="font-semibold">Check-out Date:</span> {formData.checkoutDate}
+          </div>
+        </div>
+        <div className="flex justify-end gap-2 mt-6">
+          <button
+            className="px-4 py-2 rounded bg-gray-300 text-gray-700 hover:bg-gray-400"
+            onClick={() => setShowConfirmModal(false)}
+          >
+            Cancel
+          </button>
+          <button
+            className="px-4 py-2 rounded bg-blue-600 text-white hover:bg-blue-700"
+            onClick={handleConfirm}
+          >
+            Confirm
+          </button>
+        </div>
+      </Modal>
+
+      {/* Success Modal */}
+      <Modal isVisible={showSuccessModal} onClose={() => setShowSuccessModal(false)} width="max-w-lg">
+        <h2 className="text-xl font-bold mb-4 text-center">User Created Successfully</h2>
+        <div className="space-y-2">
+          <div>
+            <span className="font-semibold">Username:</span> {username}
+          </div>
+          <div>
+            <span className="font-semibold">Villa:</span> {selectedVilla ? `${selectedVilla.villaName} (${selectedVilla.villaId})` : '-'}
+          </div>
+          <div>
+            <span className="font-semibold">Rooms:</span>
+            <ul className="list-disc ml-6">
+              {selectedRoomObjs.length > 0
+                ? selectedRoomObjs.map(room => (
+                    <li key={room._id}>{room.roomName}</li>
+                  ))
+                : <li>-</li>
+              }
+            </ul>
+          </div>
+          <div>
+            <span className="font-semibold">Check-in Date:</span> {formData.checkinDate}
+          </div>
+          <div>
+            <span className="font-semibold">Check-out Date:</span> {formData.checkoutDate}
+          </div>
+        </div>
+        <div className="flex justify-end gap-2 mt-6">
+          <button
+            className="px-4 py-2 rounded bg-blue-600 text-white hover:bg-blue-700"
+            onClick={() => {
+              setShowSuccessModal(false);
+              navigate('/admindashboard');
+            }}
+          >
+            Close
+          </button>
+        </div>
+      </Modal>
     </div>
   );
 };
