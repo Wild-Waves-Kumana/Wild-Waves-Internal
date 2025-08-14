@@ -10,6 +10,7 @@ const userSchema = new mongoose.Schema({
   rooms: [{ type: mongoose.Schema.Types.ObjectId, ref: "Room" }], // <-- Array of Room ObjectIds 
   checkinDate: { type: Date, required: true },
   checkoutDate: { type: Date, required: true },
+  villaId: { type: mongoose.Schema.Types.ObjectId, ref: 'Villa' }, // <-- Add this line for villa reference
   adminId: { type: mongoose.Schema.Types.ObjectId, ref: 'Admin' }, // <-- added
   companyId: { type: mongoose.Schema.Types.ObjectId, ref: 'Company' },
   
