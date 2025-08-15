@@ -163,8 +163,8 @@ export const updateAirConditioner = async (req, res) => {
     if (temperaturelevel !== undefined) updateFields.temperaturelevel = temperaturelevel;
     if (mode) updateFields.mode = mode;
     if (fanSpeed) updateFields.fanSpeed = fanSpeed;
-    if (status) updateFields.status = status;
-    if (access) updateFields.access = access;
+    if (status !== undefined) updateFields.status = status;   // <-- fix here
+    if (access !== undefined) updateFields.access = access; 
 
     const updatedAC = await AirConditioner.findByIdAndUpdate(
       acId,
@@ -188,22 +188,27 @@ export const updateAirConditioner = async (req, res) => {
 export const updateDoor = async (req, res) => {
   try {
     const { doorId } = req.params;
-    const {
+    let {
       itemName,
       itemCode,
-      lockStatus, // 0 for unlocked, 1 for locked
+      lockStatus,
       status,
       access,
-
     } = req.body;
+
+    // If access is being set to false, force status to false (OFF) and lockStatus to false (Locked)
+    if (access === false || access === "false") {
+      status = false;
+      lockStatus = false;
+    }
 
     // Build update object
     const updateFields = {};
     if (itemName) updateFields.itemName = itemName;
     if (itemCode) updateFields.itemCode = itemCode;
     if (lockStatus !== undefined) updateFields.lockStatus = lockStatus;
-    if (status) updateFields.status = status;
-    if (access) updateFields.access = access;
+    if (status !== undefined) updateFields.status = status;
+    if (access !== undefined) updateFields.access = access;
 
     const updatedDoor = await Door.findByIdAndUpdate(
       doorId,
@@ -238,8 +243,8 @@ export const updateLight = async (req, res) => {
     if (itemName) updateFields.itemName = itemName;
     if (itemCode) updateFields.itemCode = itemCode;
     if (brightness !== undefined) updateFields.brightness = brightness;
-    if (status) updateFields.status = status;
-    if (access) updateFields.access = access;
+    if (status !== undefined) updateFields.status = status;   // <-- fix here
+    if (access !== undefined) updateFields.access = access;   // <-- fix here
 
     const updatedLight = await Light.findByIdAndUpdate(
       lightId,
