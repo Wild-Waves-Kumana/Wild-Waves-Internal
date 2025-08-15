@@ -37,4 +37,15 @@ export const getVillas = async (req, res) => {
   }
 };
 
-
+export const getVillasbyId = async (req, res) => {
+  const { villa_id } = req.params;
+  try {
+    const villa = await Villa.findById(villa_id);
+    if (!villa) {
+      return res.status(404).json({ message: 'Villa not found' });
+    }
+    res.status(200).json(villa);
+  } catch (error) {
+    res.status(500).json({ message: 'Failed to fetch villa', error: error.message });
+  }
+};
