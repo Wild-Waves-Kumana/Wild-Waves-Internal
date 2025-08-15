@@ -3,10 +3,10 @@ import axios from 'axios';
 import { jwtDecode } from 'jwt-decode';
 import Modal from './Modal';
 
-const UserDoorList = ({ userId: propUserId, selectedRoomId }) => {
+const UserDoorList = ({ userId: propUserId, selectedRoomId, roomIds, role: propRole }) => {
   const [doors, setDoors] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [role, setRole] = useState("");
+  const [role, setRole] = useState(propRole || "");
   const [showEditModal, setShowEditModal] = useState(false);
   const [selectedDoor, setSelectedDoor] = useState(null);
   const [editForm, setEditForm] = useState({
@@ -17,9 +17,17 @@ const UserDoorList = ({ userId: propUserId, selectedRoomId }) => {
     lockStatus: false, // boolean
   });
 
-  // Fetch doors belonging to user from user > rooms > doors
+  // Fetch doors for rooms if roomIds is provided, otherwise use user logic
   const fetchDoors = useCallback(async () => {
     try {
+      if (roomIds && Array.isArray(roomIds) && roomIds.length > 0) {
+        const doorRes = await axios.get('http://localhost:5000/api/equipment/doors');
+        const filtered = doorRes.data.filter(door => door.roomId && roomIds.includes(door.roomId._id));
+        setDoors(filtered);
+        setLoading(false);
+        return;
+      }
+
       const token = localStorage.getItem("token");
       if (!token) return setLoading(false);
       const decoded = jwtDecode(token);
@@ -65,7 +73,7 @@ const UserDoorList = ({ userId: propUserId, selectedRoomId }) => {
     } finally {
       setLoading(false);
     }
-  }, [propUserId]);
+  }, [propUserId, roomIds]);
 
   useEffect(() => {
     fetchDoors();
@@ -135,8 +143,8 @@ const UserDoorList = ({ userId: propUserId, selectedRoomId }) => {
   if (loading) return <div>Loading...</div>;
 
   return (
-    <div className="mx-auto mt-10 bg-white shadow rounded p-6">
-      <h2 className="text-2xl font-bold mb-4">User's Doors</h2>
+    <div className="mx-auto my-4 bg-white shadow rounded p-6">
+      <h2 className="text-2xl font-bold mb-4">Doors</h2>
       <table className="min-w-full border">
         <thead>
           <tr>

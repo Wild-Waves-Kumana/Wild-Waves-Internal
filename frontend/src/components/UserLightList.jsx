@@ -3,10 +3,10 @@ import axios from 'axios';
 import { jwtDecode } from 'jwt-decode';
 import Modal from './Modal';
 
-const UserLightList = ({ userId: propUserId, selectedRoomId }) => {
+const UserLightList = ({ userId: propUserId, selectedRoomId, roomIds, role: propRole }) => {
   const [lights, setLights] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [role, setRole] = useState("");
+  const [role, setRole] = useState(propRole || "");
   const [showEditModal, setShowEditModal] = useState(false);
   const [selectedLight, setSelectedLight] = useState(null);
   const [editForm, setEditForm] = useState({
@@ -17,9 +17,17 @@ const UserLightList = ({ userId: propUserId, selectedRoomId }) => {
     access: false, // boolean
   });
 
-  // Fetch lights belonging to user from user > rooms > lights
+  // Fetch lights for rooms if roomIds is provided, otherwise use user logic
   const fetchLights = useCallback(async () => {
     try {
+      if (roomIds && Array.isArray(roomIds) && roomIds.length > 0) {
+        const lightRes = await axios.get('http://localhost:5000/api/equipment/lights');
+        const filtered = lightRes.data.filter(light => light.roomId && roomIds.includes(light.roomId._id));
+        setLights(filtered);
+        setLoading(false);
+        return;
+      }
+
       const token = localStorage.getItem("token");
       if (!token) return setLoading(false);
       const decoded = jwtDecode(token);
@@ -65,7 +73,7 @@ const UserLightList = ({ userId: propUserId, selectedRoomId }) => {
     } finally {
       setLoading(false);
     }
-  }, [propUserId]);
+  }, [propUserId, roomIds]);
 
   useEffect(() => {
     fetchLights();
@@ -133,8 +141,8 @@ const UserLightList = ({ userId: propUserId, selectedRoomId }) => {
   if (loading) return <div>Loading...</div>;
 
   return (
-    <div className="mx-auto mt-10 bg-white shadow rounded p-6">
-      <h2 className="text-2xl font-bold mb-4">User's Lights</h2>
+    <div className="mx-auto my-4 bg-white shadow rounded p-6">
+      <h2 className="text-2xl font-bold mb-4">Lights</h2>
       <table className="min-w-full border">
         <thead>
           <tr>

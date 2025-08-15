@@ -3,10 +3,10 @@ import axios from "axios";
 import Modal from "./Modal";
 import { jwtDecode } from "jwt-decode";
 
-const UserACList = ({ userId: propUserId, selectedRoomId }) => {
+const UserACList = ({ userId: propUserId, selectedRoomId, roomIds, role: propRole }) => {
   const [acs, setAcs] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [role, setRole] = useState("");
+  const [role, setRole] = useState(propRole || ""); // <-- use propRole if provided
   const [showEditModal, setShowEditModal] = useState(false);
   const [selectedAC, setSelectedAC] = useState(null);
   const [editForm, setEditForm] = useState({
@@ -19,9 +19,18 @@ const UserACList = ({ userId: propUserId, selectedRoomId }) => {
     access: false, // boolean
   });
 
-  // Fetch ACs belonging to user from user > rooms > airConditioners
+  // Fetch ACs for rooms if roomIds is provided, otherwise use user logic
   const fetchACs = useCallback(async () => {
     try {
+      if (roomIds && Array.isArray(roomIds) && roomIds.length > 0) {
+        // Fetch all ACs and filter by roomIds
+        const acRes = await axios.get("http://localhost:5000/api/equipment/air-conditioners");
+        const filtered = acRes.data.filter(ac => ac.roomId && roomIds.includes(ac.roomId._id));
+        setAcs(filtered);
+        setLoading(false);
+        return;
+      }
+
       const token = localStorage.getItem("token");
       if (!token) return setLoading(false);
       const decoded = jwtDecode(token);
@@ -67,7 +76,7 @@ const UserACList = ({ userId: propUserId, selectedRoomId }) => {
     } finally {
       setLoading(false);
     }
-  }, [propUserId]);
+  }, [propUserId, roomIds]);
 
   useEffect(() => {
     fetchACs();
@@ -128,8 +137,8 @@ const UserACList = ({ userId: propUserId, selectedRoomId }) => {
   if (loading) return <div>Loading...</div>;
 
   return (
-    <div className=" mx-auto mt-10 bg-white shadow rounded p-6">
-      <h2 className="text-2xl font-bold mb-4">User's Air Conditioners</h2>
+    <div className=" mx-auto my-4 bg-white shadow rounded p-6">
+      <h2 className="text-2xl font-bold mb-4">Air Conditioners</h2>
       <table className="min-w-full border">
         <thead>
           <tr>
