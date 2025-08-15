@@ -13,10 +13,12 @@ const UserLightController = ({ selectedRoom, onLightUpdate }) => {
       }
       try {
         // selectedRoom.lights is an array of Light ObjectIds
-        // Fetch all lights and filter by selectedRoom.lights
+        // Fetch all lights and filter by selectedRoom.lights and access === true
         const lightRes = await axios.get('http://localhost:5000/api/equipment/lights');
         const roomLights = lightRes.data.filter(light =>
-          selectedRoom.lights && selectedRoom.lights.includes(light._id)
+          selectedRoom.lights &&
+          selectedRoom.lights.includes(light._id) &&
+          light.access === true
         );
         setLights(roomLights);
       } catch (err) {
@@ -74,6 +76,7 @@ const UserLightController = ({ selectedRoom, onLightUpdate }) => {
                         handleFieldChange(light, idx, "brightness", Number(e.target.value))
                       }
                       className="flex-1"
+                      disabled={light.access !== true || light.status !== true}
                     />
                     <span className="w-12 text-center">
                       {light.brightness ?? 0}%
@@ -89,8 +92,10 @@ const UserLightController = ({ selectedRoom, onLightUpdate }) => {
                         ${light.status === true
                           ? "bg-blue-600 text-white border-blue-600"
                           : "bg-gray-100 text-gray-700 border-gray-300 hover:bg-blue-100"}
+                        ${light.access !== true ? "opacity-50 cursor-not-allowed" : ""}
                       `}
-                      onClick={() => handleFieldChange(light, idx, "status", true)}
+                      onClick={() => light.access === true && handleFieldChange(light, idx, "status", true)}
+                      disabled={light.access !== true}
                     >
                       ON
                     </button>
@@ -100,8 +105,10 @@ const UserLightController = ({ selectedRoom, onLightUpdate }) => {
                         ${light.status === false
                           ? "bg-blue-600 text-white border-blue-600"
                           : "bg-gray-100 text-gray-700 border-gray-300 hover:bg-blue-100"}
+                        ${light.access !== true ? "opacity-50 cursor-not-allowed" : ""}
                       `}
-                      onClick={() => handleFieldChange(light, idx, "status", false)}
+                      onClick={() => light.access === true && handleFieldChange(light, idx, "status", false)}
+                      disabled={light.access !== true}
                     >
                       OFF
                     </button>

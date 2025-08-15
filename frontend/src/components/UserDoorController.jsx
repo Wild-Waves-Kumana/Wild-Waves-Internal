@@ -13,10 +13,12 @@ const UserDoorController = ({ selectedRoom, onDoorUpdate }) => {
       }
       try {
         // selectedRoom.doors is an array of Door ObjectIds
-        // Fetch all doors and filter by selectedRoom.doors
+        // Fetch all doors and filter by selectedRoom.doors and access === true
         const doorRes = await axios.get('http://localhost:5000/api/equipment/doors');
         const roomDoors = doorRes.data.filter(door =>
-          selectedRoom.doors && selectedRoom.doors.includes(door._id)
+          selectedRoom.doors &&
+          selectedRoom.doors.includes(door._id) &&
+          door.access === true
         );
         setDoors(roomDoors);
       } catch (err) {
@@ -59,33 +61,7 @@ const UserDoorController = ({ selectedRoom, onDoorUpdate }) => {
               <div className="text-sm text-gray-500">Code: {door.itemCode}</div>
               <div className="text-sm">Room: {door.roomId?.roomName || "N/A"}</div>
               <form className="space-y-2 mt-2" onSubmit={e => e.preventDefault()}>
-                <div>
-                  <label className="block font-medium">Status</label>
-                  <div className="flex gap-2 mb-2">
-                    <button
-                      type="button"
-                      className={`px-4 py-2 rounded border 
-                        ${door.status === true
-                          ? "bg-blue-600 text-white border-blue-600"
-                          : "bg-gray-100 text-gray-700 border-gray-300 hover:bg-blue-100"}
-                      `}
-                      onClick={() => handleFieldChange(door, idx, "status", true)}
-                    >
-                      ON
-                    </button>
-                    <button
-                      type="button"
-                      className={`px-4 py-2 rounded border 
-                        ${door.status === false
-                          ? "bg-blue-600 text-white border-blue-600"
-                          : "bg-gray-100 text-gray-700 border-gray-300 hover:bg-blue-100"}
-                      `}
-                      onClick={() => handleFieldChange(door, idx, "status", false)}
-                    >
-                      OFF
-                    </button>
-                  </div>
-                </div>
+                
                 <div>
                   <label className="block font-medium">Lock Status</label>
                   <div className="flex gap-2 mb-2">
@@ -95,10 +71,12 @@ const UserDoorController = ({ selectedRoom, onDoorUpdate }) => {
                         ${door.lockStatus === true
                           ? "bg-blue-600 text-white border-blue-600"
                           : "bg-gray-100 text-gray-700 border-gray-300 hover:bg-blue-100"}
+                        ${door.access !== true || door.status !== true ? "opacity-50 cursor-not-allowed" : ""}
                       `}
-                      onClick={() => handleFieldChange(door, idx, "lockStatus", true)}
+                      onClick={() => door.access === true && handleFieldChange(door, idx, "lockStatus", true)}
+                      disabled={door.access !== true || door.status !== true}
                     >
-                      Locked
+                      Unlocked
                     </button>
                     <button
                       type="button"
@@ -106,10 +84,44 @@ const UserDoorController = ({ selectedRoom, onDoorUpdate }) => {
                         ${door.lockStatus === false
                           ? "bg-blue-600 text-white border-blue-600"
                           : "bg-gray-100 text-gray-700 border-gray-300 hover:bg-blue-100"}
+                        ${door.access !== true || door.status !== true ? "opacity-50 cursor-not-allowed" : ""}
                       `}
-                      onClick={() => handleFieldChange(door, idx, "lockStatus", false)}
+                      onClick={() => door.access === true && handleFieldChange(door, idx, "lockStatus", false)}
+                      disabled={door.access !== true || door.status !== true}
                     >
-                      Unlocked
+                      Locked
+                    </button>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block font-medium">Status</label>
+                  <div className="flex gap-2 mb-2">
+                    <button
+                      type="button"
+                      className={`px-4 py-2 rounded border 
+                        ${door.status === true
+                          ? "bg-blue-600 text-white border-blue-600"
+                          : "bg-gray-100 text-gray-700 border-gray-300 hover:bg-blue-100"}
+                        ${door.access !== true  ? "opacity-50 cursor-not-allowed" : ""}
+                      `}
+                      onClick={() => door.access === true && handleFieldChange(door, idx, "status", true)}
+                      disabled={door.access !==  true}
+                    >
+                      ON
+                    </button>
+                    <button
+                      type="button"
+                      className={`px-4 py-2 rounded border 
+                        ${door.status === false
+                          ? "bg-blue-600 text-white border-blue-600"
+                          : "bg-gray-100 text-gray-700 border-gray-300 hover:bg-blue-100"}
+                        ${door.access !== true  ? "opacity-50 cursor-not-allowed" : ""}
+                      `}
+                      onClick={() => door.access === true && handleFieldChange(door, idx, "status", false)}
+                      disabled={door.access !== true }
+                    >
+                      OFF
                     </button>
                   </div>
                 </div>

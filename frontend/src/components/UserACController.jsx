@@ -15,8 +15,12 @@ const UserACController = ({ selectedRoom, onACUpdate }) => {
         // selectedRoom.airConditioners is an array of AC ObjectIds
         // Fetch all ACs and filter by selectedRoom.airConditioners
         const acRes = await axios.get('http://localhost:5000/api/equipment/air-conditioners');
-        const roomACs = acRes.data.filter(ac =>
-          selectedRoom.airConditioners && selectedRoom.airConditioners.includes(ac._id)
+        // Only show ACs with access === true
+        const roomACs = acRes.data.filter(
+          ac =>
+            selectedRoom.airConditioners &&
+            selectedRoom.airConditioners.includes(ac._id) &&
+            ac.access === true
         );
         setAcs(roomACs);
       } catch (err) {
@@ -74,6 +78,7 @@ const UserACController = ({ selectedRoom, onACUpdate }) => {
                         handleFieldChange(ac, idx, "temperaturelevel", Number(e.target.value))
                       }
                       className="flex-1"
+                      disabled={ac.access !== true || ac.status !== true}
                     />
                     <span className="w-12 text-center">
                       {ac.temperaturelevel}°C
@@ -91,10 +96,12 @@ const UserACController = ({ selectedRoom, onACUpdate }) => {
                           ${ac.mode === modeOption
                             ? "bg-blue-600 text-white border-blue-600"
                             : "bg-gray-100 text-gray-700 border-gray-300 hover:bg-blue-100"}
+                        ${ac.access !== true || ac.status !== true ? "opacity-50 cursor-not-allowed" : ""}
                         `}
                         onClick={() =>
-                          handleFieldChange(ac, idx, "mode", modeOption)
+                          ac.access === true && ac.status === true && handleFieldChange(ac, idx, "mode", modeOption)
                         }
+                        disabled={ac.access !== true || ac.status !== true}
                       >
                         {modeOption}
                       </button>
@@ -112,10 +119,12 @@ const UserACController = ({ selectedRoom, onACUpdate }) => {
                           ${ac.fanSpeed === speed
                             ? "bg-blue-600 text-white border-blue-600"
                             : "bg-gray-100 text-gray-700 border-gray-300 hover:bg-blue-100"}
+                        ${ac.access !== true || ac.status !== true ? "opacity-50 cursor-not-allowed" : ""}
                         `}
                         onClick={() =>
-                          handleFieldChange(ac, idx, "fanSpeed", speed)
+                          ac.access === true && ac.status === true && handleFieldChange(ac, idx, "fanSpeed", speed)
                         }
+                        disabled={ac.access !== true || ac.status !== true}
                       >
                         {speed}
                       </button>
@@ -131,8 +140,10 @@ const UserACController = ({ selectedRoom, onACUpdate }) => {
                         ${ac.status === true
                           ? "bg-blue-600 text-white border-blue-600"
                           : "bg-gray-100 text-gray-700 border-gray-300 hover:bg-blue-100"}
+                        ${ac.access !== true ? "opacity-50 cursor-not-allowed" : ""}
                       `}
-                      onClick={() => handleFieldChange(ac, idx, "status", true)}
+                      onClick={() => ac.access === true && handleFieldChange(ac, idx, "status", true)}
+                      disabled={ac.access !== true}
                     >
                       ON
                     </button>
@@ -142,8 +153,10 @@ const UserACController = ({ selectedRoom, onACUpdate }) => {
                         ${ac.status === false
                           ? "bg-blue-600 text-white border-blue-600"
                           : "bg-gray-100 text-gray-700 border-gray-300 hover:bg-blue-100"}
+                        ${ac.access !== true ? "opacity-50 cursor-not-allowed" : ""}
                       `}
-                      onClick={() => handleFieldChange(ac, idx, "status", false)}
+                      onClick={() => ac.access === true && handleFieldChange(ac, idx, "status", false)}
+                      disabled={ac.access !== true}
                     >
                       OFF
                     </button>
