@@ -14,7 +14,6 @@ const UserProfile = () => {
   const [villas, setVillas] = useState([]);
   const [allRooms, setAllRooms] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [adminId, setAdminId] = useState("");
   const [role, setRole] = useState("");
   const [showEditModal, setShowEditModal] = useState(false);
   const [editForm, setEditForm] = useState({
@@ -34,7 +33,7 @@ const UserProfile = () => {
       try {
         const decoded = jwtDecode(token);
         setRole(decoded.role);
-        setAdminId(decoded.adminId);
+        //setRole(decoded.role);
       } catch {
         setRole('');
       }
