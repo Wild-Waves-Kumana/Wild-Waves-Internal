@@ -12,13 +12,16 @@ import Layout from './components/Layout';
 import SuperAdminDashboard from './pages/SuperAdminDashboard';
 import AdminCreation from './pages/AdminCreation';
 import UserCreation from './pages/UserCreation';
-import EquipmentCreate from './pages/EquipmentCreate';
+import EquipmentCreate from './pages/EquipmentCreation';
 import UserList from './pages/UserList';
 import EquipmentUser from './pages/EquipmentUser';
 import UserProfile from './pages/UserProfile';
 import AdminProfile from './pages/AdminProfile';
 import CreateCompany from './pages/CreateCompany';
 import CompanyList from './pages/CompanyList';
+import VillaCreate from './pages/VillaCreation';
+import VillaList from './pages/VillaList';
+import VillaProfile from './pages/VillaProfile';
 
 function App() {
   const { isLoggedIn, login, role } = useContext(UserContext);
@@ -113,6 +116,16 @@ function App() {
           </ProtectedRoute>
         }
       />
+      <Route
+        path="/villa-create"
+        element={
+          <ProtectedRoute allowedRoles={['admin', 'superadmin']}>
+            <Layout>
+              <VillaCreate />
+            </Layout>
+          </ProtectedRoute>
+        }
+      />
 
       <Route
         path="/user-profile/:userId"
@@ -132,6 +145,17 @@ function App() {
           <ProtectedRoute allowedRoles={['admin', 'superadmin']}>
             <Layout>
               <AdminProfile />
+            </Layout>
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/villa-profile/:villa_id"
+        element={
+          <ProtectedRoute allowedRoles={['admin', 'superadmin']}>
+            <Layout>
+              <VillaProfile />
             </Layout>
           </ProtectedRoute>
         }
@@ -177,9 +201,19 @@ function App() {
         }
       />
 
-    </Routes>
-
     
+      <Route
+        path="/villalist"
+        element={
+          <ProtectedRoute allowedRoles={['admin', 'superadmin']}>
+            <Layout>
+              <VillaList />
+            </Layout>
+          </ProtectedRoute>
+        }
+      />
+
+    </Routes>
   );
 }
 

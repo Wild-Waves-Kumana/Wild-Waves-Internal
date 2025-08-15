@@ -3,11 +3,10 @@ import mongoose from 'mongoose';
 const lightSchema = new mongoose.Schema({
   itemName: String,
   itemCode: { type: String, unique: true },
-  roomname: String,
   brightness: { type: Number, default: 100 },
-  status: { type: String, enum: ['ON', 'OFF'], default: 'ON' },
-  access: { type: String, enum: ['Enabled', 'Disabled'], default: 'Enabled' },
-  assignedUser: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+  access: { type: Boolean, default: true }, //true for Enabled, false for Disabled
+  status: { type: Boolean, default: false }, //false for OFF, true for ON
+  roomId: { type: mongoose.Schema.Types.ObjectId, ref: 'Room' }, // <-- added
   companyId: { type: mongoose.Schema.Types.ObjectId, ref: 'Company' },
   createdAdminId: { type: mongoose.Schema.Types.ObjectId, ref: 'Admin' }, // <-- added
 });
