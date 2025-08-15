@@ -1,5 +1,5 @@
-import User from "../models/user.js";
 import Room from "../models/room.js";
+import Villa from "../models/villa.js";
 import Company from "../models/company.js";
 
 // Create a new room
@@ -10,30 +10,30 @@ export const createRoom = async (req, res) => {
       return res.status(400).json({ message: "roomName and villaId are required" });
     }
 
-    // Fetch the user to get companyId
-    const user = await User.findById(villaId);
-    if (!user) {
-      return res.status(404).json({ message: "User (villaId) not found" });
+    // Fetch the villa to get companyId
+    const villa = await Villa.findById(villaId);
+    if (!villa) {
+      return res.status(404).json({ message: "Villa not found" });
     }
 
     const room = new Room({
       roomName,
       villaId,
-      companyId: user.companyId,
+      companyId: villa.companyId,
     });
 
     await room.save();
 
-    // Add room._id to user's rooms array
-    await User.findByIdAndUpdate(
+    // Add room._id to villa's rooms array
+    await Villa.findByIdAndUpdate(
       villaId,
-      { $addToSet: { rooms: room._id } }, // $addToSet avoids duplicates
+      { $addToSet: { rooms: room._id } },
       { new: true }
     );
 
     // Add room._id to company's rooms array
     await Company.findByIdAndUpdate(
-      user.companyId,
+      villa.companyId,
       { $addToSet: { rooms: room._id } },
       { new: true }
     );

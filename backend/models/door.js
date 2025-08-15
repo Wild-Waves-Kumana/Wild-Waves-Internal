@@ -5,9 +5,8 @@ const doorSchema = new mongoose.Schema({
   itemCode: { type: String, unique: true },
   villaName: String,
   lockStatus: { type: Boolean, default: true }, // true for locked, false for unlocked
-  status: { type: String, enum: ['ON', 'OFF'], default: 'OFF' },
-  access: { type: String, enum: ['Enabled', 'Disabled'], default: 'Enabled' },
-  assignedUser: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+  access: { type: Boolean, default: true }, // true for Enabled, false for Disabled
+  status: { type: Boolean, default: false }, // false for OFF, true for ON
   roomId: { type: mongoose.Schema.Types.ObjectId, ref: 'Room' }, // <-- added
   companyId: { type: mongoose.Schema.Types.ObjectId, ref: 'Company' },
   createdAdminId: { type: mongoose.Schema.Types.ObjectId, ref: 'Admin' }, // <-- added

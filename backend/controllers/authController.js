@@ -54,7 +54,7 @@ export const loginUser = async (req, res) => {
 
 //sign up
 export const registerUser = async (req, res) => {
-    const { villaName, villaId, username, password, role, adminId} = req.body;
+    const { username, password, role, adminId, checkinDate, checkoutDate, villaId, rooms } = req.body;
 
     try {
         const existingUser = await User.findOne({ username });
@@ -71,15 +71,17 @@ export const registerUser = async (req, res) => {
         const salt = await bcrypt.genSalt(10);
         const hashedPassword = await bcrypt.hash(password, salt);
 
-        // Save adminId and companyId with the new user
+        // Save adminId, companyId, checkinDate, checkoutDate, villaId, and rooms with the new user
         const newUser = new User({
-            villaName,
-            villaId,
             username,
             password: hashedPassword,
             role,
             adminId,
-            companyId: admin.companyId // <-- add companyId from admin
+            companyId: admin.companyId,
+            checkinDate,
+            checkoutDate,
+            villaId,
+            rooms // <-- save array of room ObjectIds
         });
         await newUser.save();
 
@@ -89,12 +91,26 @@ export const registerUser = async (req, res) => {
           { $push: { users: newUser._id } }
         );
 
-        // In registerUser controller, after saving newUser:
         res.status(201).json({ message: 'User created successfully', user: newUser });
     }
     catch (err) {
+        console.error(err);
         res.status(500).json({ message: 'Server error' });
     }
+};
+
+// Check username uniqueness
+export const checkUsername = async (req, res) => {
+  const { username } = req.params;
+  try {
+    const existingUser = await User.findOne({ username });
+    if (existingUser) {
+      return res.json({ available: false });
+    }
+    return res.json({ available: true });
+  } catch (err) {
+    res.status(500).json({ available: false, message: 'Server error' });
+  }
 };
 
 // Admin registration
@@ -125,3 +141,4 @@ export const registerAdmin = async (req, res) => {
         res.status(500).json({ message: 'Server error' });
     }
 };
+

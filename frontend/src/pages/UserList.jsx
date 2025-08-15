@@ -6,7 +6,7 @@ import { useNavigate } from 'react-router-dom';
 const UserList = () => {
   const [users, setUsers] = useState([]);
   const [companies, setCompanies] = useState([]);
-  //const [adminCompanyId, setAdminCompanyId] = useState(null);
+  const [villas, setVillas] = useState([]);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
 
@@ -22,15 +22,15 @@ const UserList = () => {
         // Fetch admin details to get companyId
         const adminRes = await axios.get(`http://localhost:5000/api/admin/${adminId}`);
         const companyId = adminRes.data.companyId?._id || adminRes.data.companyId;
-        
-        //setAdminCompanyId(companyId);
 
-        // Fetch all users
-        const [usersRes, companiesRes] = await Promise.all([
+        // Fetch all users, companies, and villas
+        const [usersRes, companiesRes, villasRes] = await Promise.all([
           axios.get('http://localhost:5000/api/users'),
-          axios.get('http://localhost:5000/api/company/all')
+          axios.get('http://localhost:5000/api/company/all'),
+          axios.get('http://localhost:5000/api/villas/all')
         ]);
         setCompanies(companiesRes.data);
+        setVillas(villasRes.data);
 
         // Filter users by companyId
         const filteredUsers = usersRes.data.filter(
@@ -40,7 +40,7 @@ const UserList = () => {
         );
         setUsers(filteredUsers);
       } catch (err) {
-        console.error('Failed to fetch users or companies:', err);
+        console.error('Failed to fetch users, companies, or villas:', err);
         setUsers([]);
       } finally {
         setLoading(false);
@@ -59,6 +59,15 @@ const UserList = () => {
     return found ? found.companyName : 'N/A';
   };
 
+  // Helper to get villa name by villaId
+  const getVillaName = (villaId) => {
+    if (!villaId) return 'N/A';
+    const found = villas.find(
+      (v) => v._id === villaId || v.villaId === villaId
+    );
+    return found ? found.villaName : 'N/A';
+  };
+
   if (loading) return <div>Loading...</div>;
 
   return (
@@ -69,7 +78,9 @@ const UserList = () => {
           <tr>
             <th className="border px-4 py-2">Username</th>
             <th className="border px-4 py-2">Villa Name</th>
-            <th className="border px-4 py-2">Villa ID</th>
+            <th className="border px-4 py-2">Access</th>
+            <th className="border px-4 py-2">Check-In</th>
+            <th className="border px-4 py-2">Check-Out</th>
             <th className="border px-4 py-2">Company</th>
             <th className="border px-4 py-2">Profile</th>
           </tr>
@@ -78,8 +89,18 @@ const UserList = () => {
           {users.map((u) => (
             <tr key={u._id}>
               <td className="border px-4 py-2">{u.username}</td>
-              <td className="border px-4 py-2">{u.villaName}</td>
-              <td className="border px-4 py-2">{u.villaId}</td>
+              <td className="border px-4 py-2">{getVillaName(u.villaId)}</td>
+              <td className="border px-4 py-2">
+                <span className={`px-2 py-1 rounded ${u.access === true ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"}`}>
+                  {u.access === true ? "Enabled" : "Disabled"}
+                </span>
+              </td>
+              <td className="border px-4 py-2">
+                {u.checkinDate ? new Date(u.checkinDate).toLocaleDateString() : 'N/A'}
+              </td>
+              <td className="border px-4 py-2">
+                {u.checkoutDate ? new Date(u.checkoutDate).toLocaleDateString() : 'N/A'}
+              </td>
               <td className="border px-4 py-2">
                 {getCompanyName(u.companyId?._id || u.companyId)}
               </td>

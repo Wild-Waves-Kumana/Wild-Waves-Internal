@@ -1,120 +1,74 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import { jwtDecode } from 'jwt-decode';
 import axios from 'axios';
 import UserACController from './UserACController';
 import UserLightController from './UserLightController';
 import UserDoorController from './UserDoorController';
 
+const SELECTED_ROOM_KEY = "selectedRoomId";
+
 const DashboardController = () => {
-  const [acs, setAcs] = useState([]);
-  const [lights, setLights] = useState([]);
-  const [doors, setDoors] = useState([]);
-  const [loading, setLoading] = useState(true);
   const [rooms, setRooms] = useState([]);
-  const [selectedRoomId, setSelectedRoomId] = useState(null);
+  const [selectedRoomId, setSelectedRoomId] = useState(
+    () => localStorage.getItem(SELECTED_ROOM_KEY) || null
+  );
+  const [loading, setLoading] = useState(true);
 
   // Get user id from the JWT token
   const token = localStorage.getItem('token');
-  let userId = null;
-  if (token) {
+  const userId = useMemo(() => {
+    if (!token) return null;
     try {
       const decoded = jwtDecode(token);
-      userId = decoded.id;
-    } catch (err) {
-      console.error('Invalid token:', err);
+      return decoded.id;
+    } catch {
+      return null;
     }
-  }
+  }, [token]);
 
+  // Fetch the logged-in user's rooms from the user collection
   useEffect(() => {
-    const fetchEquipments = async () => {
+    const fetchUserRooms = async () => {
       setLoading(true);
       try {
-        // Fetch ACs
-        const acRes = await axios.get('http://localhost:5000/api/equipment/air-conditioners');
-        setAcs(acRes.data.filter(
-          ac => ac.assignedUser === userId || (ac.assignedUser && ac.assignedUser._id === userId)
-        ));
+        const userRes = await axios.get(`http://localhost:5000/api/users/${userId}`);
+        const user = userRes.data;
+        // user.rooms is an array of room ObjectIds
+        // Fetch all rooms and filter by user's room ids
+        const allRoomsRes = await axios.get('http://localhost:5000/api/rooms/all');
+        const userRooms = allRoomsRes.data.filter(room => user.rooms && user.rooms.includes(room._id));
+        setRooms(userRooms);
 
-        // Fetch Lights
-        const lightRes = await axios.get('http://localhost:5000/api/equipment/lights');
-        setLights(lightRes.data.filter(
-          light => light.assignedUser === userId || (light.assignedUser && light.assignedUser._id === userId)
-        ));
-
-        // Fetch Doors
-        const doorRes = await axios.get('http://localhost:5000/api/equipment/doors');
-        setDoors(doorRes.data.filter(
-          door => door.assignedUser === userId || (door.assignedUser && door.assignedUser._id === userId)
-        ));
+        // If selectedRoomId is not in userRooms, reset to first room
+        if (userRooms.length > 0) {
+          const found = userRooms.find(r => r._id === selectedRoomId);
+          if (!found) {
+            setSelectedRoomId(userRooms[0]._id);
+            localStorage.setItem(SELECTED_ROOM_KEY, userRooms[0]._id);
+          }
+        }
       } catch (err) {
-        console.error('Failed to fetch equipments:', err);
-        setAcs([]); setLights([]); setDoors([]);
+        console.error('Failed to fetch user rooms:', err);
+        setRooms([]);
       } finally {
         setLoading(false);
       }
     };
-    if (userId) fetchEquipments();
+    if (userId) fetchUserRooms();
+    // eslint-disable-next-line
   }, [userId]);
 
+  // Save selectedRoomId to localStorage when it changes
   useEffect(() => {
-    const fetchRooms = async () => {
-      try {
-        const res = await axios.get(`http://localhost:5000/api/rooms/user/${userId}`);
-        setRooms(res.data);
-        if (res.data.length > 0) setSelectedRoomId(res.data[0]._id);
-      } catch (err) {
-        console.error('Failed to fetch rooms:', err);
-        setRooms([]);
-      }
-    };
-    if (userId) fetchRooms();
-  }, [userId]);
-
-  const filteredAcs = selectedRoomId
-    ? acs.filter(ac => ac.roomId && ac.roomId._id === selectedRoomId)
-    : acs;
-  const filteredLights = selectedRoomId
-    ? lights.filter(light => light.roomId && light.roomId._id === selectedRoomId)
-    : lights;
-  const filteredDoors = selectedRoomId
-    ? doors.filter(door => door.roomId && door.roomId._id === selectedRoomId)
-    : doors;
-
-  const refreshAcs = async () => {
-    try {
-      const acRes = await axios.get('http://localhost:5000/api/equipment/air-conditioners');
-      setAcs(acRes.data.filter(
-        ac => ac.assignedUser === userId || (ac.assignedUser && ac.assignedUser._id === userId)
-      ));
-    } catch (err) {
-      console.error('Failed to fetch ACs:', err);
-      setAcs([]);
+    if (selectedRoomId) {
+      localStorage.setItem(SELECTED_ROOM_KEY, selectedRoomId);
     }
-  };
+  }, [selectedRoomId]);
 
-  const refreshLights = async () => {
-    try {
-      const lightRes = await axios.get('http://localhost:5000/api/equipment/lights');
-      setLights(lightRes.data.filter(
-        light => light.assignedUser === userId || (light.assignedUser && light.assignedUser._id === userId)
-      ));
-    } catch (err) {
-      console.error('Failed to fetch lights:', err);
-      setLights([]);
-    }
-  };
-
-  const refreshDoors = async () => {
-    try {
-      const doorRes = await axios.get('http://localhost:5000/api/equipment/doors');
-      setDoors(doorRes.data.filter(
-        door => door.assignedUser === userId || (door.assignedUser && door.assignedUser._id === userId)
-      ));
-    } catch (err) {
-      console.error('Failed to fetch doors:', err);
-      setDoors([]);
-    }
-  };
+  const selectedRoom = useMemo(
+    () => rooms.find(r => r._id === selectedRoomId),
+    [rooms, selectedRoomId]
+  );
 
   if (loading) {
     return <div>Loading your equipments...</div>;
@@ -143,11 +97,11 @@ const DashboardController = () => {
       </div>
       <div className="w-full max-w-6xl grid grid-cols-1 md:grid-cols-3 gap-8">
         {/* AC Section */}
-        <UserACController acs={filteredAcs} onACUpdate={refreshAcs} />
+        <UserACController selectedRoom={selectedRoom} />
         {/* Lights Section */}
-        <UserLightController lights={filteredLights} onLightUpdate={refreshLights} />
+        <UserLightController selectedRoom={selectedRoom} />
         {/* Doors Section */}
-        <UserDoorController doors={filteredDoors} onDoorUpdate={refreshDoors} />
+        <UserDoorController selectedRoom={selectedRoom} />
       </div>
     </div>
   );

@@ -1,33 +1,48 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 
-const UserLightController = ({ lights, onLightUpdate }) => {
-  // Local Lights state for instant UI update
-  const [localLights, setLocalLights] = useState(lights);
+const UserLightController = ({ selectedRoom, onLightUpdate }) => {
+  const [lights, setLights] = useState([]);
 
-  // Keep localLights in sync with props when room changes
+  // Fetch Lights for the selected room
   useEffect(() => {
-    setLocalLights(lights);
-  }, [lights]);
+    const fetchRoomLights = async () => {
+      if (!selectedRoom) {
+        setLights([]);
+        return;
+      }
+      try {
+        // selectedRoom.lights is an array of Light ObjectIds
+        // Fetch all lights and filter by selectedRoom.lights
+        const lightRes = await axios.get('http://localhost:5000/api/equipment/lights');
+        const roomLights = lightRes.data.filter(light =>
+          selectedRoom.lights && selectedRoom.lights.includes(light._id)
+        );
+        setLights(roomLights);
+      } catch (err) {
+        console.error('Failed to fetch room lights:', err);
+        setLights([]);
+      }
+    };
+    fetchRoomLights();
+  }, [selectedRoom]);
 
   // Save only the changed field
   const handleFieldChange = async (light, idx, field, value) => {
-    const updated = { ...localLights[idx], [field]: value };
-    // Update local state for instant feedback
-    setLocalLights(prev =>
+    const updated = { ...lights[idx], [field]: value };
+    setLights(prev =>
       prev.map((item, i) =>
         i === idx ? updated : item
       )
     );
-    // Save to backend
     try {
       await axios.put(
         `http://localhost:5000/api/equipment/lights/${light._id}`,
         { [field]: value }
       );
-      if (onLightUpdate) onLightUpdate(); // Refresh parent data
+      if (onLightUpdate) onLightUpdate();
     } catch (err) {
-      console.error('Failed to update Light:', err);
+      console.error('Failed to update light:', err);
       alert("Failed to update Light.");
     }
   };
@@ -35,11 +50,11 @@ const UserLightController = ({ lights, onLightUpdate }) => {
   return (
     <div className="bg-white rounded shadow p-4">
       <h3 className="text-xl font-bold mb-2 text-yellow-700">Your Lights</h3>
-      {localLights.length === 0 ? (
-        <div className="text-gray-400">No lights assigned.</div>
+      {lights.length === 0 ? (
+        <div className="text-gray-400">No lights assigned to this room.</div>
       ) : (
         <ul className="space-y-2">
-          {localLights.map((light, idx) => (
+          {lights.map((light, idx) => (
             <li key={light._id} className="border-b pb-1">
               <div className="font-semibold">{light.itemName}</div>
               <div className="text-sm text-gray-500">Code: {light.itemCode}</div>
@@ -68,22 +83,28 @@ const UserLightController = ({ lights, onLightUpdate }) => {
                 <div>
                   <label className="block font-medium">Status</label>
                   <div className="flex gap-2 mb-2">
-                    {["ON", "OFF"].map((statusOption) => (
-                      <button
-                        key={statusOption}
-                        type="button"
-                        className={`px-4 py-2 rounded border 
-                          ${localLights[idx].status === statusOption
-                            ? "bg-blue-600 text-white border-blue-600"
-                            : "bg-gray-100 text-gray-700 border-gray-300 hover:bg-blue-100"}
-                        `}
-                        onClick={() =>
-                          handleFieldChange(light, idx, "status", statusOption)
-                        }
-                      >
-                        {statusOption}
-                      </button>
-                    ))}
+                    <button
+                      type="button"
+                      className={`px-4 py-2 rounded border 
+                        ${light.status === true
+                          ? "bg-blue-600 text-white border-blue-600"
+                          : "bg-gray-100 text-gray-700 border-gray-300 hover:bg-blue-100"}
+                      `}
+                      onClick={() => handleFieldChange(light, idx, "status", true)}
+                    >
+                      ON
+                    </button>
+                    <button
+                      type="button"
+                      className={`px-4 py-2 rounded border 
+                        ${light.status === false
+                          ? "bg-blue-600 text-white border-blue-600"
+                          : "bg-gray-100 text-gray-700 border-gray-300 hover:bg-blue-100"}
+                      `}
+                      onClick={() => handleFieldChange(light, idx, "status", false)}
+                    >
+                      OFF
+                    </button>
                   </div>
                 </div>
               </form>

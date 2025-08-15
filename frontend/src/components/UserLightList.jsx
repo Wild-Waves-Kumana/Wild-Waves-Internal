@@ -1,25 +1,33 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import axios from 'axios';
 import { jwtDecode } from 'jwt-decode';
 import Modal from './Modal';
 
-const UserLightList = ({ userId: propUserId }) => {
+const UserLightList = ({ userId: propUserId, selectedRoomId, roomIds, role: propRole }) => {
   const [lights, setLights] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [role, setRole] = useState("");
+  const [role, setRole] = useState(propRole || "");
   const [showEditModal, setShowEditModal] = useState(false);
   const [selectedLight, setSelectedLight] = useState(null);
   const [editForm, setEditForm] = useState({
     itemName: "",
     itemCode: "",
     brightness: 100,
-    status: "",
-    access: "",
+    status: false, // boolean
+    access: false, // boolean
   });
 
-  // Fetch lights logic
-  const fetchLights = React.useCallback(async () => {
+  // Fetch lights for rooms if roomIds is provided, otherwise use user logic
+  const fetchLights = useCallback(async () => {
     try {
+      if (roomIds && Array.isArray(roomIds) && roomIds.length > 0) {
+        const lightRes = await axios.get('http://localhost:5000/api/equipment/lights');
+        const filtered = lightRes.data.filter(light => light.roomId && roomIds.includes(light.roomId._id));
+        setLights(filtered);
+        setLoading(false);
+        return;
+      }
+
       const token = localStorage.getItem("token");
       if (!token) return setLoading(false);
       const decoded = jwtDecode(token);
@@ -28,38 +36,44 @@ const UserLightList = ({ userId: propUserId }) => {
       setRole(userRole);
 
       let userId = loggedUserId;
-      let adminCompanyId = null;
-
-      if (userRole === 'admin' || userRole === 'superadmin') {
+      if (userRole === "admin" || userRole === "superadmin") {
         userId = propUserId;
-        const adminRes = await axios.get(`http://localhost:5000/api/admin/${loggedUserId}`);
-        adminCompanyId = adminRes.data.companyId?._id || adminRes.data.companyId;
       }
 
-      const res = await axios.get('http://localhost:5000/api/equipment/lights');
-
-      let filteredLights = res.data.filter(
-        (light) =>
-          (light.assignedUser === userId ||
-            (light.assignedUser && light.assignedUser._id === userId))
-      );
-
-      if ((userRole === 'admin' || userRole === 'superadmin') && adminCompanyId) {
-        filteredLights = filteredLights.filter(
-          (light) =>
-            light.companyId === adminCompanyId ||
-            (light.companyId && light.companyId._id === adminCompanyId)
-        );
+      // Fetch user to get rooms
+      const userRes = await axios.get(`http://localhost:5000/api/users/${userId}`);
+      const user = userRes.data;
+      if (!user.rooms || user.rooms.length === 0) {
+        setLights([]);
+        setLoading(false);
+        return;
       }
 
-      setLights(filteredLights);
+      // Fetch all rooms and filter by user's room ids
+      const allRoomsRes = await axios.get('http://localhost:5000/api/rooms/all');
+      const userRooms = allRoomsRes.data.filter(room => user.rooms.includes(room._id));
+
+      // Collect all light ObjectIds from user's rooms
+      const lightIds = userRooms.flatMap(room => room.lights || []);
+
+      if (lightIds.length === 0) {
+        setLights([]);
+        setLoading(false);
+        return;
+      }
+
+      // Fetch all lights and filter by lightIds
+      const lightRes = await axios.get('http://localhost:5000/api/equipment/lights');
+      const filtered = lightRes.data.filter(light => lightIds.includes(light._id));
+
+      setLights(filtered);
     } catch (err) {
       console.error("Failed to fetch lights:", err);
       setLights([]);
     } finally {
       setLoading(false);
     }
-  }, [propUserId]);
+  }, [propUserId, roomIds]);
 
   useEffect(() => {
     fetchLights();
@@ -72,24 +86,27 @@ const UserLightList = ({ userId: propUserId }) => {
       itemName: light.itemName || "",
       itemCode: light.itemCode || "",
       brightness: light.brightness ?? 100,
-      status: light.status || "",
-      access: light.access || "",
+      status: light.status === true,
+      access: light.access === true,
     });
     setShowEditModal(true);
   };
 
   // Handle form changes
   const handleEditChange = (e) => {
-    const { name, value } = e.target;
-    setEditForm({ ...editForm, [name]: name === "brightness" ? Number(value) : value });
+    const { name, value, type, checked } = e.target;
+    setEditForm((prev) => ({
+      ...prev,
+      [name]: type === "checkbox" ? checked : (["status", "access"].includes(name) ? value === "true" : value),
+    }));
   };
 
-  // If access is Disabled, force status to OFF
+  // If access is false (Disabled), force status to false (OFF)
   useEffect(() => {
-    if (editForm.access === "Disabled") {
+    if (editForm.access === false) {
       setEditForm((prev) => ({
         ...prev,
-        status: "OFF",
+        status: false,
       }));
     }
   }, [editForm.access]);
@@ -98,9 +115,15 @@ const UserLightList = ({ userId: propUserId }) => {
   const handleEditSubmit = async (e) => {
     e.preventDefault();
     try {
+      // Ensure status and access are booleans
+      const payload = {
+        ...editForm,
+        status: Boolean(editForm.status),
+        access: Boolean(editForm.access),
+      };
       await axios.put(
         `http://localhost:5000/api/equipment/lights/${selectedLight._id}`,
-        editForm
+        payload
       );
       setShowEditModal(false);
       await fetchLights();
@@ -110,18 +133,22 @@ const UserLightList = ({ userId: propUserId }) => {
     }
   };
 
+  // Filter lights by selectedRoomId if provided
+  const filteredLights = selectedRoomId
+    ? lights.filter(light => light.roomId && light.roomId._id === selectedRoomId)
+    : lights;
+
   if (loading) return <div>Loading...</div>;
 
   return (
-    <div className="mx-auto mt-10 bg-white shadow rounded p-6">
-      <h2 className="text-2xl font-bold mb-4">User's Lights</h2>
+    <div className="mx-auto my-4 bg-white shadow rounded p-6">
+      <h2 className="text-2xl font-bold mb-4">Lights</h2>
       <table className="min-w-full border">
         <thead>
           <tr>
             <th className="border px-4 py-2">Item Name</th>
             <th className="border px-4 py-2">Item Code</th>
-            <th className="border px-4 py-2">Villa Name</th>
-            <th className="border px-4 py-2">Room Name</th>
+            <th className="border px-4 py-2">Room</th>
             <th className="border px-4 py-2">Brightness</th>
             <th className="border px-4 py-2">Status</th>
             <th className="border px-4 py-2">Access</th>
@@ -131,15 +158,18 @@ const UserLightList = ({ userId: propUserId }) => {
           </tr>
         </thead>
         <tbody>
-          {lights.map((light) => (
+          {filteredLights.map((light) => (
             <tr key={light._id}>
               <td className="border px-4 py-2">{light.itemName}</td>
               <td className="border px-4 py-2">{light.itemCode}</td>
-              <td className="border px-4 py-2">{light.villaName} ({light.assignedUser?.username || light.assignedUser || 'N/A'})</td>
               <td className="border px-4 py-2">{light.roomId?.roomName || "N/A"}</td>
               <td className="border px-4 py-2">{light.brightness}</td>
-              <td className="border px-4 py-2">{light.status}</td>
-              <td className="border px-4 py-2">{light.access}</td>
+              <td className="border px-4 py-2">{light.status === true ? "ON" : "OFF"}</td>
+              <td className="border px-4 py-2">
+                <span className={`px-2 py-1 rounded ${light.access === true ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"}`}>
+                  {light.access === true ? "Enabled" : "Disabled"}
+                </span>
+              </td>
               {(role === "admin" || role === "superadmin") && (
                 <td className="border px-4 py-2">
                   <button
@@ -154,7 +184,7 @@ const UserLightList = ({ userId: propUserId }) => {
           ))}
         </tbody>
       </table>
-      {lights.length === 0 && (
+      {filteredLights.length === 0 && (
         <div className="mt-4 text-gray-500">No lights found for this user.</div>
       )}
 
@@ -189,47 +219,65 @@ const UserLightList = ({ userId: propUserId }) => {
               value={editForm.brightness}
               onChange={handleEditChange}
               className="flex-1"
-              disabled={editForm.access === "Disabled"}
+              disabled={!editForm.access}
             />
             <span className="w-12 text-center">{editForm.brightness}%</span>
           </div>
 
           <label className="block font-medium">Status</label>
           <div className="flex gap-2 mb-2">
-            {["ON", "OFF"].map((statusOption) => (
-              <button
-                key={statusOption}
-                type="button"
-                className={`px-4 py-2 rounded border 
-                  ${editForm.status === statusOption
-                    ? "bg-blue-600 text-white border-blue-600"
-                    : "bg-gray-100 text-gray-700 border-gray-300 hover:bg-blue-100"}
-                  ${editForm.access === "Disabled" ? "opacity-50 cursor-not-allowed" : ""}
-                `}
-                onClick={() => editForm.access !== "Disabled" && setEditForm({ ...editForm, status: statusOption })}
-                disabled={editForm.access === "Disabled"}
-              >
-                {statusOption}
-              </button>
-            ))}
+            <button
+              type="button"
+              className={`px-4 py-2 rounded border 
+                ${editForm.status === true
+                  ? "bg-blue-600 text-white border-blue-600"
+                  : "bg-gray-100 text-gray-700 border-gray-300 hover:bg-blue-100"}
+                ${!editForm.access ? "opacity-50 cursor-not-allowed" : ""}
+              `}
+              onClick={() => editForm.access && setEditForm({ ...editForm, status: true })}
+              disabled={!editForm.access}
+            >
+              ON
+            </button>
+            <button
+              type="button"
+              className={`px-4 py-2 rounded border 
+                ${editForm.status === false
+                  ? "bg-blue-600 text-white border-blue-600"
+                  : "bg-gray-100 text-gray-700 border-gray-300 hover:bg-blue-100"}
+                ${!editForm.access ? "opacity-50 cursor-not-allowed" : ""}
+              `}
+              onClick={() => editForm.access && setEditForm({ ...editForm, status: false })}
+              disabled={!editForm.access}
+            >
+              OFF
+            </button>
           </div>
 
           <label className="block font-medium">Access</label>
           <div className="flex gap-2 mb-2">
-            {["Enabled", "Disabled"].map((accessOption) => (
-              <button
-                key={accessOption}
-                type="button"
-                className={`px-4 py-2 rounded border 
-                  ${editForm.access === accessOption
-                    ? "bg-blue-600 text-white border-blue-600"
-                    : "bg-gray-100 text-gray-700 border-gray-300 hover:bg-blue-100"}
-                `}
-                onClick={() => setEditForm({ ...editForm, access: accessOption })}
-              >
-                {accessOption}
-              </button>
-            ))}
+            <button
+              type="button"
+              className={`px-4 py-2 rounded border 
+                ${editForm.access === true
+                  ? "bg-blue-600 text-white border-blue-600"
+                  : "bg-gray-100 text-gray-700 border-gray-300 hover:bg-blue-100"}
+              `}
+              onClick={() => setEditForm({ ...editForm, access: true })}
+            >
+              Enabled
+            </button>
+            <button
+              type="button"
+              className={`px-4 py-2 rounded border 
+                ${editForm.access === false
+                  ? "bg-blue-600 text-white border-blue-600"
+                  : "bg-gray-100 text-gray-700 border-gray-300 hover:bg-blue-100"}
+              `}
+              onClick={() => setEditForm({ ...editForm, access: false })}
+            >
+              Disabled
+            </button>
           </div>
 
           <div className="flex justify-end gap-2">
