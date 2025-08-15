@@ -67,7 +67,7 @@ const VillaList = () => {
   if (loading) return <div>Loading...</div>;
 
   return (
-    <div className="mx-auto mt-10 bg-white shadow rounded p-6 max-w-2xl">
+    <div className="mx-auto mt-10 bg-white shadow rounded p-6 ">
       <h2 className="text-2xl font-bold mb-4">Villas {villas.length > 0 && "(Total: " + villas.length + ")"}</h2>
       <table className="min-w-full border">
         <thead>
