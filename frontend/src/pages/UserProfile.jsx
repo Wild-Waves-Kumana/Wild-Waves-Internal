@@ -25,6 +25,7 @@ const UserProfile = () => {
     checkoutDate: "",
     access: false,
   });
+  const [selectedRoomId, setSelectedRoomId] = useState(""); // for room filter
 
   // Fetch user, companies, villas, and all rooms
   useEffect(() => {
@@ -191,9 +192,41 @@ const UserProfile = () => {
         </div>
       </div>
       <div className="mt-4">
-        <UserACList userId={userId} adminId={adminId} />
-        <UserDoorList userId={userId} adminId={adminId} />
-        <UserLightList userId={userId} adminId={adminId} />
+        {/* Room selection buttons */}
+        <div className="mb-4">
+          <h3 className="font-semibold mb-2">Filter by Room:</h3>
+          <div className="flex flex-wrap gap-2">
+            <button
+              type="button"
+              className={`px-4 py-2 rounded border
+                ${selectedRoomId === ""
+                  ? "bg-blue-600 text-white border-blue-600"
+                  : "bg-gray-100 text-gray-700 border-gray-300 hover:bg-blue-100"}
+              `}
+              onClick={() => setSelectedRoomId("")}
+            >
+              All Rooms
+            </button>
+            {getAssignedRooms().map(room => (
+              <button
+                key={room._id}
+                type="button"
+                className={`px-4 py-2 rounded border
+                  ${selectedRoomId === room._id
+                    ? "bg-blue-600 text-white border-blue-600"
+                    : "bg-gray-100 text-gray-700 border-gray-300 hover:bg-blue-100"}
+                `}
+                onClick={() => setSelectedRoomId(room._id)}
+              >
+                {room.roomName}
+              </button>
+            ))}
+          </div>
+        </div>
+        {/* Pass selectedRoomId as prop to UserACList */}
+        <UserACList userId={userId} selectedRoomId={selectedRoomId} />
+        <UserDoorList userId={userId} selectedRoomId={selectedRoomId} />
+        <UserLightList userId={userId} selectedRoomId={selectedRoomId} />
       </div>
 
       <Modal isVisible={showEditModal} onClose={() => setShowEditModal(false)} width="w-2/5">

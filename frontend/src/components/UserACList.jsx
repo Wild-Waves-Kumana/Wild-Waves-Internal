@@ -1,9 +1,9 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import axios from "axios";
 import Modal from "./Modal";
 import { jwtDecode } from "jwt-decode";
 
-const UserACList = ({ userId: propUserId }) => {
+const UserACList = ({ userId: propUserId, selectedRoomId }) => {
   const [acs, setAcs] = useState([]);
   const [loading, setLoading] = useState(true);
   const [role, setRole] = useState("");
@@ -15,12 +15,12 @@ const UserACList = ({ userId: propUserId }) => {
     temperaturelevel: "",
     mode: "",
     fanSpeed: "",
-    status: "",
-    access: "",
+    status: false, // boolean
+    access: false, // boolean
   });
 
-  // Move fetchACs outside useEffect so it can be called elsewhere
-  const fetchACs = React.useCallback(async () => {
+  // Fetch ACs belonging to user from user > rooms > airConditioners
+  const fetchACs = useCallback(async () => {
     try {
       const token = localStorage.getItem("token");
       if (!token) return setLoading(false);
@@ -30,29 +30,35 @@ const UserACList = ({ userId: propUserId }) => {
       setRole(userRole);
 
       let userId = loggedUserId;
-      let adminCompanyId = null;
-
       if (userRole === "admin" || userRole === "superadmin") {
         userId = propUserId;
-        const adminRes = await axios.get(`http://localhost:5000/api/admin/${loggedUserId}`);
-        adminCompanyId = adminRes.data.companyId?._id || adminRes.data.companyId;
       }
 
-      const res = await axios.get("http://localhost:5000/api/equipment/air-conditioners");
-
-      let filtered = res.data.filter(
-        (ac) =>
-          (ac.assignedUser === userId) ||
-          (ac.assignedUser && ac.assignedUser._id === userId)
-      );
-
-      if (userRole === "admin" && adminCompanyId) {
-        filtered = filtered.filter(
-          (ac) =>
-            ac.companyId === adminCompanyId ||
-            (ac.companyId && ac.companyId._id === adminCompanyId)
-        );
+      // Fetch user to get rooms
+      const userRes = await axios.get(`http://localhost:5000/api/users/${userId}`);
+      const user = userRes.data;
+      if (!user.rooms || user.rooms.length === 0) {
+        setAcs([]);
+        setLoading(false);
+        return;
       }
+
+      // Fetch all rooms and filter by user's room ids
+      const allRoomsRes = await axios.get('http://localhost:5000/api/rooms/all');
+      const userRooms = allRoomsRes.data.filter(room => user.rooms.includes(room._id));
+
+      // Collect all airConditioner ObjectIds from user's rooms
+      const acIds = userRooms.flatMap(room => room.airConditioners || []);
+
+      if (acIds.length === 0) {
+        setAcs([]);
+        setLoading(false);
+        return;
+      }
+
+      // Fetch all ACs and filter by acIds
+      const acRes = await axios.get("http://localhost:5000/api/equipment/air-conditioners");
+      const filtered = acRes.data.filter(ac => acIds.includes(ac._id));
 
       setAcs(filtered);
     } catch (err) {
@@ -75,14 +81,18 @@ const UserACList = ({ userId: propUserId }) => {
       temperaturelevel: ac.temperaturelevel || "",
       mode: ac.mode || "",
       fanSpeed: ac.fanSpeed || "",
-      status: ac.status || "",
-      access: ac.access || "",
+      status: ac.status === true, // ensure boolean
+      access: ac.access === true, // ensure boolean
     });
     setShowEditModal(true);
   };
 
   const handleEditChange = (e) => {
-    setEditForm({ ...editForm, [e.target.name]: e.target.value });
+    const { name, value, type, checked } = e.target;
+    setEditForm((prev) => ({
+      ...prev,
+      [name]: type === "checkbox" ? checked : (name === "status" || name === "access" ? value === "true" : value),
+    }));
   };
 
   const handleEditSubmit = async (e) => {
@@ -94,22 +104,26 @@ const UserACList = ({ userId: propUserId }) => {
       );
       setShowEditModal(false);
       await fetchACs();
-       // <-- Refetch the AC list after saving
     } catch (err) {
       console.error("Failed to update AC:", err);
       alert("Failed to update AC.");
     }
   };
 
-  // Add this useEffect inside your component to auto-set status to OFF if access is Disabled
+  // If access is false (Disabled), force status to false (OFF)
   useEffect(() => {
-    if (editForm.access === "Disabled") {
+    if (editForm.access === false) {
       setEditForm((prev) => ({
         ...prev,
-        status: "OFF",
+        status: false,
       }));
     }
   }, [editForm.access]);
+
+  // Filter ACs by selectedRoomId if provided
+  const filteredAcs = selectedRoomId
+    ? acs.filter(ac => ac.roomId && ac.roomId._id === selectedRoomId)
+    : acs;
 
   if (loading) return <div>Loading...</div>;
 
@@ -121,7 +135,6 @@ const UserACList = ({ userId: propUserId }) => {
           <tr>
             <th className="border px-4 py-2">Item Name</th>
             <th className="border px-4 py-2">Item Code</th>
-            <th className="border px-4 py-2">Villa Name</th>
             <th className="border px-4 py-2">Room</th>
             <th className="border px-4 py-2">Temp</th>
             <th className="border px-4 py-2">Mode</th>
@@ -134,17 +147,22 @@ const UserACList = ({ userId: propUserId }) => {
           </tr>
         </thead>
         <tbody>
-          {acs.map((ac) => (
+          {filteredAcs.map((ac) => (
             <tr key={ac._id}>
               <td className="border px-4 py-2">{ac.itemName}</td>
               <td className="border px-4 py-2">{ac.itemCode}</td>
-              <td className="border px-4 py-2">{ac.villaName} ({ac.assignedUser?.username || ac.assignedUser || 'N/A'})</td>
               <td className="border px-4 py-2">{ac.roomId?.roomName || "N/A"}</td>
               <td className="border px-4 py-2">{ac.temperaturelevel}</td>
               <td className="border px-4 py-2">{ac.mode}</td>
               <td className="border px-4 py-2">{ac.fanSpeed}</td>
-              <td className="border px-4 py-2">{ac.status}</td>
-              <td className="border px-4 py-2">{ac.access}</td>
+              <td className="border px-4 py-2">
+                {ac.status === true ? "ON" : "OFF"}
+              </td>
+              <td className="border px-4 py-2">
+                <span className={`px-2 py-1 rounded ${ac.access === true ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"}`}>
+                  {ac.access === true ? "Enabled" : "Disabled"}
+                </span>
+              </td>
               {(role === "admin" || role === "superadmin") && (
                 <td className="border px-4 py-2">
                   <button
@@ -159,7 +177,7 @@ const UserACList = ({ userId: propUserId }) => {
           ))}
         </tbody>
       </table>
-      {acs.length === 0 && (
+      {filteredAcs.length === 0 && (
         <div className="mt-4 text-gray-500">No air conditioners found for this user.</div>
       )}
 
@@ -184,100 +202,117 @@ const UserACList = ({ userId: propUserId }) => {
           />
 
           <label className="block font-medium">Temperature Level</label>
-            <div className="flex items-center gap-4 mb-2">
-              <input
-                type="range"
-                min={16}
-                max={26}
-                step={1}
-                name="temperaturelevel"
-                value={editForm.temperaturelevel || 16}
-                onChange={e => setEditForm({ ...editForm, temperaturelevel: Number(e.target.value) })}
-                className="flex-1"
-                disabled={editForm.access === "Disabled"}
-              />
-              <span className="w-12 text-center">{editForm.temperaturelevel || 16}°C</span>
-            </div>
-                
+          <div className="flex items-center gap-4 mb-2">
+            <input
+              type="range"
+              min={16}
+              max={26}
+              step={1}
+              name="temperaturelevel"
+              value={editForm.temperaturelevel || 16}
+              onChange={e => setEditForm({ ...editForm, temperaturelevel: Number(e.target.value) })}
+              className="flex-1"
+              disabled={!editForm.access}
+            />
+            <span className="w-12 text-center">{editForm.temperaturelevel || 16}°C</span>
+          </div>
 
           {/* Mode */}
           <label className="block font-medium">Mode</label>
-            <div className="flex gap-2 mb-2">
-              {["No Mode", "Cool", "Heat", "Fan", "Dry"].map((modeOption) => (
-                <button
-                  key={modeOption}
-                  type="button"
-                  className={`px-4 py-2 rounded border 
-                    ${editForm.mode === modeOption
-                      ? "bg-blue-600 text-white border-blue-600"
-                      : "bg-gray-100 text-gray-700 border-gray-300 hover:bg-blue-100"}
-                    ${editForm.access === "Disabled" ? "opacity-50 cursor-not-allowed" : ""}
-                  `}
-                  onClick={() => editForm.access !== "Disabled" && setEditForm({ ...editForm, mode: modeOption })}
-                  disabled={editForm.access === "Disabled"}
-                >
-                  {modeOption}
-                </button>
-              ))}
-            </div>
+          <div className="flex gap-2 mb-2">
+            {["No Mode", "Cool", "Heat", "Fan", "Dry"].map((modeOption) => (
+              <button
+                key={modeOption}
+                type="button"
+                className={`px-4 py-2 rounded border 
+                  ${editForm.mode === modeOption
+                    ? "bg-blue-600 text-white border-blue-600"
+                    : "bg-gray-100 text-gray-700 border-gray-300 hover:bg-blue-100"}
+                  ${!editForm.access ? "opacity-50 cursor-not-allowed" : ""}
+                `}
+                onClick={() => editForm.access && setEditForm({ ...editForm, mode: modeOption })}
+                disabled={!editForm.access}
+              >
+                {modeOption}
+              </button>
+            ))}
+          </div>
 
           <label className="block font-medium">Fan Speed</label>
-            <div className="flex gap-2 mb-2">
-              {["Low", "Medium", "High"].map((speed) => (
-                <button
-                  key={speed}
-                  type="button"
-                  className={`px-4 py-2 rounded border 
-                    ${editForm.fanSpeed === speed
-                      ? "bg-blue-600 text-white border-blue-600"
-                      : "bg-gray-100 text-gray-700 border-gray-300 hover:bg-blue-100"}
-                    ${editForm.access === "Disabled" ? "opacity-50 cursor-not-allowed" : ""}
-                  `}
-                  onClick={() => editForm.access !== "Disabled" && setEditForm({ ...editForm, fanSpeed: speed })}
-                  disabled={editForm.access === "Disabled"}
-                >
-                  {speed}
-                </button>
-              ))}
-            </div> 
+          <div className="flex gap-2 mb-2">
+            {["Low", "Medium", "High"].map((speed) => (
+              <button
+                key={speed}
+                type="button"
+                className={`px-4 py-2 rounded border 
+                  ${editForm.fanSpeed === speed
+                    ? "bg-blue-600 text-white border-blue-600"
+                    : "bg-gray-100 text-gray-700 border-gray-300 hover:bg-blue-100"}
+                  ${!editForm.access ? "opacity-50 cursor-not-allowed" : ""}
+                `}
+                onClick={() => editForm.access && setEditForm({ ...editForm, fanSpeed: speed })}
+                disabled={!editForm.access}
+              >
+                {speed}
+              </button>
+            ))}
+          </div>
 
           <label className="block font-medium">Status</label>
-            <div className="flex gap-2 mb-2">
-              {["ON", "OFF"].map((statusOption) => (
-                <button
-                  key={statusOption}
-                  type="button"
-                  className={`px-4 py-2 rounded border 
-                    ${editForm.status === statusOption
-                      ? "bg-blue-600 text-white border-blue-600"
-                      : "bg-gray-100 text-gray-700 border-gray-300 hover:bg-blue-100"}
-                    ${editForm.access === "Disabled" ? "opacity-50 cursor-not-allowed" : ""}
-                  `}
-                  onClick={() => editForm.access !== "Disabled" && setEditForm({ ...editForm, status: statusOption })}
-                  disabled={editForm.access === "Disabled"}
-                >
-                  {statusOption}
-                </button>
-              ))}
-            </div>
+          <div className="flex gap-2 mb-2">
+            <button
+              type="button"
+              className={`px-4 py-2 rounded border 
+                ${editForm.status === true
+                  ? "bg-blue-600 text-white border-blue-600"
+                  : "bg-gray-100 text-gray-700 border-gray-300 hover:bg-blue-100"}
+                ${!editForm.access ? "opacity-50 cursor-not-allowed" : ""}
+              `}
+              onClick={() => editForm.access && setEditForm({ ...editForm, status: true })}
+              disabled={!editForm.access}
+            >
+              ON
+            </button>
+            <button
+              type="button"
+              className={`px-4 py-2 rounded border 
+                ${editForm.status === false
+                  ? "bg-blue-600 text-white border-blue-600"
+                  : "bg-gray-100 text-gray-700 border-gray-300 hover:bg-blue-100"}
+                ${!editForm.access ? "opacity-50 cursor-not-allowed" : ""}
+              `}
+              onClick={() => editForm.access && setEditForm({ ...editForm, status: false })}
+              disabled={!editForm.access}
+            >
+              OFF
+            </button>
+          </div>
 
-            <label className="block font-medium">Access</label>
-            <div className="flex gap-2 mb-2">
-              {["Enabled", "Disabled"].map((accessOption) => (
-                <button
-                  key={accessOption}
-                  type="button"
-                  className={`px-4 py-2 rounded border 
-                    ${editForm.access === accessOption
-                      ? "bg-blue-600 text-white border-blue-600"
-                      : "bg-gray-100 text-gray-700 border-gray-300 hover:bg-blue-100"}
-                  `}
-                  onClick={() => setEditForm({ ...editForm, access: accessOption })}
-                >
-                  {accessOption}
-                </button>
-              ))}
-            </div>
+          <label className="block font-medium">Access</label>
+          <div className="flex gap-2 mb-2">
+            <button
+              type="button"
+              className={`px-4 py-2 rounded border 
+                ${editForm.access === true
+                  ? "bg-blue-600 text-white border-blue-600"
+                  : "bg-gray-100 text-gray-700 border-gray-300 hover:bg-blue-100"}
+              `}
+              onClick={() => setEditForm({ ...editForm, access: true })}
+            >
+              Enabled
+            </button>
+            <button
+              type="button"
+              className={`px-4 py-2 rounded border 
+                ${editForm.access === false
+                  ? "bg-blue-600 text-white border-blue-600"
+                  : "bg-gray-100 text-gray-700 border-gray-300 hover:bg-blue-100"}
+              `}
+              onClick={() => setEditForm({ ...editForm, access: false })}
+            >
+              Disabled
+            </button>
+          </div>
           <div className="flex justify-end gap-2">
             <button
               type="button"
@@ -294,7 +329,7 @@ const UserACList = ({ userId: propUserId }) => {
             </button>
           </div>
         </form>
-      </Modal> 
+      </Modal>
     </div>
   );
 };

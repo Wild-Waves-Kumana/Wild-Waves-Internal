@@ -1,9 +1,9 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import axios from 'axios';
 import { jwtDecode } from 'jwt-decode';
 import Modal from './Modal';
 
-const UserDoorList = ({ userId: propUserId }) => {
+const UserDoorList = ({ userId: propUserId, selectedRoomId }) => {
   const [doors, setDoors] = useState([]);
   const [loading, setLoading] = useState(true);
   const [role, setRole] = useState("");
@@ -12,14 +12,13 @@ const UserDoorList = ({ userId: propUserId }) => {
   const [editForm, setEditForm] = useState({
     itemName: "",
     itemCode: "",
-    status: "",
-    access: "",
+    status: false, // boolean
+    access: false, // boolean
+    lockStatus: false, // boolean
   });
-  
-  
 
-  // Fetch doors logic
-  const fetchDoors = React.useCallback(async () => {
+  // Fetch doors belonging to user from user > rooms > doors
+  const fetchDoors = useCallback(async () => {
     try {
       const token = localStorage.getItem("token");
       if (!token) return setLoading(false);
@@ -29,31 +28,37 @@ const UserDoorList = ({ userId: propUserId }) => {
       setRole(userRole);
 
       let userId = loggedUserId;
-      let adminCompanyId = null;
-
-      if (userRole === 'admin' || userRole === 'superadmin') {
+      if (userRole === "admin" || userRole === "superadmin") {
         userId = propUserId;
-        const adminRes = await axios.get(`http://localhost:5000/api/admin/${loggedUserId}`);
-        adminCompanyId = adminRes.data.companyId?._id || adminRes.data.companyId;
       }
 
-      const res = await axios.get('http://localhost:5000/api/equipment/doors');
-
-      let filteredDoors = res.data.filter(
-        (door) =>
-          (door.assignedUser === userId ||
-            (door.assignedUser && door.assignedUser._id === userId))
-      );
-
-      if ((userRole === 'admin' || userRole === 'superadmin') && adminCompanyId) {
-        filteredDoors = filteredDoors.filter(
-          (door) =>
-            door.companyId === adminCompanyId ||
-            (door.companyId && door.companyId._id === adminCompanyId)
-        );
+      // Fetch user to get rooms
+      const userRes = await axios.get(`http://localhost:5000/api/users/${userId}`);
+      const user = userRes.data;
+      if (!user.rooms || user.rooms.length === 0) {
+        setDoors([]);
+        setLoading(false);
+        return;
       }
 
-      setDoors(filteredDoors);
+      // Fetch all rooms and filter by user's room ids
+      const allRoomsRes = await axios.get('http://localhost:5000/api/rooms/all');
+      const userRooms = allRoomsRes.data.filter(room => user.rooms.includes(room._id));
+
+      // Collect all door ObjectIds from user's rooms
+      const doorIds = userRooms.flatMap(room => room.doors || []);
+
+      if (doorIds.length === 0) {
+        setDoors([]);
+        setLoading(false);
+        return;
+      }
+
+      // Fetch all doors and filter by doorIds
+      const doorRes = await axios.get('http://localhost:5000/api/equipment/doors');
+      const filtered = doorRes.data.filter(door => doorIds.includes(door._id));
+
+      setDoors(filtered);
     } catch (err) {
       console.error("Failed to fetch doors:", err);
       setDoors([]);
@@ -66,29 +71,40 @@ const UserDoorList = ({ userId: propUserId }) => {
     fetchDoors();
   }, [propUserId, fetchDoors]);
 
+  // Filter doors by selectedRoomId if provided
+  const filteredDoors = selectedRoomId
+    ? doors.filter(door => door.roomId && door.roomId._id === selectedRoomId)
+    : doors;
+
   // Open modal and prefill form
   const openEditModal = (door) => {
     setSelectedDoor(door);
     setEditForm({
       itemName: door.itemName || "",
       itemCode: door.itemCode || "",
-      status: door.status || "",
-      access: door.access || "",
+      status: door.status === true,
+      access: door.access === true,
+      lockStatus: door.lockStatus === true,
     });
     setShowEditModal(true);
   };
 
   // Handle form changes
   const handleEditChange = (e) => {
-    setEditForm({ ...editForm, [e.target.name]: e.target.value });
+    const { name, value, type, checked } = e.target;
+    setEditForm((prev) => ({
+      ...prev,
+      [name]: type === "checkbox" ? checked : (["status", "access", "lockStatus"].includes(name) ? value === "true" : value),
+    }));
   };
 
-  // If access is Disabled, force status to OFF
+  // If access is false (Disabled), force status to false (OFF) and lockStatus to false (Locked)
   useEffect(() => {
-    if (editForm.access === "Disabled") {
+    if (editForm.access === false) {
       setEditForm((prev) => ({
         ...prev,
-        status: "OFF",
+        status: false,
+        lockStatus: false, // lock the door automatically when access is disabled (false means Locked)
       }));
     }
   }, [editForm.access]);
@@ -97,9 +113,16 @@ const UserDoorList = ({ userId: propUserId }) => {
   const handleEditSubmit = async (e) => {
     e.preventDefault();
     try {
+      // Ensure status, access, and lockStatus are booleans
+      const payload = {
+        ...editForm,
+        status: Boolean(editForm.status),
+        access: Boolean(editForm.access),
+        lockStatus: Boolean(editForm.lockStatus),
+      };
       await axios.put(
         `http://localhost:5000/api/equipment/doors/${selectedDoor._id}`,
-        editForm
+        payload
       );
       setShowEditModal(false);
       await fetchDoors();
@@ -119,8 +142,7 @@ const UserDoorList = ({ userId: propUserId }) => {
           <tr>
             <th className="border px-4 py-2">Item Name</th>
             <th className="border px-4 py-2">Item Code</th>
-            <th className="border px-4 py-2">Villa Name</th>
-            <th className="border px-4 py-2">Room Name</th>
+            <th className="border px-4 py-2">Room</th>
             <th className="border px-4 py-2">Lock Status</th>
             <th className="border px-4 py-2">Status</th>
             <th className="border px-4 py-2">Access</th>
@@ -130,15 +152,18 @@ const UserDoorList = ({ userId: propUserId }) => {
           </tr>
         </thead>
         <tbody>
-          {doors.map((door) => (
+          {filteredDoors.map((door) => (
             <tr key={door._id}>
               <td className="border px-4 py-2">{door.itemName}</td>
               <td className="border px-4 py-2">{door.itemCode}</td>
-              <td className="border px-4 py-2">{door.villaName} ({door.assignedUser?.username || door.assignedUser || 'N/A'})</td>
               <td className="border px-4 py-2">{door.roomId?.roomName || "N/A"}</td>
-              <td className="border px-4 py-2">{door.lockStatus ? "Locked" : "Unlocked"}</td>
-              <td className="border px-4 py-2">{door.status}</td>
-              <td className="border px-4 py-2">{door.access}</td>
+              <td className="border px-4 py-2">{door.lockStatus === true ? "Unlocked" : "Locked"}</td>
+              <td className="border px-4 py-2">{door.status === true ? "ON" : "OFF"}</td>
+              <td className="border px-4 py-2">
+                <span className={`px-2 py-1 rounded ${door.access === true ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"}`}>
+                  {door.access === true ? "Enabled" : "Disabled"}
+                </span>
+              </td>
               {(role === "admin" || role === "superadmin") && (
                 <td className="border px-4 py-2">
                   <div className="flex justify-center">
@@ -155,7 +180,7 @@ const UserDoorList = ({ userId: propUserId }) => {
           ))}
         </tbody>
       </table>
-      {doors.length === 0 && (
+      {filteredDoors.length === 0 && (
         <div className="mt-4 text-gray-500">No doors found for this user.</div>
       )}
 
@@ -181,40 +206,88 @@ const UserDoorList = ({ userId: propUserId }) => {
 
           <label className="block font-medium">Status</label>
           <div className="flex gap-2 mb-2">
-            {["ON", "OFF"].map((statusOption) => (
-              <button
-                key={statusOption}
-                type="button"
-                className={`px-4 py-2 rounded border 
-                  ${editForm.status === statusOption
-                    ? "bg-blue-600 text-white border-blue-600"
-                    : "bg-gray-100 text-gray-700 border-gray-300 hover:bg-blue-100"}
-                  ${editForm.access === "Disabled" ? "opacity-50 cursor-not-allowed" : ""}
-                `}
-                onClick={() => editForm.access !== "Disabled" && setEditForm({ ...editForm, status: statusOption })}
-                disabled={editForm.access === "Disabled"}
-              >
-                {statusOption}
-              </button>
-            ))}
+            <button
+              type="button"
+              className={`px-4 py-2 rounded border 
+                ${editForm.status === true
+                  ? "bg-blue-600 text-white border-blue-600"
+                  : "bg-gray-100 text-gray-700 border-gray-300 hover:bg-blue-100"}
+                ${!editForm.access ? "opacity-50 cursor-not-allowed" : ""}
+              `}
+              onClick={() => editForm.access && setEditForm({ ...editForm, status: true })}
+              disabled={!editForm.access}
+            >
+              ON
+            </button>
+            <button
+              type="button"
+              className={`px-4 py-2 rounded border 
+                ${editForm.status === false
+                  ? "bg-blue-600 text-white border-blue-600"
+                  : "bg-gray-100 text-gray-700 border-gray-300 hover:bg-blue-100"}
+                ${!editForm.access ? "opacity-50 cursor-not-allowed" : ""}
+              `}
+              onClick={() => editForm.access && setEditForm({ ...editForm, status: false })}
+              disabled={!editForm.access}
+            >
+              OFF
+            </button>
+          </div>
+
+          <label className="block font-medium">Lock Status</label>
+          <div className="flex gap-2 mb-2">
+            <button
+              type="button"
+              className={`px-4 py-2 rounded border 
+                ${editForm.lockStatus === true
+                  ? "bg-blue-600 text-white border-blue-600"
+                  : "bg-gray-100 text-gray-700 border-gray-300 hover:bg-blue-100"}
+                ${!editForm.access ? "opacity-50 cursor-not-allowed" : ""}
+              `}
+              onClick={() => editForm.access && setEditForm({ ...editForm, lockStatus: true })}
+              disabled={!editForm.access}
+            >
+              Unlocked
+            </button>
+            <button
+              type="button"
+              className={`px-4 py-2 rounded border 
+                ${editForm.lockStatus === false
+                  ? "bg-blue-600 text-white border-blue-600"
+                  : "bg-gray-100 text-gray-700 border-gray-300 hover:bg-blue-100"}
+                ${!editForm.access ? "opacity-50 cursor-not-allowed" : ""}
+              `}
+              onClick={() => editForm.access && setEditForm({ ...editForm, lockStatus: false })}
+              disabled={!editForm.access}
+            >
+              Locked
+            </button>
           </div>
 
           <label className="block font-medium">Access</label>
           <div className="flex gap-2 mb-2">
-            {["Enabled", "Disabled"].map((accessOption) => (
-              <button
-                key={accessOption}
-                type="button"
-                className={`px-4 py-2 rounded border 
-                  ${editForm.access === accessOption
-                    ? "bg-blue-600 text-white border-blue-600"
-                    : "bg-gray-100 text-gray-700 border-gray-300 hover:bg-blue-100"}
-                `}
-                onClick={() => setEditForm({ ...editForm, access: accessOption })}
-              >
-                {accessOption}
-              </button>
-            ))}
+            <button
+              type="button"
+              className={`px-4 py-2 rounded border 
+                ${editForm.access === true
+                  ? "bg-blue-600 text-white border-blue-600"
+                  : "bg-gray-100 text-gray-700 border-gray-300 hover:bg-blue-100"}
+              `}
+              onClick={() => setEditForm({ ...editForm, access: true })}
+            >
+              Enabled
+            </button>
+            <button
+              type="button"
+              className={`px-4 py-2 rounded border 
+                ${editForm.access === false
+                  ? "bg-blue-600 text-white border-blue-600"
+                  : "bg-gray-100 text-gray-700 border-gray-300 hover:bg-blue-100"}
+              `}
+              onClick={() => setEditForm({ ...editForm, access: false })}
+            >
+              Disabled
+            </button>
           </div>
           <div className="flex justify-end gap-2">
             <button
