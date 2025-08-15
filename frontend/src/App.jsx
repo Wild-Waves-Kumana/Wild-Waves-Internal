@@ -20,6 +20,8 @@ import AdminProfile from './pages/AdminProfile';
 import CreateCompany from './pages/CreateCompany';
 import CompanyList from './pages/CompanyList';
 import VillaCreate from './pages/VillaCreation';
+import VillaList from './pages/VillaList';
+import VillaProfile from './pages/VillaProfile';
 
 function App() {
   const { isLoggedIn, login, role } = useContext(UserContext);
@@ -148,6 +150,17 @@ function App() {
         }
       />
 
+      <Route
+        path="/villa-profile/:villa_id"
+        element={
+          <ProtectedRoute allowedRoles={['admin', 'superadmin']}>
+            <Layout>
+              <VillaProfile />
+            </Layout>
+          </ProtectedRoute>
+        }
+      />
+
        <Route
         path="/userdashboard"
         element={
@@ -188,9 +201,19 @@ function App() {
         }
       />
 
-    </Routes>
-
     
+      <Route
+        path="/villalist"
+        element={
+          <ProtectedRoute allowedRoles={['admin', 'superadmin']}>
+            <Layout>
+              <VillaList />
+            </Layout>
+          </ProtectedRoute>
+        }
+      />
+
+    </Routes>
   );
 }
 
