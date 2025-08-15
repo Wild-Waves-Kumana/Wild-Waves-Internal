@@ -1,31 +1,46 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 
-const UserACController = ({ acs, onACUpdate }) => {
-  // Local ACs state for instant UI update
-  const [localAcs, setLocalAcs] = useState(acs);
+const UserACController = ({ selectedRoom, onACUpdate }) => {
+  const [acs, setAcs] = useState([]);
 
-  // Keep localAcs in sync with props when room changes
+  // Fetch ACs for the selected room
   useEffect(() => {
-    setLocalAcs(acs);
-  }, [acs]);
+    const fetchRoomACs = async () => {
+      if (!selectedRoom) {
+        setAcs([]);
+        return;
+      }
+      try {
+        // selectedRoom.airConditioners is an array of AC ObjectIds
+        // Fetch all ACs and filter by selectedRoom.airConditioners
+        const acRes = await axios.get('http://localhost:5000/api/equipment/air-conditioners');
+        const roomACs = acRes.data.filter(ac =>
+          selectedRoom.airConditioners && selectedRoom.airConditioners.includes(ac._id)
+        );
+        setAcs(roomACs);
+      } catch (err) {
+        console.error('Failed to fetch room ACs:', err);
+        setAcs([]);
+      }
+    };
+    fetchRoomACs();
+  }, [selectedRoom]);
 
   // Save only the changed field
   const handleFieldChange = async (ac, idx, field, value) => {
-    const updated = { ...localAcs[idx], [field]: value };
-    // Update local state for instant feedback
-    setLocalAcs(prev =>
+    const updated = { ...acs[idx], [field]: value };
+    setAcs(prev =>
       prev.map((item, i) =>
         i === idx ? updated : item
       )
     );
-    // Save to backend
     try {
       await axios.put(
         `http://localhost:5000/api/equipment/air-conditioners/${ac._id}`,
         { [field]: value }
       );
-      if (onACUpdate) onACUpdate(); // Refresh parent data after update
+      if (onACUpdate) onACUpdate();
     } catch (err) {
       console.error('Failed to update AC:', err);
       alert("Failed to update AC.");
@@ -35,11 +50,11 @@ const UserACController = ({ acs, onACUpdate }) => {
   return (
     <div className="bg-white rounded shadow p-4">
       <h3 className="text-xl font-bold mb-2 text-blue-700">Your Air Conditioners</h3>
-      {localAcs.length === 0 ? (
-        <div className="text-gray-400">No ACs assigned.</div>
+      {acs.length === 0 ? (
+        <div className="text-gray-400">No ACs assigned to this room.</div>
       ) : (
         <ul className="space-y-2">
-          {localAcs.map((ac, idx) => (
+          {acs.map((ac, idx) => (
             <li key={ac._id} className="border-b pb-1">
               <div className="font-semibold">{ac.itemName}</div>
               <div className="text-sm text-gray-500">Code: {ac.itemCode}</div>
@@ -110,22 +125,28 @@ const UserACController = ({ acs, onACUpdate }) => {
                 <div>
                   <label className="block font-medium">Status</label>
                   <div className="flex gap-2 mb-2">
-                    {["ON", "OFF"].map((statusOption) => (
-                      <button
-                        key={statusOption}
-                        type="button"
-                        className={`px-4 py-2 rounded border 
-                          ${ac.status === statusOption
-                            ? "bg-blue-600 text-white border-blue-600"
-                            : "bg-gray-100 text-gray-700 border-gray-300 hover:bg-blue-100"}
-                        `}
-                        onClick={() =>
-                          handleFieldChange(ac, idx, "status", statusOption)
-                        }
-                      >
-                        {statusOption}
-                      </button>
-                    ))}
+                    <button
+                      type="button"
+                      className={`px-4 py-2 rounded border 
+                        ${ac.status === true
+                          ? "bg-blue-600 text-white border-blue-600"
+                          : "bg-gray-100 text-gray-700 border-gray-300 hover:bg-blue-100"}
+                      `}
+                      onClick={() => handleFieldChange(ac, idx, "status", true)}
+                    >
+                      ON
+                    </button>
+                    <button
+                      type="button"
+                      className={`px-4 py-2 rounded border 
+                        ${ac.status === false
+                          ? "bg-blue-600 text-white border-blue-600"
+                          : "bg-gray-100 text-gray-700 border-gray-300 hover:bg-blue-100"}
+                      `}
+                      onClick={() => handleFieldChange(ac, idx, "status", false)}
+                    >
+                      OFF
+                    </button>
                   </div>
                 </div>
               </form>
