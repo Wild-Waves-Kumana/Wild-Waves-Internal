@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import axios from 'axios';
-import UserACList from '../components/UserACList';
+import ACList from '../components/ACList';
 import DoorList from '../components/DoorList';
 import UserLightList from '../components/UserLightList';
 import Modal from "../components/Modal";
@@ -222,8 +222,8 @@ const UserProfile = () => {
             ))}
           </div>
         </div>
-        {/* Pass selectedRoomId as prop to UserACList */}
-        <UserACList userId={userId} selectedRoomId={selectedRoomId} />
+        {/* Pass selectedRoomId as prop to ACList */}
+        <ACList userId={userId} selectedRoomId={selectedRoomId} />
         <DoorList userId={userId} selectedRoomId={selectedRoomId} />
         <UserLightList userId={userId} selectedRoomId={selectedRoomId} />
       </div>

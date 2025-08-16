@@ -3,7 +3,7 @@ import axios from "axios";
 import Modal from "./Modal";
 import { jwtDecode } from "jwt-decode";
 
-const UserACList = ({ userId: propUserId, selectedRoomId, roomIds, role: propRole }) => {
+const ACList = ({ userId: propUserId, selectedRoomId, roomIds, role: propRole }) => {
   const [acs, setAcs] = useState([]);
   const [loading, setLoading] = useState(true);
   const [role, setRole] = useState(propRole || ""); // <-- use propRole if provided
@@ -343,4 +343,4 @@ const UserACList = ({ userId: propUserId, selectedRoomId, roomIds, role: propRol
   );
 };
 
-export default UserACList;
+export default ACList;
