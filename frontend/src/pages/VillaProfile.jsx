@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import axios from 'axios';
 import UserACList from '../components/UserACList';
-import UserDoorList from '../components/UserDoorList';
+import DoorList from '../components/DoorList';
 import UserLightList from '../components/UserLightList';
 
 const VillaProfile = () => {
@@ -99,7 +99,7 @@ const VillaProfile = () => {
       </div>
       <div className="my-4">
         <strong>Villa Doors:</strong>
-        <UserDoorList roomIds={roomIds} selectedRoomId={selectedRoomId} role="admin" />
+        <DoorList roomIds={roomIds} selectedRoomId={selectedRoomId} role="admin" />
       </div>
       <div className="my-4">
         <strong>Villa Lights:</strong>

@@ -3,7 +3,7 @@ import axios from 'axios';
 import { jwtDecode } from 'jwt-decode';
 import Modal from './Modal';
 
-const UserDoorList = ({ userId: propUserId, selectedRoomId, roomIds, role: propRole }) => {
+const DoorList = ({ userId: propUserId, selectedRoomId, roomIds, role: propRole }) => {
   const [doors, setDoors] = useState([]);
   const [loading, setLoading] = useState(true);
   const [role, setRole] = useState(propRole || "");
@@ -318,4 +318,4 @@ const UserDoorList = ({ userId: propUserId, selectedRoomId, roomIds, role: propR
   );
 };
 
-export default UserDoorList;
+export default DoorList;

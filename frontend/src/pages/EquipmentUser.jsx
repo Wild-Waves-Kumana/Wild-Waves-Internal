@@ -1,5 +1,5 @@
 import React from 'react';
-import UserDoorList from '../components/UserDoorList';
+import DoorList from '../components/DoorList';
 import UserLightList from '../components/UserLightList';
 import UserACList from '../components/UserACList';
 
@@ -8,7 +8,7 @@ const EquipmentUser = () => {
 
   return (
     <div>
-      <UserDoorList userId={userId}/>  {/* Pass userId only for user filtering */}
+      <DoorList userId={userId}/>  {/* Pass userId only for user filtering */}
       <UserLightList userId={userId} />
       <UserACList userId={userId} />
     </div>

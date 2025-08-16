@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import axios from 'axios';
 import UserACList from '../components/UserACList';
-import UserDoorList from '../components/UserDoorList';
+import DoorList from '../components/DoorList';
 import UserLightList from '../components/UserLightList';
 import Modal from "../components/Modal";
 import { jwtDecode } from 'jwt-decode';
@@ -224,7 +224,7 @@ const UserProfile = () => {
         </div>
         {/* Pass selectedRoomId as prop to UserACList */}
         <UserACList userId={userId} selectedRoomId={selectedRoomId} />
-        <UserDoorList userId={userId} selectedRoomId={selectedRoomId} />
+        <DoorList userId={userId} selectedRoomId={selectedRoomId} />
         <UserLightList userId={userId} selectedRoomId={selectedRoomId} />
       </div>
 
