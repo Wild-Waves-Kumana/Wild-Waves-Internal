@@ -1,9 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import axios from 'axios';
-import ACList from '../components/ACList';
-import DoorList from '../components/DoorList';
-import UserLightList from '../components/UserLightList';
+import ACList from '../components/equipmentLists/ACList';
+import DoorList from '../components/equipmentLists/DoorList';
+import LightList from '../components/equipmentLists/LightList';
 import Modal from "../components/Modal";
 import { jwtDecode } from 'jwt-decode';
 
@@ -225,7 +225,7 @@ const UserProfile = () => {
         {/* Pass selectedRoomId as prop to ACList */}
         <ACList userId={userId} selectedRoomId={selectedRoomId} />
         <DoorList userId={userId} selectedRoomId={selectedRoomId} />
-        <UserLightList userId={userId} selectedRoomId={selectedRoomId} />
+        <LightList userId={userId} selectedRoomId={selectedRoomId} />
       </div>
 
       <Modal isVisible={showEditModal} onClose={() => setShowEditModal(false)} width="w-2/5">

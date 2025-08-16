@@ -1,32 +1,29 @@
-import React, { useEffect, useState, useCallback } from "react";
-import axios from "axios";
-import Modal from "./Modal";
-import { jwtDecode } from "jwt-decode";
+import React, { useEffect, useState, useCallback } from 'react';
+import axios from 'axios';
+import { jwtDecode } from 'jwt-decode';
+import Modal from '../Modal';
 
-const ACList = ({ userId: propUserId, selectedRoomId, roomIds, role: propRole }) => {
-  const [acs, setAcs] = useState([]);
+const LightList = ({ userId: propUserId, selectedRoomId, roomIds, role: propRole }) => {
+  const [lights, setLights] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [role, setRole] = useState(propRole || ""); // <-- use propRole if provided
+  const [role, setRole] = useState(propRole || "");
   const [showEditModal, setShowEditModal] = useState(false);
-  const [selectedAC, setSelectedAC] = useState(null);
+  const [selectedLight, setSelectedLight] = useState(null);
   const [editForm, setEditForm] = useState({
     itemName: "",
     itemCode: "",
-    temperaturelevel: "",
-    mode: "",
-    fanSpeed: "",
+    brightness: 100,
     status: false, // boolean
     access: false, // boolean
   });
 
-  // Fetch ACs for rooms if roomIds is provided, otherwise use user logic
-  const fetchACs = useCallback(async () => {
+  // Fetch lights for rooms if roomIds is provided, otherwise use user logic
+  const fetchLights = useCallback(async () => {
     try {
       if (roomIds && Array.isArray(roomIds) && roomIds.length > 0) {
-        // Fetch all ACs and filter by roomIds
-        const acRes = await axios.get("http://localhost:5000/api/equipment/air-conditioners");
-        const filtered = acRes.data.filter(ac => ac.roomId && roomIds.includes(ac.roomId._id));
-        setAcs(filtered);
+        const lightRes = await axios.get('http://localhost:5000/api/equipment/lights');
+        const filtered = lightRes.data.filter(light => light.roomId && roomIds.includes(light.roomId._id));
+        setLights(filtered);
         setLoading(false);
         return;
       }
@@ -47,7 +44,7 @@ const ACList = ({ userId: propUserId, selectedRoomId, roomIds, role: propRole })
       const userRes = await axios.get(`http://localhost:5000/api/users/${userId}`);
       const user = userRes.data;
       if (!user.rooms || user.rooms.length === 0) {
-        setAcs([]);
+        setLights([]);
         setLoading(false);
         return;
       }
@@ -56,67 +53,52 @@ const ACList = ({ userId: propUserId, selectedRoomId, roomIds, role: propRole })
       const allRoomsRes = await axios.get('http://localhost:5000/api/rooms/all');
       const userRooms = allRoomsRes.data.filter(room => user.rooms.includes(room._id));
 
-      // Collect all airConditioner ObjectIds from user's rooms
-      const acIds = userRooms.flatMap(room => room.airConditioners || []);
+      // Collect all light ObjectIds from user's rooms
+      const lightIds = userRooms.flatMap(room => room.lights || []);
 
-      if (acIds.length === 0) {
-        setAcs([]);
+      if (lightIds.length === 0) {
+        setLights([]);
         setLoading(false);
         return;
       }
 
-      // Fetch all ACs and filter by acIds
-      const acRes = await axios.get("http://localhost:5000/api/equipment/air-conditioners");
-      const filtered = acRes.data.filter(ac => acIds.includes(ac._id));
+      // Fetch all lights and filter by lightIds
+      const lightRes = await axios.get('http://localhost:5000/api/equipment/lights');
+      const filtered = lightRes.data.filter(light => lightIds.includes(light._id));
 
-      setAcs(filtered);
+      setLights(filtered);
     } catch (err) {
-      console.error("Failed to fetch air conditioners:", err);
-      setAcs([]);
+      console.error("Failed to fetch lights:", err);
+      setLights([]);
     } finally {
       setLoading(false);
     }
   }, [propUserId, roomIds]);
 
   useEffect(() => {
-    fetchACs();
-  }, [propUserId, fetchACs]);
+    fetchLights();
+  }, [propUserId, fetchLights]);
 
-  const openEditModal = (ac) => {
-    setSelectedAC(ac);
+  // Open modal and prefill form
+  const openEditModal = (light) => {
+    setSelectedLight(light);
     setEditForm({
-      itemName: ac.itemName || "",
-      itemCode: ac.itemCode || "",
-      temperaturelevel: ac.temperaturelevel || "",
-      mode: ac.mode || "",
-      fanSpeed: ac.fanSpeed || "",
-      status: ac.status === true, // ensure boolean
-      access: ac.access === true, // ensure boolean
+      itemName: light.itemName || "",
+      itemCode: light.itemCode || "",
+      brightness: light.brightness ?? 100,
+      status: light.status === true,
+      access: light.access === true,
     });
     setShowEditModal(true);
   };
 
+  // Handle form changes
   const handleEditChange = (e) => {
     const { name, value, type, checked } = e.target;
     setEditForm((prev) => ({
       ...prev,
-      [name]: type === "checkbox" ? checked : (name === "status" || name === "access" ? value === "true" : value),
+      [name]: type === "checkbox" ? checked : (["status", "access"].includes(name) ? value === "true" : value),
     }));
-  };
-
-  const handleEditSubmit = async (e) => {
-    e.preventDefault();
-    try {
-      await axios.put(
-        `http://localhost:5000/api/equipment/air-conditioners/${selectedAC._id}`,
-        editForm
-      );
-      setShowEditModal(false);
-      await fetchACs();
-    } catch (err) {
-      console.error("Failed to update AC:", err);
-      alert("Failed to update AC.");
-    }
   };
 
   // If access is false (Disabled), force status to false (OFF)
@@ -129,25 +111,45 @@ const ACList = ({ userId: propUserId, selectedRoomId, roomIds, role: propRole })
     }
   }, [editForm.access]);
 
-  // Filter ACs by selectedRoomId if provided
-  const filteredAcs = selectedRoomId
-    ? acs.filter(ac => ac.roomId && ac.roomId._id === selectedRoomId)
-    : acs;
+  // Submit the form
+  const handleEditSubmit = async (e) => {
+    e.preventDefault();
+    try {
+      // Ensure status and access are booleans
+      const payload = {
+        ...editForm,
+        status: Boolean(editForm.status),
+        access: Boolean(editForm.access),
+      };
+      await axios.put(
+        `http://localhost:5000/api/equipment/lights/${selectedLight._id}`,
+        payload
+      );
+      setShowEditModal(false);
+      await fetchLights();
+    } catch (err) {
+      console.error("Failed to update light:", err);
+      alert("Failed to update light.");
+    }
+  };
+
+  // Filter lights by selectedRoomId if provided
+  const filteredLights = selectedRoomId
+    ? lights.filter(light => light.roomId && light.roomId._id === selectedRoomId)
+    : lights;
 
   if (loading) return <div>Loading...</div>;
 
   return (
-    <div className=" mx-auto my-4 bg-white shadow rounded p-6">
-      <h2 className="text-2xl font-bold mb-4">Air Conditioners</h2>
+    <div className="mx-auto my-4 bg-white shadow rounded p-6">
+      <h2 className="text-2xl font-bold mb-4">Lights</h2>
       <table className="min-w-full border">
         <thead>
           <tr>
             <th className="border px-4 py-2">Item Name</th>
             <th className="border px-4 py-2">Item Code</th>
             <th className="border px-4 py-2">Room</th>
-            <th className="border px-4 py-2">Temp</th>
-            <th className="border px-4 py-2">Mode</th>
-            <th className="border px-4 py-2">Fan Speed</th>
+            <th className="border px-4 py-2">Brightness</th>
             <th className="border px-4 py-2">Status</th>
             <th className="border px-4 py-2">Access</th>
             {(role === "admin" || role === "superadmin") && (
@@ -156,27 +158,23 @@ const ACList = ({ userId: propUserId, selectedRoomId, roomIds, role: propRole })
           </tr>
         </thead>
         <tbody>
-          {filteredAcs.map((ac) => (
-            <tr key={ac._id}>
-              <td className="border px-4 py-2">{ac.itemName}</td>
-              <td className="border px-4 py-2">{ac.itemCode}</td>
-              <td className="border px-4 py-2">{ac.roomId?.roomName || "N/A"}</td>
-              <td className="border px-4 py-2">{ac.temperaturelevel}</td>
-              <td className="border px-4 py-2">{ac.mode}</td>
-              <td className="border px-4 py-2">{ac.fanSpeed}</td>
+          {filteredLights.map((light) => (
+            <tr key={light._id}>
+              <td className="border px-4 py-2">{light.itemName}</td>
+              <td className="border px-4 py-2">{light.itemCode}</td>
+              <td className="border px-4 py-2">{light.roomId?.roomName || "N/A"}</td>
+              <td className="border px-4 py-2">{light.brightness}</td>
+              <td className="border px-4 py-2">{light.status === true ? "ON" : "OFF"}</td>
               <td className="border px-4 py-2">
-                {ac.status === true ? "ON" : "OFF"}
-              </td>
-              <td className="border px-4 py-2">
-                <span className={`px-2 py-1 rounded ${ac.access === true ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"}`}>
-                  {ac.access === true ? "Enabled" : "Disabled"}
+                <span className={`px-2 py-1 rounded ${light.access === true ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"}`}>
+                  {light.access === true ? "Enabled" : "Disabled"}
                 </span>
               </td>
               {(role === "admin" || role === "superadmin") && (
                 <td className="border px-4 py-2">
                   <button
                     className="bg-yellow-500 text-white px-3 py-1 rounded hover:bg-yellow-700"
-                    onClick={() => openEditModal(ac)}
+                    onClick={() => openEditModal(light)}
                   >
                     Edit
                   </button>
@@ -186,12 +184,12 @@ const ACList = ({ userId: propUserId, selectedRoomId, roomIds, role: propRole })
           ))}
         </tbody>
       </table>
-      {filteredAcs.length === 0 && (
-        <div className="mt-4 text-gray-500">No air conditioners found for this user.</div>
+      {filteredLights.length === 0 && (
+        <div className="mt-4 text-gray-500">No lights found for this user.</div>
       )}
 
-      <Modal isVisible={showEditModal} onClose={() => setShowEditModal(false)} width="w-full max-w-lg">
-        <h2 className="text-xl font-bold mb-4">Edit Air Conditioner</h2>
+      <Modal isVisible={showEditModal} onClose={() => setShowEditModal(false)} width="w-full max-w-md">
+        <h2 className="text-xl font-bold mb-4">Edit Light</h2>
         <form onSubmit={handleEditSubmit} className="space-y-3">
           <input
             type="text"
@@ -210,61 +208,20 @@ const ACList = ({ userId: propUserId, selectedRoomId, roomIds, role: propRole })
             className="w-full border px-3 py-2 rounded"
           />
 
-          <label className="block font-medium">Temperature Level</label>
+          <label className="block font-medium">Brightness</label>
           <div className="flex items-center gap-4 mb-2">
             <input
               type="range"
-              min={16}
-              max={26}
+              min={0}
+              max={100}
               step={1}
-              name="temperaturelevel"
-              value={editForm.temperaturelevel || 16}
-              onChange={e => setEditForm({ ...editForm, temperaturelevel: Number(e.target.value) })}
+              name="brightness"
+              value={editForm.brightness}
+              onChange={handleEditChange}
               className="flex-1"
               disabled={!editForm.access}
             />
-            <span className="w-12 text-center">{editForm.temperaturelevel || 16}°C</span>
-          </div>
-
-          {/* Mode */}
-          <label className="block font-medium">Mode</label>
-          <div className="flex gap-2 mb-2">
-            {["No Mode", "Cool", "Heat", "Fan", "Dry"].map((modeOption) => (
-              <button
-                key={modeOption}
-                type="button"
-                className={`px-4 py-2 rounded border 
-                  ${editForm.mode === modeOption
-                    ? "bg-blue-600 text-white border-blue-600"
-                    : "bg-gray-100 text-gray-700 border-gray-300 hover:bg-blue-100"}
-                  ${!editForm.access ? "opacity-50 cursor-not-allowed" : ""}
-                `}
-                onClick={() => editForm.access && setEditForm({ ...editForm, mode: modeOption })}
-                disabled={!editForm.access}
-              >
-                {modeOption}
-              </button>
-            ))}
-          </div>
-
-          <label className="block font-medium">Fan Speed</label>
-          <div className="flex gap-2 mb-2">
-            {["Low", "Medium", "High"].map((speed) => (
-              <button
-                key={speed}
-                type="button"
-                className={`px-4 py-2 rounded border 
-                  ${editForm.fanSpeed === speed
-                    ? "bg-blue-600 text-white border-blue-600"
-                    : "bg-gray-100 text-gray-700 border-gray-300 hover:bg-blue-100"}
-                  ${!editForm.access ? "opacity-50 cursor-not-allowed" : ""}
-                `}
-                onClick={() => editForm.access && setEditForm({ ...editForm, fanSpeed: speed })}
-                disabled={!editForm.access}
-              >
-                {speed}
-              </button>
-            ))}
+            <span className="w-12 text-center">{editForm.brightness}%</span>
           </div>
 
           <label className="block font-medium">Status</label>
@@ -322,19 +279,20 @@ const ACList = ({ userId: propUserId, selectedRoomId, roomIds, role: propRole })
               Disabled
             </button>
           </div>
+
           <div className="flex justify-end gap-2">
             <button
               type="button"
               onClick={() => setShowEditModal(false)}
-              className="px-4 py-2 bg-gray-300 rounded"
+              className="px-4 py-2 rounded bg-gray-200 hover:bg-gray-300"
             >
               Cancel
             </button>
             <button
               type="submit"
-              className="px-4 py-2 bg-blue-600 text-white rounded"
+              className="px-4 py-2 rounded bg-blue-600 text-white hover:bg-blue-700"
             >
-              Save
+              Save Changes
             </button>
           </div>
         </form>
@@ -343,4 +301,4 @@ const ACList = ({ userId: propUserId, selectedRoomId, roomIds, role: propRole })
   );
 };
 
-export default ACList;
+export default LightList;

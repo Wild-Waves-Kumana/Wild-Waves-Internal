@@ -1,9 +1,9 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import { jwtDecode } from 'jwt-decode';
 import axios from 'axios';
-import UserACController from './UserACController';
-import UserLightController from './UserLightController';
-import UserDoorController from './UserDoorController';
+import UserACController from './equipmentControllers/UserACController';
+import UserLightController from './equipmentControllers/UserLightController';
+import UserDoorController from './equipmentControllers/UserDoorController';
 
 const SELECTED_ROOM_KEY = "selectedRoomId";
 

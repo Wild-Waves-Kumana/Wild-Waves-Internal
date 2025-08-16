@@ -1,9 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import axios from 'axios';
-import ACList from '../components/ACList';
-import DoorList from '../components/DoorList';
-import UserLightList from '../components/UserLightList';
+import ACList from '../components/equipmentLists/ACList';
+import DoorList from '../components/equipmentLists/DoorList';
+import LightList from '../components/equipmentLists/LightList';
 
 const VillaProfile = () => {
   const { villa_id } = useParams();
@@ -103,7 +103,7 @@ const VillaProfile = () => {
       </div>
       <div className="my-4">
         <strong>Villa Lights:</strong>
-        <UserLightList roomIds={roomIds} selectedRoomId={selectedRoomId} role="admin" />
+        <LightList roomIds={roomIds} selectedRoomId={selectedRoomId} role="admin" />
       </div>
       <button
         className="mt-4 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-700"

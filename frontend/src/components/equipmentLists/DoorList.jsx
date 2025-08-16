@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import axios from 'axios';
 import { jwtDecode } from 'jwt-decode';
-import Modal from './Modal';
+import Modal from '../Modal';
 
 const DoorList = ({ userId: propUserId, selectedRoomId, roomIds, role: propRole }) => {
   const [doors, setDoors] = useState([]);
