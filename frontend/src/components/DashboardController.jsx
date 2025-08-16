@@ -95,13 +95,20 @@ const DashboardController = () => {
           ))}
         </div>
       </div>
-      <div className="w-full max-w-6xl grid grid-cols-1 md:grid-cols-3 gap-8">
-        {/* AC Section */}
-        <UserACController selectedRoom={selectedRoom} />
-        {/* Lights Section */}
-        <UserLightController selectedRoom={selectedRoom} />
-        {/* Doors Section */}
-        <UserDoorController selectedRoom={selectedRoom} />
+      <div className="w-full max-w-6xl grid grid-cols-1 md:grid-cols-2 gap-8">
+        <div className='flex flex-col gap-4'>
+          {/* Doors Section */}
+          <UserDoorController selectedRoom={selectedRoom} />
+          {/* Lights Section */}
+          <UserLightController selectedRoom={selectedRoom} />  
+        </div>
+
+        <div className='flex flex-col gap-4'>
+          {/* AC Section */}
+          <UserACController selectedRoom={selectedRoom} />
+        </div>
+       
+ 
       </div>
     </div>
   );
