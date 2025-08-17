@@ -105,7 +105,6 @@ const DashboardController = () => {
 
         <div className='flex flex-col gap-4'>
           {/* AC Section */}
-          <h3 className="text-xl font-bold text-blue-700">Your Air Conditioners</h3>
           <UserACController selectedRoom={selectedRoom} />
         </div>
        
