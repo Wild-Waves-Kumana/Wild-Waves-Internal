@@ -245,7 +245,7 @@ const UserACController = ({ selectedRoom, onACUpdate }) => {
                 className={`w-12 h-12 rounded-full flex items-center justify-center transition-all duration-300 transform hover:scale-110 ${
                   currentAC.status
                     ? 'bg-gradient-to-r from-blue-500 to-blue-600 text-white shadow-lg hover:shadow-xl'
-                    : 'bg-gray-300 text-gray-600 shadow-md hover:bg-gray-400'
+                    : 'bg-red-500 text-gray-200 shadow-md hover:bg-red-600'
                 } ${currentAC.access !== true ? 'opacity-50 cursor-not-allowed' : ''}`}
                 disabled={currentAC.access !== true}
                 aria-label="Toggle Power"
