@@ -204,11 +204,11 @@ const UserACController = ({ selectedRoom, onACUpdate }) => {
               </p>
             </div>
 
-          <div className='mt-4'>
+          <div className=''>
             {/* AC Indicator Dots */}
           {acs.length > 1 && (
             <div className="flex justify-center">
-              <div className="flex space-x-2 bg-white/50 rounded-full px-4 py-2 backdrop-blur-sm">
+              <div className="flex space-x-2 bg-white/50 rounded-full px-4 py-2 backdrop-blur-sm ">
                 {acs.map((ac, idx) => (
                   <button
                     key={ac._id}
