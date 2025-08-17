@@ -275,22 +275,15 @@ const UserDoorController = ({ selectedRoom, onDoorUpdate }) => {
           slideDirection === 'slide-left' ? 'transform -translate-x-full opacity-0' :
           slideDirection === 'slide-right' ? 'transform translate-x-full opacity-0' : ''
         }`}>
-          <h3 className="text-center text-sm font-semibold text-cyan-700 mb-4 tracking-wide">LOCK STATUS</h3>
           <div className="text-center">
             <div className={`inline-flex items-center gap-2 px-4 py-2 rounded-full ${
-              currentDoor.access !== true || currentDoor.status !== true
-                ? 'bg-gray-100 text-gray-400'
-                : currentDoor.lockStatus
-                  ? 'bg-green-100 text-green-700'
-                  : 'bg-red-100 text-red-700'
+              currentDoor.lockStatus
+                ? 'bg-green-100 text-green-700'
+                : 'bg-red-100 text-red-700'
             }`}>
               {currentDoor.lockStatus ? <Unlock size={16} /> : <Lock size={16} />}
               <span className="text-sm font-medium">
-                {currentDoor.access !== true || currentDoor.status !== true
-                  ? 'Offline'
-                  : currentDoor.lockStatus 
-                    ? 'Door is Unlocked' 
-                    : 'Door is Locked'}
+                {currentDoor.lockStatus ? 'Door is Unlocked' : 'Door is Locked'}
               </span>
             </div>
           </div>
