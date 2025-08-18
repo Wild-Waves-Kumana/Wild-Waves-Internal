@@ -77,16 +77,17 @@ const DashboardController = () => {
   return (
     <div className="w-full max-w-6xl mx-auto p-4">
       <div className="mb-6">
-        <h3 className="font-semibold mb-2">Select Room:</h3>
-        <div className="flex flex-wrap gap-2">
+        
+        <div className="flex flex-wrap gap-2 justify-center">
           {rooms.map(room => (
             <button
               key={room._id}
               type="button"
-              className={`px-4 py-2 rounded border
+              className={`px-4 py-2 rounded-2xl border font-medium transition-all duration-300 shadow
                 ${selectedRoomId === room._id
-                  ? "bg-blue-600 text-white border-blue-600"
-                  : "bg-gray-100 text-gray-700 border-gray-300 hover:bg-blue-100"}
+                  ? "bg-blue-400 text-white  shadow-lg  "
+                  : "bg-gray-100 text-gray-700 border-gray-300 hover:bg-blue-100 hover:shadow-lg hover:shadow-blue-200/40"}
+                focus:outline-none focus:ring-2 focus:ring-blue-400
               `}
               onClick={() => setSelectedRoomId(room._id)}
             >
@@ -107,8 +108,6 @@ const DashboardController = () => {
           {/* AC Section */}
           <UserACController selectedRoom={selectedRoom} />
         </div>
-       
- 
       </div>
     </div>
   );
