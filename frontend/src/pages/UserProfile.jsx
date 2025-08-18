@@ -132,7 +132,7 @@ const UserProfile = () => {
     <div>
       <div className="flex max-w mx-auto mt-10 bg-white shadow rounded p-6">
         <div className='flex-1 mx-3'>
-          <img src={user.profilePicture} alt={`${user.username}'s profile`} className="w-24 h-24 rounded-full mx-auto" />
+          {/* <img src={user.profilePicture} alt={`${user.username}'s profile`} className="w-24 h-24 rounded-full mx-auto" /> */}
         </div>
         <div className="flex-2 mx-3 mb-2">
           <h2 className="text-2xl font-bold mb-4">User Profile</h2>
