@@ -192,7 +192,7 @@ const UserDoorController = ({ selectedRoom, onDoorUpdate }) => {
               className={`w-12 h-12 rounded-full flex items-center justify-center transition-all duration-200 transform hover:scale-110 ${
                 currentIdx === 0
                   ? "bg-gray-200 text-gray-400 cursor-not-allowed opacity-50"
-                  : "bg-white/90 text-blue-600 hover:bg-white shadow-lg hover:shadow-xl backdrop-blur-sm"
+                  : "bg-white/90 text-pink-600 hover:bg-white shadow-lg hover:shadow-xl backdrop-blur-sm"
               }`}
               aria-label="Previous Door"
             >
@@ -261,7 +261,7 @@ const UserDoorController = ({ selectedRoom, onDoorUpdate }) => {
               className={`w-12 h-12 rounded-full flex items-center justify-center transition-all duration-200 transform hover:scale-110 ${
                 currentIdx === doors.length - 1
                   ? "bg-gray-200 text-gray-400 cursor-not-allowed opacity-50"
-                  : "bg-white/90 text-blue-600 hover:bg-white shadow-lg hover:shadow-xl backdrop-blur-sm"
+                  : "bg-white/90 text-pink-600 hover:bg-white shadow-lg hover:shadow-xl backdrop-blur-sm"
               }`}
               aria-label="Next Door"
             >

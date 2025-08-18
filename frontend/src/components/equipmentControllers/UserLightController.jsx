@@ -102,8 +102,8 @@ const UserLightController = ({ selectedRoom, onLightUpdate }) => {
 
   if (lights.length === 0) {
     return (
-      <div className="bg-white rounded-3xl shadow-2xl p-8 bg-gradient-to-br from-blue-100 to-cyan-100">
-        <h3 className="text-xl font-bold mb-6 text-yellow-600">Your Lights</h3>
+      <div className="bg-white rounded-3xl shadow-2xl p-8 bg-gradient-to-br from-orange-100 to-yellow-100">
+        <h3 className="text-xl font-bold mb-6 text-gray-500">Your Lights</h3>
         <div className="text-gray-400">No lights assigned to this room.</div>
       </div>
     );
@@ -115,7 +115,7 @@ const UserLightController = ({ selectedRoom, onLightUpdate }) => {
   // const currentPairIdx = Math.floor(currentIdx / 2);
 
   return (
-    <div className="bg-white rounded-3xl shadow-2xl p-8 bg-gradient-to-br from-blue-100 to-cyan-100">
+    <div className="bg-white rounded-3xl shadow-2xl p-8 bg-gradient-to-br from-orange-100 to-yellow-100">
       <div className="space-y-6">
         {/* Enhanced Header with Navigation */}
         {/* {lights.length > 2 && (
