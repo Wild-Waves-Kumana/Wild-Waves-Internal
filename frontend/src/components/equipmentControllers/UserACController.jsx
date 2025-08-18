@@ -174,7 +174,7 @@ const UserACController = ({ selectedRoom, onACUpdate }) => {
   if (acs.length === 0) {
     return (
       <div className="bg-white rounded-3xl shadow-2xl p-8 bg-gradient-to-br from-blue-100 to-cyan-100">
-        <h3 className="text-xl font-bold mb-2 text-blue-700">Your Air Conditioners</h3>
+        <h3 className="text-xl font-bold mb-2 text-gray-600">Your Air Conditioners</h3>
         <div className="text-gray-400">No ACs assigned to this room.</div>
       </div>
     );

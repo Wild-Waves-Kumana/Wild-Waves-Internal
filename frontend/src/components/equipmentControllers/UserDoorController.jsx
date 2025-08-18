@@ -101,8 +101,8 @@ const UserDoorController = ({ selectedRoom, onDoorUpdate }) => {
 
   if (doors.length === 0) {
     return (
-      <div className="bg-white rounded-3xl shadow-2xl p-8 bg-gradient-to-br from-blue-100 to-cyan-100">
-        <h3 className="text-xl font-bold mb-6 text-green-700">Your Doors</h3>
+      <div className="bg-white rounded-3xl shadow-2xl p-8 bg-gradient-to-br from-fuchsia-100 to-red-100">
+        <h3 className="text-xl font-bold mb-6 text-gray-600">Your Doors</h3>
         <div className="text-gray-400">No doors assigned to this room.</div>
       </div>
     );
@@ -111,7 +111,7 @@ const UserDoorController = ({ selectedRoom, onDoorUpdate }) => {
   const currentDoor = doors[currentIdx];
 
   return (
-    <div className="bg-white rounded-3xl shadow-2xl p-8 bg-gradient-to-br from-blue-100 to-cyan-100">
+    <div className="bg-white rounded-3xl shadow-2xl p-8 bg-gradient-to-br from-fuchsia-100 to-red-100">
       <div className="space-y-6">
         {/* Enhanced Header with Navigation */}
         <div className="relative">
