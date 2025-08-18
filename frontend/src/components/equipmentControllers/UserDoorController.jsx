@@ -176,14 +176,14 @@ const UserDoorController = ({ selectedRoom, onDoorUpdate }) => {
                 disabled={currentDoor.access !== true}
                 aria-label="Toggle Power"
               >
-                <Power size={20} />
+                <Power size={20} className='' />
               </button>
             </div>
           </div>
         </div>
 
         {/* Lock Controller with Side Navigation */}
-        <div className="flex items-center justify-center gap-6">
+        <div className="flex items-center justify-center gap-6 z-10">
           {/* Left Arrow */}
           {doors.length > 1 && (
             <button
