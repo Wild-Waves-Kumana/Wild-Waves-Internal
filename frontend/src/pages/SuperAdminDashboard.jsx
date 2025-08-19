@@ -1,51 +1,56 @@
 import React, { useContext } from "react";
 import { FaUserFriends, FaUser, FaBuilding } from "react-icons/fa";
 import { UserContext } from "../context/UserContext";
-import { useNavigate } from "react-router-dom"; // Add this import
+import { useNavigate } from "react-router-dom";
 
 const SuperAdminDashboard = () => {
   const { username } = useContext(UserContext);
-  const navigate = useNavigate(); // Add this line
-
-  const handleCreateAdmin = () => {
-    navigate("/admincreation");
-  };
-
-  const handleCreateCompany = () => {
-    navigate("/create-company");
-  };
+  const navigate = useNavigate();
 
   return (
-    <div className="p-8">
-      <h1 className="text-3xl font-bold mb-6">Super Admin Dashboard</h1>
-      <p className="mb-8 text-lg">Welcome, {username}! 👋</p>
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-        <div className="bg-white  rounded-lg shadow p-6 flex flex-col items-center">
-          <FaUserFriends className="text-4xl text-blue-500 mb-4" />
-          <h2 className="text-xl font-semibold mb-2">Companies</h2>
-          <p className="text-gray-600 dark:text-gray-300">Manage all companies in the system.</p>
-          <button
-            onClick={handleCreateCompany}
-            className="mt-4 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
-          >
-            Create Company
-          </button>
+    <div className="min-h-screen w-full ">
+      <div className="max-w-6xl mx-auto px-4 py-12">
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-10">
+          <div>
+            <h1 className="text-3xl md:text-4xl font-bold text-blue-800 mb-2">
+              Super Admin Dashboard
+            </h1>
+            <p className="text-lg text-cyan-700 font-medium">
+              Welcome,{" "}
+              <span className="font-bold">{username}</span> 👋
+            </p>
+          </div>
         </div>
-        <div className="bg-white  rounded-lg shadow p-6 flex flex-col items-center">
-          <FaUser className="text-4xl text-green-500 mb-4" />
-          <h2 className="text-xl font-semibold mb-2">Admins</h2>
-          <p className="text-gray-600 dark:text-gray-300">View and manage admin users.</p>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
           <button
-            onClick={handleCreateAdmin}
-            className="mt-4 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+            onClick={() => navigate("/create-company")}
+            className="group bg-gradient-to-br from-blue-500 to-cyan-500 rounded-2xl shadow-xl p-8 flex flex-col items-center hover:scale-105 transition-transform duration-200"
           >
-            Create Admin
+            <FaUserFriends className="w-10 h-10 text-cyan-100 mb-4" />
+            <h2 className="text-xl font-semibold text-white mb-1">Create Companies</h2>
+            <p className="text-white/90 text-sm text-center">
+              Manage and create companies
+            </p>
           </button>
-        </div>
-        <div className="bg-white  rounded-lg shadow p-6 flex flex-col items-center">
-          <FaBuilding className="text-4xl text-purple-500 mb-4" />
-          <h2 className="text-xl font-semibold mb-2">System Overview</h2>
-          <p className="text-gray-600 dark:text-gray-300">Get insights and statistics about the platform.</p>
+          <button
+            onClick={() => navigate("/admincreation")}
+            className="group bg-gradient-to-br from-emerald-500 to-blue-400 rounded-2xl shadow-xl p-8 flex flex-col items-center hover:scale-105 transition-transform duration-200"
+          >
+            <FaUser className="w-10 h-10 text-emerald-100 mb-4" />
+            <h2 className="text-xl font-semibold text-white mb-1">Create Admins</h2>
+            <p className="text-white/90 text-sm text-center">
+              View and create admin users
+            </p>
+          </button>
+          <div className="group bg-gradient-to-br from-indigo-500 to-purple-400 rounded-2xl shadow-xl p-8 flex flex-col items-center">
+            <FaBuilding className="w-10 h-10 text-indigo-100 mb-4" />
+            <h2 className="text-xl font-semibold text-white mb-1">
+              System Overview
+            </h2>
+            <p className="text-white/90 text-sm text-center">
+              Get insights and statistics about the platform.
+            </p>
+          </div>
         </div>
       </div>
     </div>
