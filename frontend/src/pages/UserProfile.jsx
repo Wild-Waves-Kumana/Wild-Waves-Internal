@@ -1,9 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import axios from 'axios';
-import ACList from '../components/equipmentLists/ACList';
-import DoorList from '../components/equipmentLists/DoorList';
-import LightList from '../components/equipmentLists/LightList';
+import ACList from '../components/equipment-lists/ACList';
+import DoorList from '../components/equipment-lists/DoorList';
+import LightList from '../components/equipment-lists/LightList';
 import Modal from "../components/Modal";
 import { jwtDecode } from 'jwt-decode';
 

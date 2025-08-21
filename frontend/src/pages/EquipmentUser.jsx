@@ -1,7 +1,7 @@
 import React from 'react';
-import DoorList from '../components/equipmentLists/DoorList';
-import LightList from '../components/equipmentLists/LightList';
-import ACList from '../components/equipmentLists/ACList';
+import DoorList from '../components/equipment-lists/DoorList';
+import LightList from '../components/equipment-lists/LightList';
+import ACList from '../components/equipment-lists/ACList';
 
 const EquipmentUser = () => {
   const userId = localStorage.getItem('userId'); // Get logged-in user's ID
