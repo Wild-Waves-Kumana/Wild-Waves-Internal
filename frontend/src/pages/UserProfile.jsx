@@ -4,7 +4,7 @@ import axios from 'axios';
 import ACList from '../components/lists/ACList';
 import DoorList from '../components/lists/DoorList';
 import LightList from '../components/lists/LightList';
-import Modal from "../components/Modal";
+import Modal from "../components/common/Modal";
 import { jwtDecode } from 'jwt-decode';
 
 const UserProfile = () => {

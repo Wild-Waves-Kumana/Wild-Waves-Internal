@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import axios from 'axios';
 import { jwtDecode } from 'jwt-decode';
-import Modal from '../Modal';
+import Modal from '../common/Modal';
 import ReusableTable from '../common/ReusableTable';
 
 const LightList = ({ userId: propUserId, selectedRoomId, roomIds, role: propRole }) => {

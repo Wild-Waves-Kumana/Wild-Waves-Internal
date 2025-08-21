@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useCallback } from "react";
 import axios from "axios";
-import Modal from "../Modal";
+import Modal from "../common/Modal";
 import { jwtDecode } from "jwt-decode";
 import ReusableTable from "../common/ReusableTable";
 
