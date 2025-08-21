@@ -1,7 +1,8 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import axios from 'axios';
 import { jwtDecode } from 'jwt-decode';
 import { useNavigate } from 'react-router-dom';
+import ReusableTable from '../common/ReusableTable';
 
 const VillaList = ({ companyId: propCompanyId }) => {
   const [villas, setVillas] = useState([]);
@@ -67,66 +68,70 @@ const VillaList = ({ companyId: propCompanyId }) => {
     fetchRooms();
   }, []);
 
+  // Helper to get room names for a villa
   const getVillaRooms = (villa) => {
     if (!villa.rooms || !Array.isArray(villa.rooms)) return [];
     return rooms.filter(room => villa.rooms.includes(room._id));
   };
 
-  if (loading) return <div>Loading...</div>;
+  // Prepare columns for ReusableTable
+  const columns = useMemo(() => [
+    { key: "villaName", header: "Villa Name" },
+    { key: "villaId", header: "Villa ID" },
+    {
+      key: "rooms",
+      header: "Rooms",
+      render: (_, row) => (
+        <div className="relative">
+          <button
+            className="bg-gray-200 text-gray-600 px-3 py-1 rounded hover:bg-gray-300"
+            onClick={() => setOpenDropdown(openDropdown === row._id ? null : row._id)}
+          >
+            {openDropdown === row._id ? "Hide Rooms" : "Show Rooms"}
+          </button>
+          {openDropdown === row._id && (
+            <div className="absolute z-10 mt-2 bg-white border rounded shadow w-48 max-h-48 overflow-auto">
+              {getVillaRooms(row).length > 0 ? (
+                <ul>
+                  {getVillaRooms(row).map(room => (
+                    <li key={room._id} className="px-4 py-2 hover:bg-gray-100">{room.roomName}</li>
+                  ))}
+                </ul>
+              ) : (
+                <div className="px-4 py-2 text-gray-400">No rooms</div>
+              )}
+            </div>
+          )}
+        </div>
+      )
+    },
+    {
+      key: "profile",
+      header: "Profile",
+      render: (_, row) => (
+        <button
+          className="bg-green-500 text-white px-3 py-1 rounded hover:bg-green-700"
+          onClick={() => navigate(`/villa-profile/${row._id}`)}
+        >
+          View Profile
+        </button>
+      )
+    }
+  ], [rooms, openDropdown, navigate]);
 
   return (
-    <div className="mx-auto mt-10 bg-white shadow rounded p-6 ">
-      <h2 className="text-2xl font-bold mb-4">Villas {villas.length > 0 && "(Total: " + villas.length + ")"}</h2>
-      <table className="min-w-full border">
-        <thead>
-          <tr>
-            <th className="border px-4 py-2">Villa Name</th>
-            <th className="border px-4 py-2">Villa ID</th>
-            <th className="border px-4 py-2">Rooms</th>
-            <th className="border px-4 py-2">Profile</th>
-          </tr>
-        </thead>
-        <tbody>
-          {villas.map((villa) => (
-            <tr key={villa._id}>
-              <td className="border px-4 py-2">{villa.villaName}</td>
-              <td className="border px-4 py-2">{villa.villaId}</td>
-              <td className="border px-4 py-2">
-                <div className="relative">
-                  <button
-                    className="bg-blue-500 text-white px-3 py-1 rounded hover:bg-blue-700"
-                    onClick={() => setOpenDropdown(openDropdown === villa._id ? null : villa._id)}
-                  >
-                    {openDropdown === villa._id ? "Hide Rooms" : "Show Rooms"}
-                  </button>
-                  {openDropdown === villa._id && (
-                    <div className="absolute z-10 mt-2 bg-white border rounded shadow w-48 max-h-48 overflow-auto">
-                      {getVillaRooms(villa).length > 0 ? (
-                        <ul>
-                          {getVillaRooms(villa).map(room => (
-                            <li key={room._id} className="px-4 py-2 hover:bg-gray-100">{room.roomName}</li>
-                          ))}
-                        </ul>
-                      ) : (
-                        <div className="px-4 py-2 text-gray-400">No rooms</div>
-                      )}
-                    </div>
-                  )}
-                </div>
-              </td>
-              <td className="border px-4 py-2">
-                <button
-                  className="bg-green-500 text-white px-3 py-1 rounded hover:bg-green-700"
-                  onClick={() => navigate(`/villa-profile/${villa._id}`)}
-                >
-                  View Profile
-                </button>
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-      {villas.length === 0 && <div className="mt-4 text-gray-500">No villas found.</div>}
+    <div className="mx-auto mt-10 bg-white shadow rounded p-6">
+      <h2 className="text-2xl font-bold mb-4">
+        Villas {villas.length > 0 && `(Total: ${villas.length})`}
+      </h2>
+      <ReusableTable
+        columns={columns}
+        data={villas}
+        loading={loading}
+        pagination={true}
+        pageSize={10}
+        emptyMessage="No villas found."
+      />
     </div>
   );
 };
