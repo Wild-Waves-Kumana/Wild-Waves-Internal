@@ -1,5 +1,6 @@
 import Villa from '../models/villa.js';
 import Admin from '../models/admin.js';
+import Company from '../models/company.js'; // <-- import Company
 
 export const createVilla = async (req, res) => {
   try {
@@ -19,6 +20,14 @@ export const createVilla = async (req, res) => {
     });
 
     await newVilla.save();
+
+    // --- Add the villa _id to the company's villas array ---
+    await Company.findByIdAndUpdate(
+      admin.companyId,
+      { $addToSet: { villas: newVilla._id } }, // $addToSet avoids duplicates
+      { new: true }
+    );
+    // ------------------------------------------------------
 
     res.status(201).json({ message: 'Villa created successfully', villa: newVilla });
   } catch (error) {
