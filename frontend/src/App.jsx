@@ -20,7 +20,6 @@ import AdminProfile from './pages/AdminProfile';
 import CreateCompany from './pages/CreateCompany';
 import CompanyList from './pages/CompanyList';
 import VillaCreate from './pages/VillaCreation';
-import VillaList from './pages/VillaList';
 import VillaProfile from './pages/VillaProfile';
 
 function App() {
@@ -202,16 +201,6 @@ function App() {
       />
 
     
-      <Route
-        path="/villalist"
-        element={
-          <ProtectedRoute allowedRoles={['admin', 'superadmin']}>
-            <Layout>
-              <VillaList />
-            </Layout>
-          </ProtectedRoute>
-        }
-      />
 
     </Routes>
   );

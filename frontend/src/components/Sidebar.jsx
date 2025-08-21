@@ -109,18 +109,7 @@ const Sidebar = () => {
                   <FaUserFriends /> Users
                 </NavLink>
               </li>
-              <li>
-                <NavLink
-                  to="/villalist"
-                  className={({ isActive }) =>
-                    isActive
-                      ? " text-blue-600 flex items-center gap-4 dark:text-blue-400"
-                      : "text-gray-600 flex items-center gap-2 dark:text-slate-400"
-                  }
-                >
-                  <FaUserFriends /> Villas List
-                </NavLink>
-              </li>
+              
               <li>
                 <NavLink
                   to="/admin-profile"
