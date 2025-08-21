@@ -176,10 +176,15 @@ const ACList = ({ userId: propUserId, selectedRoomId, roomIds, role: propRole })
   return (
     <div className="mx-auto my-4 bg-white shadow rounded p-6">
       <h2 className="text-2xl font-bold mb-4">Air Conditioners</h2>
+
       <ReusableTable
         columns={columns}
         data={tableData}
+        pagination={true}
+        pageSize={5}
+        pageSizeOptions={[5, 10, 20, 50]}
       />
+      
       {filteredAcs.length === 0 && (
         <div className="mt-4 text-gray-500">No air conditioners found for this user.</div>
       )}

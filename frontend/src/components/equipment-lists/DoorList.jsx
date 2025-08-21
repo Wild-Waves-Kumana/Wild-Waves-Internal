@@ -194,6 +194,9 @@ const DoorList = ({ userId: propUserId, selectedRoomId, roomIds, role: propRole 
       <ReusableTable
         columns={columns}
         data={tableData}
+        pagination={true}
+        pageSize={5}
+        pageSizeOptions={[5, 10, 20, 50]}
       />
       {filteredDoors.length === 0 && (
         <div className="mt-4 text-gray-500">No doors found for this user.</div>

@@ -187,12 +187,12 @@ const LightList = ({ userId: propUserId, selectedRoomId, roomIds, role: propRole
     <div className="mx-auto my-4 bg-white shadow rounded p-6">
       <h2 className="text-2xl font-bold mb-4">Lights</h2>
       <ReusableTable
-  columns={columns}
-  data={tableData}
-  pagination={true}
-  pageSize={5}
-  pageSizeOptions={[5, 10, 20, 50]}
-/>
+        columns={columns}
+        data={tableData}
+        pagination={true}
+        pageSize={5}
+        pageSizeOptions={[5, 10, 20, 50]}
+      />
       {filteredLights.length === 0 && (
         <div className="mt-4 text-gray-500">No lights found for this user.</div>
       )}
