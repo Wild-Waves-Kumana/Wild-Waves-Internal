@@ -33,7 +33,7 @@ const DashboardController = () => {
       try {
         const userRes = await axios.get(`http://localhost:5000/api/users/${userId}`);
         const user = userRes.data;
-        // user.rooms is an array of room ObjectIds
+        
         // Fetch all rooms and filter by user's room ids
         const allRoomsRes = await axios.get('http://localhost:5000/api/rooms/all');
         const userRooms = allRoomsRes.data.filter(room => user.rooms && user.rooms.includes(room._id));
