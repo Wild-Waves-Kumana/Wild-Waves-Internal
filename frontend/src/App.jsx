@@ -13,7 +13,7 @@ import SuperAdminDashboard from './pages/SuperAdminDashboard';
 import AdminCreation from './pages/AdminCreation';
 import UserCreation from './pages/UserCreation';
 import EquipmentCreate from './pages/EquipmentCreation';
-import UserList from './pages/UserList';
+import Users from './pages/Users';
 import EquipmentUser from './pages/EquipmentUser';
 import UserProfile from './pages/UserProfile';
 import AdminProfile from './pages/AdminProfile';
@@ -191,11 +191,11 @@ function App() {
         }
       />
       <Route
-        path="/userlist"
+        path="/users"
         element={
           <ProtectedRoute allowedRoles={['admin', 'superadmin']}>
             <Layout>
-              <UserList />
+              <Users/>
             </Layout>
           </ProtectedRoute>
         }

@@ -99,14 +99,14 @@ const Sidebar = () => {
             <>
               <li>
                 <NavLink
-                  to="/userlist"
+                  to="/users"
                   className={({ isActive }) =>
                     isActive
                       ? " text-blue-600 flex items-center gap-4 dark:text-blue-400"
                       : "text-gray-600 flex items-center gap-2 dark:text-slate-400"
                   }
                 >
-                  <FaUserFriends /> Users List
+                  <FaUserFriends /> Users
                 </NavLink>
               </li>
               <li>
