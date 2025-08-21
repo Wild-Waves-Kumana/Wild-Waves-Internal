@@ -16,7 +16,7 @@ import EquipmentCreate from './pages/EquipmentCreation';
 import Users from './pages/Users';
 import EquipmentUser from './pages/EquipmentUser';
 import UserProfile from './pages/UserProfile';
-import AdminProfile from './pages/AdminProfile';
+import CompanyProfile from './pages/CompanyProfile';
 import CreateCompany from './pages/CreateCompany';
 import CompanyList from './pages/CompanyList';
 import VillaCreate from './pages/VillaCreation';
@@ -139,11 +139,11 @@ function App() {
       />
 
       <Route
-        path="/admin-profile"
+        path="/company-profile"
         element={
           <ProtectedRoute allowedRoles={['admin', 'superadmin']}>
             <Layout>
-              <AdminProfile />
+              <CompanyProfile />
             </Layout>
           </ProtectedRoute>
         }

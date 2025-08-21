@@ -97,6 +97,19 @@ const Sidebar = () => {
           )}
           {userRole !== 'user' && (
             <>
+
+            <li>
+                <NavLink
+                  to="/company-profile"
+                  className={({ isActive }) =>
+                    isActive
+                      ? " text-blue-600 flex items-center gap-4 dark:text-blue-400"
+                      : "text-gray-600 flex items-center gap-2 dark:text-slate-400"
+                  }
+                >
+                  <FaUser /> Profile
+                </NavLink>
+              </li>
               <li>
                 <NavLink
                   to="/users"
@@ -110,18 +123,7 @@ const Sidebar = () => {
                 </NavLink>
               </li>
               
-              <li>
-                <NavLink
-                  to="/admin-profile"
-                  className={({ isActive }) =>
-                    isActive
-                      ? " text-blue-600 flex items-center gap-4 dark:text-blue-400"
-                      : "text-gray-600 flex items-center gap-2 dark:text-slate-400"
-                  }
-                >
-                  <FaUser /> Admin Profile
-                </NavLink>
-              </li>
+              
 
               {/* <li>
                 <NavLink
