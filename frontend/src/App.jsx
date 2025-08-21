@@ -6,7 +6,7 @@ import ProtectedRoute from './components/ProtectedRoute';
 import Login from './pages/Login';
 import Signup from './pages/UserCreation';
 import AdminDashboard from './pages/AdminDashboard';
-import Unauthorized from './pages/unauthorized';
+import Unauthorized from './pages/Unauthorized';
 import UserDashboard from './pages/UserDashboard';
 import Layout from './components/Layout';
 import SuperAdminDashboard from './pages/SuperAdminDashboard';
