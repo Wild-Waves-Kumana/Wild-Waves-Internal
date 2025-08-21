@@ -2,11 +2,12 @@ import React, { useEffect, useState, useCallback } from "react";
 import axios from "axios";
 import Modal from "../Modal";
 import { jwtDecode } from "jwt-decode";
+import ReusableTable from "../common/ReusableTable";
 
 const ACList = ({ userId: propUserId, selectedRoomId, roomIds, role: propRole }) => {
   const [acs, setAcs] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [role, setRole] = useState(propRole || ""); // <-- use propRole if provided
+  const [role, setRole] = useState(propRole || "");
   const [showEditModal, setShowEditModal] = useState(false);
   const [selectedAC, setSelectedAC] = useState(null);
   const [editForm, setEditForm] = useState({
@@ -15,15 +16,14 @@ const ACList = ({ userId: propUserId, selectedRoomId, roomIds, role: propRole })
     temperaturelevel: "",
     mode: "",
     fanSpeed: "",
-    status: false, // boolean
-    access: false, // boolean
+    status: false,
+    access: false,
   });
 
   // Fetch ACs for rooms if roomIds is provided, otherwise use user logic
   const fetchACs = useCallback(async () => {
     try {
       if (roomIds && Array.isArray(roomIds) && roomIds.length > 0) {
-        // Fetch all ACs and filter by roomIds
         const acRes = await axios.get("http://localhost:5000/api/equipment/air-conditioners");
         const filtered = acRes.data.filter(ac => ac.roomId && roomIds.includes(ac.roomId._id));
         setAcs(filtered);
@@ -43,7 +43,6 @@ const ACList = ({ userId: propUserId, selectedRoomId, roomIds, role: propRole })
         userId = propUserId;
       }
 
-      // Fetch user to get rooms
       const userRes = await axios.get(`http://localhost:5000/api/users/${userId}`);
       const user = userRes.data;
       if (!user.rooms || user.rooms.length === 0) {
@@ -52,11 +51,8 @@ const ACList = ({ userId: propUserId, selectedRoomId, roomIds, role: propRole })
         return;
       }
 
-      // Fetch all rooms and filter by user's room ids
       const allRoomsRes = await axios.get('http://localhost:5000/api/rooms/all');
       const userRooms = allRoomsRes.data.filter(room => user.rooms.includes(room._id));
-
-      // Collect all airConditioner ObjectIds from user's rooms
       const acIds = userRooms.flatMap(room => room.airConditioners || []);
 
       if (acIds.length === 0) {
@@ -65,10 +61,8 @@ const ACList = ({ userId: propUserId, selectedRoomId, roomIds, role: propRole })
         return;
       }
 
-      // Fetch all ACs and filter by acIds
       const acRes = await axios.get("http://localhost:5000/api/equipment/air-conditioners");
       const filtered = acRes.data.filter(ac => acIds.includes(ac._id));
-
       setAcs(filtered);
     } catch (err) {
       console.error("Failed to fetch air conditioners:", err);
@@ -90,8 +84,8 @@ const ACList = ({ userId: propUserId, selectedRoomId, roomIds, role: propRole })
       temperaturelevel: ac.temperaturelevel || "",
       mode: ac.mode || "",
       fanSpeed: ac.fanSpeed || "",
-      status: ac.status === true, // ensure boolean
-      access: ac.access === true, // ensure boolean
+      status: ac.status === true,
+      access: ac.access === true,
     });
     setShowEditModal(true);
   };
@@ -119,7 +113,6 @@ const ACList = ({ userId: propUserId, selectedRoomId, roomIds, role: propRole })
     }
   };
 
-  // If access is false (Disabled), force status to false (OFF)
   useEffect(() => {
     if (editForm.access === false) {
       setEditForm((prev) => ({
@@ -134,58 +127,59 @@ const ACList = ({ userId: propUserId, selectedRoomId, roomIds, role: propRole })
     ? acs.filter(ac => ac.roomId && ac.roomId._id === selectedRoomId)
     : acs;
 
+  // Prepare columns for ReusableTable
+  const columns = [
+    { key: "itemName", header: "Item Name" },
+    { key: "itemCode", header: "Item Code" },
+    { key: "roomName", header: "Room" },
+    { key: "temperaturelevel", header: "Temp" },
+    { key: "mode", header: "Mode" },
+    { key: "fanSpeed", header: "Fan Speed" },
+    {
+      key: "status",
+      header: "Status",
+      render: (value) => value === true ? "ON" : "OFF"
+    },
+    {
+      key: "access",
+      header: "Access",
+      render: (value) =>
+        <span className={`px-2 py-1 rounded ${value === true ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"}`}>
+          {value === true ? "Enabled" : "Disabled"}
+        </span>
+    },
+  ];
+
+  if (role === "admin" || role === "superadmin") {
+    columns.push({
+      key: "edit",
+      header: "Edit",
+      render: (_, row) => (
+        <button
+          className="bg-yellow-500 text-white px-3 py-1 rounded hover:bg-yellow-700"
+          onClick={() => openEditModal(row)}
+        >
+          Edit
+        </button>
+      )
+    });
+  }
+
+  // Prepare data for ReusableTable
+  const tableData = filteredAcs.map(ac => ({
+    ...ac,
+    roomName: ac.roomId?.roomName || "N/A",
+  }));
+
   if (loading) return <div>Loading...</div>;
 
   return (
-    <div className=" mx-auto my-4 bg-white shadow rounded p-6">
+    <div className="mx-auto my-4 bg-white shadow rounded p-6">
       <h2 className="text-2xl font-bold mb-4">Air Conditioners</h2>
-      <table className="min-w-full border">
-        <thead>
-          <tr>
-            <th className="border px-4 py-2">Item Name</th>
-            <th className="border px-4 py-2">Item Code</th>
-            <th className="border px-4 py-2">Room</th>
-            <th className="border px-4 py-2">Temp</th>
-            <th className="border px-4 py-2">Mode</th>
-            <th className="border px-4 py-2">Fan Speed</th>
-            <th className="border px-4 py-2">Status</th>
-            <th className="border px-4 py-2">Access</th>
-            {(role === "admin" || role === "superadmin") && (
-              <th className="border px-4 py-2">Edit</th>
-            )}
-          </tr>
-        </thead>
-        <tbody>
-          {filteredAcs.map((ac) => (
-            <tr key={ac._id}>
-              <td className="border px-4 py-2">{ac.itemName}</td>
-              <td className="border px-4 py-2">{ac.itemCode}</td>
-              <td className="border px-4 py-2">{ac.roomId?.roomName || "N/A"}</td>
-              <td className="border px-4 py-2">{ac.temperaturelevel}</td>
-              <td className="border px-4 py-2">{ac.mode}</td>
-              <td className="border px-4 py-2">{ac.fanSpeed}</td>
-              <td className="border px-4 py-2">
-                {ac.status === true ? "ON" : "OFF"}
-              </td>
-              <td className="border px-4 py-2">
-                <span className={`px-2 py-1 rounded ${ac.access === true ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"}`}>
-                  {ac.access === true ? "Enabled" : "Disabled"}
-                </span>
-              </td>
-              {(role === "admin" || role === "superadmin") && (
-                <td className="border px-4 py-2">
-                  <button
-                    className="bg-yellow-500 text-white px-3 py-1 rounded hover:bg-yellow-700"
-                    onClick={() => openEditModal(ac)}
-                  >
-                    Edit
-                  </button>
-                </td>
-              )}
-            </tr>
-          ))}
-        </tbody>
-      </table>
+      <ReusableTable
+        columns={columns}
+        data={tableData}
+      />
       {filteredAcs.length === 0 && (
         <div className="mt-4 text-gray-500">No air conditioners found for this user.</div>
       )}
