@@ -1,9 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import axios from 'axios';
-import ACList from '../components/equipment-lists/ACList';
-import DoorList from '../components/equipment-lists/DoorList';
-import LightList from '../components/equipment-lists/LightList';
+import ACList from '../components/lists/ACList';
+import DoorList from '../components/lists/DoorList';
+import LightList from '../components/lists/LightList';
 
 const VillaProfile = () => {
   const { villa_id } = useParams();
