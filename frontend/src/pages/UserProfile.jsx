@@ -163,9 +163,12 @@ const UserProfile = () => {
         <div className="flex-1 mx-3 mb-4 my-5 ">
           <div className='mb-2 '>
             <button
-              onClick={() => window.history.back()}
-              className="px-4 py-2 w-30 bg-blue-500 text-white rounded hover:bg-blue-600">
-              Back
+              onClick={() => window.location.href = `/face-registration/${userId}`}
+              className={`px-4 py-2 w-30 bg-green-500 text-white rounded 
+                ${role === "user" ? "hover:bg-green-600" : ""} 
+                disabled:opacity-50 disabled:cursor-not-allowed`}
+              disabled={role !== "user"}>
+              Face Registration
             </button>
           </div>
           <div className='mb-2'>

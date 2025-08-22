@@ -21,6 +21,7 @@ import CreateCompany from './pages/CreateCompany';
 import CompanyList from './pages/CompanyList';
 import VillaCreate from './pages/VillaCreation';
 import VillaProfile from './pages/VillaProfile';
+import UserFaceRegistration from './pages/UserFaceRegistration';
 
 function App() {
   const { isLoggedIn, login, role } = useContext(UserContext);
@@ -92,6 +93,18 @@ function App() {
           </ProtectedRoute>
         }
       />
+
+      <Route
+        path="/face-registration/:userId"
+        element={
+          <ProtectedRoute allowedRoles={['user']}>
+            <Layout>
+              <UserFaceRegistration />
+            </Layout>
+          </ProtectedRoute>
+        }
+      />
+
       <Route
         path="/admincreation"
         element={
