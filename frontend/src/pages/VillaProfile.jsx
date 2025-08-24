@@ -1,9 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import axios from 'axios';
-import UserACList from '../components/UserACList';
-import UserDoorList from '../components/UserDoorList';
-import UserLightList from '../components/UserLightList';
+import ACList from '../components/lists/ACList';
+import DoorList from '../components/lists/DoorList';
+import LightList from '../components/lists/LightList';
 
 const VillaProfile = () => {
   const { villa_id } = useParams();
@@ -95,15 +95,15 @@ const VillaProfile = () => {
       </div>
       <div className="my-4">
         <strong>Villa Air Conditioners:</strong>
-        <UserACList roomIds={roomIds} selectedRoomId={selectedRoomId} role="admin" />
+        <ACList roomIds={roomIds} selectedRoomId={selectedRoomId} role="admin" />
       </div>
       <div className="my-4">
         <strong>Villa Doors:</strong>
-        <UserDoorList roomIds={roomIds} selectedRoomId={selectedRoomId} role="admin" />
+        <DoorList roomIds={roomIds} selectedRoomId={selectedRoomId} role="admin" />
       </div>
       <div className="my-4">
         <strong>Villa Lights:</strong>
-        <UserLightList roomIds={roomIds} selectedRoomId={selectedRoomId} role="admin" />
+        <LightList roomIds={roomIds} selectedRoomId={selectedRoomId} role="admin" />
       </div>
       <button
         className="mt-4 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-700"
