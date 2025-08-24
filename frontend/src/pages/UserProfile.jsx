@@ -1,10 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import axios from 'axios';
-import UserACList from '../components/UserACList';
-import UserDoorList from '../components/UserDoorList';
-import UserLightList from '../components/UserLightList';
-import Modal from "../components/Modal";
+import ACList from '../components/lists/ACList';
+import DoorList from '../components/lists/DoorList';
+import LightList from '../components/lists/LightList';
+import Modal from "../components/common/Modal";
 import { jwtDecode } from 'jwt-decode';
 
 const UserProfile = () => {
@@ -132,7 +132,7 @@ const UserProfile = () => {
     <div>
       <div className="flex max-w mx-auto mt-10 bg-white shadow rounded p-6">
         <div className='flex-1 mx-3'>
-          <img src={user.profilePicture} alt={`${user.username}'s profile`} className="w-24 h-24 rounded-full mx-auto" />
+          {/* <img src={user.profilePicture} alt={`${user.username}'s profile`} className="w-24 h-24 rounded-full mx-auto" /> */}
         </div>
         <div className="flex-2 mx-3 mb-2">
           <h2 className="text-2xl font-bold mb-4">User Profile</h2>
@@ -163,9 +163,12 @@ const UserProfile = () => {
         <div className="flex-1 mx-3 mb-4 my-5 ">
           <div className='mb-2 '>
             <button
-              onClick={() => window.history.back()}
-              className="px-4 py-2 w-30 bg-blue-500 text-white rounded hover:bg-blue-600">
-              Back
+              onClick={() => window.location.href = `/face-registration/${userId}`}
+              className={`px-4 py-2 w-30 bg-green-500 text-white rounded 
+                ${role === "user" ? "hover:bg-green-600" : ""} 
+                disabled:opacity-50 disabled:cursor-not-allowed`}
+              disabled={role !== "user"}>
+              Face Registration
             </button>
           </div>
           <div className='mb-2'>
@@ -222,10 +225,10 @@ const UserProfile = () => {
             ))}
           </div>
         </div>
-        {/* Pass selectedRoomId as prop to UserACList */}
-        <UserACList userId={userId} selectedRoomId={selectedRoomId} />
-        <UserDoorList userId={userId} selectedRoomId={selectedRoomId} />
-        <UserLightList userId={userId} selectedRoomId={selectedRoomId} />
+        {/* Pass selectedRoomId as prop to ACList */}
+        <ACList userId={userId} selectedRoomId={selectedRoomId} />
+        <DoorList userId={userId} selectedRoomId={selectedRoomId} />
+        <LightList userId={userId} selectedRoomId={selectedRoomId} />
       </div>
 
       <Modal isVisible={showEditModal} onClose={() => setShowEditModal(false)} width="w-2/5">

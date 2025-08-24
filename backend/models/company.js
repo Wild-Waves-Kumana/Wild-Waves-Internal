@@ -4,6 +4,7 @@ const companySchema = new mongoose.Schema({
   companyName: { type: String, required: true },
   companyId: { type: String, required: true, unique: true },
   admins: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Admin' }],
+  villas: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Villa' }],
   users: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
   rooms: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Room' }],
   doors: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Door' }],

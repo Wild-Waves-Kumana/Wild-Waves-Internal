@@ -6,22 +6,22 @@ import ProtectedRoute from './components/ProtectedRoute';
 import Login from './pages/Login';
 import Signup from './pages/UserCreation';
 import AdminDashboard from './pages/AdminDashboard';
-import Unauthorized from './pages/unauthorized';
+import Unauthorized from './pages/Unauthorized';
 import UserDashboard from './pages/UserDashboard';
 import Layout from './components/Layout';
 import SuperAdminDashboard from './pages/SuperAdminDashboard';
 import AdminCreation from './pages/AdminCreation';
 import UserCreation from './pages/UserCreation';
 import EquipmentCreate from './pages/EquipmentCreation';
-import UserList from './pages/UserList';
+import Users from './pages/Users';
 import EquipmentUser from './pages/EquipmentUser';
 import UserProfile from './pages/UserProfile';
-import AdminProfile from './pages/AdminProfile';
+import CompanyProfile from './pages/CompanyProfile';
 import CreateCompany from './pages/CreateCompany';
 import CompanyList from './pages/CompanyList';
 import VillaCreate from './pages/VillaCreation';
-import VillaList from './pages/VillaList';
 import VillaProfile from './pages/VillaProfile';
+import UserFaceRegistration from './pages/UserFaceRegistration';
 
 function App() {
   const { isLoggedIn, login, role } = useContext(UserContext);
@@ -93,6 +93,18 @@ function App() {
           </ProtectedRoute>
         }
       />
+
+      <Route
+        path="/face-registration/:userId"
+        element={
+          <ProtectedRoute allowedRoles={['user']}>
+            <Layout>
+              <UserFaceRegistration />
+            </Layout>
+          </ProtectedRoute>
+        }
+      />
+
       <Route
         path="/admincreation"
         element={
@@ -140,11 +152,11 @@ function App() {
       />
 
       <Route
-        path="/admin-profile"
+        path="/company-profile"
         element={
           <ProtectedRoute allowedRoles={['admin', 'superadmin']}>
             <Layout>
-              <AdminProfile />
+              <CompanyProfile />
             </Layout>
           </ProtectedRoute>
         }
@@ -191,27 +203,17 @@ function App() {
         }
       />
       <Route
-        path="/userlist"
+        path="/users"
         element={
           <ProtectedRoute allowedRoles={['admin', 'superadmin']}>
             <Layout>
-              <UserList />
+              <Users/>
             </Layout>
           </ProtectedRoute>
         }
       />
 
     
-      <Route
-        path="/villalist"
-        element={
-          <ProtectedRoute allowedRoles={['admin', 'superadmin']}>
-            <Layout>
-              <VillaList />
-            </Layout>
-          </ProtectedRoute>
-        }
-      />
 
     </Routes>
   );

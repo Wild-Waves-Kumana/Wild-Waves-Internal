@@ -10,25 +10,26 @@ import {
 import { NavLink, useNavigate } from "react-router-dom";
 import { UserContext } from '../context/UserContext';
 import {jwtDecode} from 'jwt-decode';
-import Modal from "./Modal";
+import Modal from "./common/Modal";
+import Logo from "../assets/logo.png";
 
 const Sidebar = () => {
   const [showLogoutModal, setShowLogoutModal] = useState(false);
   const navigate = useNavigate();
   const token = localStorage.getItem('token');
   let userRole = null;
-  let username = null;
+  //let username = null;
   let userId = null;
 
   if (token) {
     try {
       const decoded = jwtDecode(token);
       userRole = decoded.role;
-      username = decoded.username;
+      //username = decoded.username;
       userId = decoded.id || decoded.userId || null; // Adjust according to your token structure
     } catch {
       userRole = null;
-      username = null;
+      //username = null;
       userId = null;
     }
   }
@@ -50,7 +51,8 @@ const Sidebar = () => {
 
   return (
     <aside className="w-64 bg-slate-200 min-h-screen p-6 flex flex-col">
-      <h1 className="text-3xl pb-4 font-bold">Welcome, {username} 👋</h1>
+      <img src={Logo} alt="Wild Waves Kumana" className="w-40 mb-4 select-none" />
+      {/* <h1 className="text-xl pb-4 font-medium text-gray-600 mb-4"> {username} </h1> */}
       <nav className="flex-1">
         <ul className="space-y-6">
           <li>
@@ -95,42 +97,33 @@ const Sidebar = () => {
           )}
           {userRole !== 'user' && (
             <>
-              <li>
+
+            <li>
                 <NavLink
-                  to="/userlist"
+                  to="/company-profile"
                   className={({ isActive }) =>
                     isActive
                       ? " text-blue-600 flex items-center gap-4 dark:text-blue-400"
                       : "text-gray-600 flex items-center gap-2 dark:text-slate-400"
                   }
                 >
-                  <FaUserFriends /> Users List
+                  <FaUser /> Profile
                 </NavLink>
               </li>
               <li>
                 <NavLink
-                  to="/villalist"
+                  to="/users"
                   className={({ isActive }) =>
                     isActive
                       ? " text-blue-600 flex items-center gap-4 dark:text-blue-400"
                       : "text-gray-600 flex items-center gap-2 dark:text-slate-400"
                   }
                 >
-                  <FaUserFriends /> Villas List
+                  <FaUserFriends /> Users
                 </NavLink>
               </li>
-              <li>
-                <NavLink
-                  to="/admin-profile"
-                  className={({ isActive }) =>
-                    isActive
-                      ? " text-blue-600 flex items-center gap-4 dark:text-blue-400"
-                      : "text-gray-600 flex items-center gap-2 dark:text-slate-400"
-                  }
-                >
-                  <FaUser /> Admin Profile
-                </NavLink>
-              </li>
+              
+              
 
               {/* <li>
                 <NavLink

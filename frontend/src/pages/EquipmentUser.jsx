@@ -1,16 +1,16 @@
 import React from 'react';
-import UserDoorList from '../components/UserDoorList';
-import UserLightList from '../components/UserLightList';
-import UserACList from '../components/UserACList';
+import DoorList from '../components/lists/DoorList';
+import LightList from '../components/lists/LightList';
+import ACList from '../components/lists/ACList';
 
 const EquipmentUser = () => {
   const userId = localStorage.getItem('userId'); // Get logged-in user's ID
 
   return (
     <div>
-      <UserDoorList userId={userId}/>  {/* Pass userId only for user filtering */}
-      <UserLightList userId={userId} />
-      <UserACList userId={userId} />
+      <DoorList userId={userId}/>  {/* Pass userId only for user filtering */}
+      <LightList userId={userId} />
+      <ACList userId={userId} />
     </div>
   );
 };

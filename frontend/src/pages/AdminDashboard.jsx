@@ -1,90 +1,51 @@
 import React, { useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { UserContext } from '../context/UserContext';
-import {jwtDecode} from 'jwt-decode';
+import { UserPlus, Home, Cpu } from 'lucide-react';
 
 const AdminDashboard = () => {
   const navigate = useNavigate();
-  const { username, logout } = useContext(UserContext);
-  const token = localStorage.getItem('token');
-
-  // Decode token to get adminId and role
-  let adminId = null;
-  if (token) {
-    try {
-      const decoded = jwtDecode(token);
-      adminId = decoded.id; // or decoded._id depending on your backend
-      console.log('Admin ID (from token):', adminId);
-    } catch (err) {
-      console.error('Invalid token:', err);
-    }
-  }
-
-  //Display token in console
-  console.log('JWT Token:', token);
- 
-
-  const handleLogout = () => {
-    logout();            // clear login state
-    navigate('/');       // go back to login
-  };
-
-   const usercreation= () => {
-    navigate('/usercreation'); // Navigate to user creation page
-  };
-
-  const equipmentcreation = () => {
-    navigate('/equipment-create'); // Navigate to equipment creation page  
-  };
-
-  const villaCreation = () => {
-    navigate('/villa-create'); // Navigate to villa creation page
-  };
+  const { username } = useContext(UserContext);
 
   return (
-    <div className="min-h-screen bg-gray-100 flex flex-col items-center justify-center px-4">
-      <h1 className="text-4xl font-bold mb-6 text-blue-700">Welcome to Admin Dashboard</h1>
-      <h1 className="text-3xl pb-4 font-bold">Welcome, {username} 👋</h1>
+    <div className="min-h-screen w-full ">
+      <div className="max-w-6xl mx-auto px-4 py-12">
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-10">
+          <div>
+            <h1 className="text-3xl md:text-4xl font-bold text-blue-800 mb-2">Admin Dashboard</h1>
+            <p className="text-lg text-cyan-700 font-medium">
+              Welcome, <span className="font-bold">{username}</span> 👋
+            </p>
+          </div>
+        </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 w-full max-w-4xl">
-        <div className="bg-white p-6 rounded shadow text-center">
-          <h2 className="text-xl font-semibold">Users</h2>
-          <p className="text-gray-500">Manage user accounts</p>
-        </div>
-        <div className="bg-white p-6 rounded shadow text-center">
-          <h2 className="text-xl font-semibold">Reports</h2>
-          <p className="text-gray-500">View system reports</p>
-        </div>
-        <div className="bg-white p-6 rounded shadow text-center">
-          <h2 className="text-xl font-semibold">Settings</h2>
-          <p className="text-gray-500">Configure system preferences</p>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+          <button
+            onClick={() => navigate('/usercreation')}
+            className="group bg-gradient-to-br from-cyan-500 to-blue-500 rounded-2xl shadow-xl p-8 flex flex-col items-center hover:scale-105 transition-transform duration-200"
+          >
+            <UserPlus className="w-8 h-8 text-cyan-100 mb-2" />
+            <h2 className="text-xl font-semibold text-white mb-1">Create User</h2>
+            <p className="text-white/90 text-sm text-center">Add a new user to your company</p>
+          </button>
+          <button
+            onClick={() => navigate('/equipment-create')}
+            className="group bg-gradient-to-br from-emerald-500 to-cyan-500 rounded-2xl shadow-xl p-8 flex flex-col items-center hover:scale-105 transition-transform duration-200"
+          >
+            <Cpu className="w-8 h-8 text-emerald-100 mb-2" />
+            <h2 className="text-xl font-semibold text-white mb-1">Create Equipment</h2>
+            <p className="text-white/90 text-sm text-center">Register new equipment</p>
+          </button>
+          <button
+            onClick={() => navigate('/villa-create')}
+            className="group bg-gradient-to-br from-indigo-500 to-blue-400 rounded-2xl shadow-xl p-8 flex flex-col items-center hover:scale-105 transition-transform duration-200"
+          >
+            <Home className="w-8 h-8 text-indigo-100 mb-2" />
+            <h2 className="text-xl font-semibold text-white mb-1">Create Villa</h2>
+            <p className="text-white/90 text-sm text-center">Add a new villa</p>
+          </button>
         </div>
       </div>
-
-      <button
-        onClick={handleLogout}
-        className="mt-8 bg-red-500 text-white px-6 py-2 rounded hover:bg-red-600">
-        Logout
-      </button>
-
-      <button
-        onClick={usercreation}
-        className="px-6 py-2 my-3 bg-blue-600 text-white rounded hover:bg-blue-700">
-        Create User
-      </button>
-
-      <button
-        onClick={equipmentcreation}
-        className="px-6 py-2 my-3 bg-blue-600 text-white rounded hover:bg-blue-700">
-        Create Equipment
-      </button>
-
-      <button
-        onClick={villaCreation}
-        className="px-6 py-2 my-3 bg-blue-600 text-white rounded hover:bg-blue-700">
-        Create Villa
-      </button>
-
     </div>
   );
 };
