@@ -16,7 +16,7 @@ const UserFaceRegistration = () => {
         setStreaming(true);
       }
     } catch (err) {
-        console.error("Error accessing camera:", err);
+        console.error("Error accessing camera:", err); 
       setError("Unable to access camera.");
     }
   };
