@@ -1,6 +1,8 @@
 import React, { useRef, useState, useContext, useEffect } from "react";
 import { UserContext } from "../context/UserContext";
 import { jwtDecode } from "jwt-decode";
+import LoadingOverlay from "../components/common/LoadingOverlay";
+import Modal from "../components/common/Modal";
 
 const UserFaceRegistration = () => {
   const videoRef = useRef(null);
@@ -10,6 +12,8 @@ const UserFaceRegistration = () => {
   const [success, setSuccess] = useState("");
   const [faceRegistered, setFaceRegistered] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false); // <-- modal state
   const { username } = useContext(UserContext);
 
   // Get userId from token
@@ -38,6 +42,7 @@ const UserFaceRegistration = () => {
           }
         }
       } catch (err) {
+        console.error(err);
         // Optionally handle error
       }
     };
@@ -55,6 +60,7 @@ const UserFaceRegistration = () => {
         setStreaming(true);
       }
     } catch (err) {
+      console.error(err);
       setError("Unable to access camera.");
     }
   };
@@ -100,8 +106,10 @@ const UserFaceRegistration = () => {
   const handleSubmit = async () => {
     setError("");
     setSuccess("");
+    setLoading(true);
     if (photos.length < 5) {
       setError("Please capture 5 photos.");
+      setLoading(false);
       return;
     }
     try {
@@ -138,7 +146,7 @@ const UserFaceRegistration = () => {
             body: JSON.stringify({ faceRegistration: true }),
           });
         } catch (err) {
-          // Optionally handle error
+          console.error(err);
         }
       } else {
         const resText = await response.text();
@@ -147,6 +155,7 @@ const UserFaceRegistration = () => {
     } catch (err) {
       setError("Face registration failed: " + err.message);
     }
+    setLoading(false);
   };
 
   // Delete face data handler
@@ -174,7 +183,7 @@ const UserFaceRegistration = () => {
             body: JSON.stringify({ faceRegistration: false }),
           });
         } catch (err) {
-          // Optionally handle error
+          console.error(err);
         }
       } else {
         const resText = await response.text();
@@ -184,10 +193,17 @@ const UserFaceRegistration = () => {
       setError("Failed to delete face data: " + err.message);
     }
     setDeleting(false);
+    setShowDeleteModal(false);
   };
 
   return (
     <div className="mx-auto bg-white shadow rounded p-6">
+      <LoadingOverlay
+        isVisible={loading}
+        message="Registering your face. Please wait..."
+        variant="orbit"
+        theme="blue"
+      />
       <h2 className="text-2xl font-bold mb-2">Face Registration</h2>
       <div className="mb-2 text-cyan-700 font-semibold">
         Username: <span className="font-bold">{username}</span>
@@ -201,12 +217,32 @@ const UserFaceRegistration = () => {
             Face registration already completed successfully!
           </div>
           <button
-            onClick={handleDeleteFaceData}
+            onClick={() => setShowDeleteModal(true)}
             className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 disabled:opacity-50"
             disabled={deleting}
           >
-            {deleting ? "Deleting..." : "Delete Face Data"}
+            Delete Face Data
           </button>
+          <Modal isVisible={showDeleteModal} onClose={() => setShowDeleteModal(false)} width="w-full max-w-xs">
+            <h2 className="text-xl font-bold mb-4">Confirm Delete</h2>
+            <p className="mb-4">Are you sure you want to delete your facial data? This action cannot be undone.</p>
+            <div className="flex justify-center space-x-4">
+              <button
+                onClick={() => setShowDeleteModal(false)}
+                className="px-4 py-2 bg-gray-300 text-slate-800 rounded-lg hover:bg-gray-400"
+                disabled={deleting}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleDeleteFaceData}
+                className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
+                disabled={deleting}
+              >
+                {deleting ? "Deleting..." : "Delete"}
+              </button>
+            </div>
+          </Modal>
         </div>
       ) : (
         <>
