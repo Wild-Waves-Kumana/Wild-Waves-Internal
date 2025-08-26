@@ -3,14 +3,39 @@ import Food from '../models/food.js';
 // Create a new food item
 export const createFood = async (req, res) => {
   try {
-    const { name, description, price, category, isAvailable } = req.body;
-    const food = new Food({
+    const {
       name,
       description,
       price,
       category,
       isAvailable,
-    });
+      companyId,
+      availableOn,
+      portions,
+    } = req.body;
+
+    if (!companyId) {
+      return res.status(400).json({ message: "companyId is required" });
+    }
+
+    const foodData = {
+      name,
+      description,
+      category,
+      isAvailable,
+      companyId,
+      availableOn: Array.isArray(availableOn) ? availableOn : [],
+      portions: Array.isArray(portions) ? portions : [],
+    };
+
+    // If no portions, set price; if portions exist, ignore price
+    if (!foodData.portions.length && price !== undefined) {
+      foodData.price = price;
+    } else {
+      foodData.price = undefined;
+    }
+
+    const food = new Food(foodData);
     await food.save();
     res.status(201).json({ message: "Food item created successfully", food });
   } catch (err) {
@@ -42,10 +67,25 @@ export const getFoodById = async (req, res) => {
 // Update a food item
 export const updateFood = async (req, res) => {
   try {
-    const { name, description, price, category, isAvailable } = req.body;
+    const {
+      name,
+      description,
+      category,
+      isAvailable,
+      availableOn,
+      portions,
+    } = req.body;
+
     const food = await Food.findByIdAndUpdate(
       req.params.id,
-      { name, description, price, category, isAvailable },
+      {
+        name,
+        description,
+        category,
+        isAvailable,
+        availableOn: Array.isArray(availableOn) ? availableOn : [],
+        portions: Array.isArray(portions) ? portions : [],
+      },
       { new: true, runValidators: true }
     );
     if (!food) return res.status(404).json({ message: "Food not found" });
