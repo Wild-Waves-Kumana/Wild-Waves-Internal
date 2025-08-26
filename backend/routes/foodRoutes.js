@@ -1,0 +1,19 @@
+import express from "express";
+import {
+  createFood,
+  getFoods,
+  getFoodById,
+  updateFood,
+  deleteFood,
+} from "../controllers/foodController.js";
+
+const router = express.Router();
+
+
+router.post("/create", createFood);  // Create a new food item
+router.get("/all", getFoods);  // Get all food items
+router.get("/:id", getFoodById);  // Get a single food item by ID
+router.put("/:id", updateFood);  // Update a food item
+router.delete("/:id", deleteFood);  // Delete a food item
+
+export default router;
