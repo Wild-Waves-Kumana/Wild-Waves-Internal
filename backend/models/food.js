@@ -14,6 +14,7 @@ const foodSchema = new mongoose.Schema({
   companyId: { type: mongoose.Schema.Types.ObjectId, ref: "Company", required: true },
   availableOn: [{ type: String }],
   portions: [portionSchema], // Array of portions with name and price
+  images: [{ type: String }], // <-- Array of Cloudinary image URLs
 });
 
 export default mongoose.model("Food", foodSchema);

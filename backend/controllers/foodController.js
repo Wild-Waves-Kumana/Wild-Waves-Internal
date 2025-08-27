@@ -12,6 +12,7 @@ export const createFood = async (req, res) => {
       companyId,
       availableOn,
       portions,
+      images, // <-- Accept images array
     } = req.body;
 
     if (!companyId) {
@@ -26,6 +27,7 @@ export const createFood = async (req, res) => {
       companyId,
       availableOn: Array.isArray(availableOn) ? availableOn : [],
       portions: Array.isArray(portions) ? portions : [],
+      images: Array.isArray(images) ? images : [], // <-- Store as array
     };
 
     // If no portions, set price; if portions exist, ignore price
