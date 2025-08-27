@@ -12,7 +12,7 @@ export const createFood = async (req, res) => {
       companyId,
       availableOn,
       portions,
-      images, // <-- Accept images array
+      images,
     } = req.body;
 
     if (!companyId) {
@@ -27,10 +27,9 @@ export const createFood = async (req, res) => {
       companyId,
       availableOn: Array.isArray(availableOn) ? availableOn : [],
       portions: Array.isArray(portions) ? portions : [],
-      images: Array.isArray(images) ? images : [], // <-- Store as array
+      images: Array.isArray(images) ? images : [],
     };
 
-    // If no portions, set price; if portions exist, ignore price
     if (!foodData.portions.length && price !== undefined) {
       foodData.price = price;
     } else {
@@ -45,10 +44,16 @@ export const createFood = async (req, res) => {
   }
 };
 
-// Get all food items
+// Get all food items (optionally filter by companyId)
 export const getFoods = async (req, res) => {
   try {
-    const foods = await Food.find();
+    // GET /api/foods/all?companyId=xxx
+    const { companyId } = req.query;
+    let query = {};
+    if (companyId) {
+      query.companyId = companyId;
+    }
+    const foods = await Food.find(query);
     res.json(foods);
   } catch (err) {
     res.status(500).json({ message: err.message });
@@ -76,6 +81,7 @@ export const updateFood = async (req, res) => {
       isAvailable,
       availableOn,
       portions,
+      images,
     } = req.body;
 
     const food = await Food.findByIdAndUpdate(
@@ -87,6 +93,7 @@ export const updateFood = async (req, res) => {
         isAvailable,
         availableOn: Array.isArray(availableOn) ? availableOn : [],
         portions: Array.isArray(portions) ? portions : [],
+        images: Array.isArray(images) ? images : [],
       },
       { new: true, runValidators: true }
     );
