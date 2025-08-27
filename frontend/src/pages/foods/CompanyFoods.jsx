@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { jwtDecode } from "jwt-decode";
 import axios from "axios";
+import { useNavigate } from "react-router-dom";
 
 const categories = ["All", "Main", "Dessert", "Beverage", "Snack"];
 const availableOnOptions = [
@@ -28,6 +29,8 @@ const CompanyFoods = () => {
   const [availableOnFilter, setAvailableOnFilter] = useState("All");
   const [availabilityFilter, setAvailabilityFilter] = useState("All");
   const [search, setSearch] = useState("");
+
+  const navigate = useNavigate();
 
   useEffect(() => {
     const fetchCompanyIdAndFoods = async () => {
@@ -167,7 +170,16 @@ const CompanyFoods = () => {
         {filteredFoods.map((food) => (
           <div
             key={food._id}
-            className="bg-white rounded shadow p-4 flex flex-col items-center"
+            className="bg-white rounded shadow p-4 flex flex-col items-center cursor-pointer hover:shadow-lg transition"
+            onClick={() => navigate(`/food-profile/${food._id}`)}
+            tabIndex={0}
+            onKeyDown={e => {
+              if (e.key === "Enter" || e.key === " ") {
+                navigate(`/food-profile/${food._id}`);
+              }
+            }}
+            role="button"
+            aria-label={`View details for ${food.name}`}
           >
             <div className="w-full flex justify-center mb-2">
               {food.images && food.images.length > 0 ? (
