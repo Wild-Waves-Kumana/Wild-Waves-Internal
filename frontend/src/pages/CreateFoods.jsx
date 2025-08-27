@@ -1,113 +1,149 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { jwtDecode } from "jwt-decode";
+import ImageCropper from "../components/common/ImageCropper";
 
 const categories = ["Main", "Dessert", "Beverage", "Snack"];
 const availableOnOptions = ["Breakfast", "Lunch", "Dinner", "Teatime", "Anytime"];
 const portionOptions = ["Small", "Medium", "Large"];
 
+const cropAspectRatios = {
+  Square: 1,
+  Portrait: 3 / 4,
+  Landscape: 4 / 3,
+  Wide: 16 / 9,
+};
+
+const initialFormState = {
+  name: "",
+  description: "",
+  price: "",
+  category: categories[0],
+  isAvailable: true,
+  availableOn: [],
+  portions: [],
+  images: [],
+};
+
 const CreateFoods = () => {
-  const [form, setForm] = useState({
-    name: "",
-    description: "",
-    price: "",
-    category: categories[0],
-    isAvailable: true,
-    availableOn: [],
-    portions: [],
-    images: [],
-  });
+  const [form, setForm] = useState(initialFormState);
   const [companyId, setCompanyId] = useState("");
   const [loading, setLoading] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [success, setSuccess] = useState("");
   const [error, setError] = useState("");
 
+  // Cropping states
+  const [cropModalOpen, setCropModalOpen] = useState(false);
+  const [cropImageSrc, setCropImageSrc] = useState(null);
+  const [pendingFiles, setPendingFiles] = useState([]);
+  const [currentCropIdx, setCurrentCropIdx] = useState(0);
+
   // Get companyId from token or fetch admin
   useEffect(() => {
     const token = localStorage.getItem("token");
-    if (token) {
-      try {
-        const decoded = jwtDecode(token);
-        if (decoded.companyId) {
-          setCompanyId(decoded.companyId._id || decoded.companyId);
-        } else if (decoded.id) {
-          fetch(`http://localhost:5000/api/admin/${decoded.id}`)
-            .then((res) => res.json())
-            .then((admin) => {
-              setCompanyId(admin.companyId?._id || admin.companyId);
-            });
-        }
-      } catch {
-        setCompanyId("");
+    if (!token) return;
+    try {
+      const decoded = jwtDecode(token);
+      if (decoded.companyId) {
+        setCompanyId(decoded.companyId._id || decoded.companyId);
+      } else if (decoded.id) {
+        fetch(`http://localhost:5000/api/admin/${decoded.id}`)
+          .then((res) => res.json())
+          .then((admin) => {
+            setCompanyId(admin.companyId?._id || admin.companyId);
+          });
       }
+    } catch {
+      setCompanyId("");
     }
   }, []);
 
-  // Handle checkbox and input changes
-  const handleChange = (e) => {
-    const { name, value, type, checked } = e.target;
-    if (name === "availableOn") {
+  // Handle input changes
+  const handleChange = useCallback(
+    (e) => {
+      const { name, value, type, checked } = e.target;
       setForm((prev) => {
-        if (checked) {
-          return { ...prev, availableOn: [...prev.availableOn, value] };
-        } else {
+        if (name === "availableOn") {
           return {
             ...prev,
-            availableOn: prev.availableOn.filter((v) => v !== value),
+            availableOn: checked
+              ? [...prev.availableOn, value]
+              : prev.availableOn.filter((v) => v !== value),
           };
         }
-      });
-    } else if (name.startsWith("portion-")) {
-      // Portion price change
-      const portionName = name.split("-")[1];
-      setForm((prev) => {
-        const portions = prev.portions.filter((p) => p.name !== portionName);
-        if (value !== "") {
+        if (name.startsWith("portion-")) {
+          const portionName = name.split("-")[1];
+          const portions = prev.portions.filter((p) => p.name !== portionName);
           return {
             ...prev,
-            portions: [...portions, { name: portionName, price: value }],
+            portions:
+              value !== ""
+                ? [...portions, { name: portionName, price: value }]
+                : portions,
           };
-        } else {
-          return { ...prev, portions };
         }
+        return {
+          ...prev,
+          [name]: type === "checkbox" ? checked : value,
+        };
       });
-    } else {
-      setForm((prev) => ({
-        ...prev,
-        [name]: type === "checkbox" ? checked : value,
-      }));
-    }
-  };
+    },
+    []
+  );
 
   // Handle portion checkbox (add/remove portion)
-  const handlePortionCheck = (e) => {
+  const handlePortionCheck = useCallback((e) => {
     const { value, checked } = e.target;
     setForm((prev) => {
       let portions = prev.portions || [];
-      if (checked) {
-        // Add with empty price
-        if (!portions.find((p) => p.name === value)) {
-          portions = [...portions, { name: value, price: "" }];
-        }
-      } else {
+      if (checked && !portions.find((p) => p.name === value)) {
+        portions = [...portions, { name: value, price: "" }];
+      } else if (!checked) {
         portions = portions.filter((p) => p.name !== value);
       }
       return { ...prev, portions };
     });
-  };
+  }, []);
 
-  // Handle multiple image uploads to Cloudinary
-  const handleImageUpload = async (e) => {
+  // Handle multiple image uploads with cropping
+  const handleImageUpload = useCallback((e) => {
     const files = Array.from(e.target.files);
     if (!files.length) return;
-    setUploading(true);
-    setError("");
-    try {
-      const uploadedUrls = [];
-      for (const file of files) {
+    setPendingFiles(files);
+    setCurrentCropIdx(0);
+    readAndCropNext(files, 0);
+    // eslint-disable-next-line
+  }, []);
+
+  // Read file as data URL and open cropper
+  const readAndCropNext = useCallback((files, idx) => {
+    if (idx >= files.length) {
+      setPendingFiles([]);
+      setCurrentCropIdx(0);
+      return;
+    }
+    const file = files[idx];
+    const reader = new FileReader();
+    reader.onload = () => {
+      setCropImageSrc(reader.result);
+      setCropModalOpen(true);
+    };
+    reader.readAsDataURL(file);
+  }, []);
+
+  // After cropping, upload to Cloudinary and continue with next file
+  const handleCropComplete = useCallback(
+    async (croppedImageBlob) => {
+      setCropModalOpen(false);
+      setUploading(true);
+      setError("");
+      try {
         const formData = new FormData();
-        formData.append("file", file);
-        formData.append("upload_preset", import.meta.env.VITE_APP_CLOUDINARY_UPLOAD_PRESET);
+        formData.append("file", croppedImageBlob);
+        formData.append(
+          "upload_preset",
+          import.meta.env.VITE_APP_CLOUDINARY_UPLOAD_PRESET
+        );
 
         const res = await fetch(
           `https://api.cloudinary.com/v1_1/${import.meta.env.VITE_APP_CLOUDINARY_CLOUD_NAME}/image/upload`,
@@ -118,29 +154,50 @@ const CreateFoods = () => {
         );
         const data = await res.json();
         if (data.secure_url) {
-          uploadedUrls.push(data.secure_url);
+          setForm((prev) => ({
+            ...prev,
+            images: [...prev.images, data.secure_url],
+          }));
         } else {
-          setError("One or more images failed to upload.");
+          setError("Image upload failed.");
+        }
+      } catch {
+        setError("Image upload failed.");
+      }
+      setUploading(false);
+
+      // Continue cropping next file if any
+      if (pendingFiles.length > 0) {
+        const nextIdx = currentCropIdx + 1;
+        if (nextIdx < pendingFiles.length) {
+          setCurrentCropIdx(nextIdx);
+          readAndCropNext(pendingFiles, nextIdx);
+        } else {
+          setPendingFiles([]);
+          setCurrentCropIdx(0);
         }
       }
-      setForm((prev) => ({
-        ...prev,
-        images: [...prev.images, ...uploadedUrls],
-      }));
-    } catch (err) {
-      console.error("Error uploading images:", err);
-      setError("Image upload failed.");
-    }
-    setUploading(false);
-  };
+    },
+    [pendingFiles, currentCropIdx, readAndCropNext]
+  );
+
+  // Cancel cropping
+  const handleCropCancel = useCallback(() => {
+    setCropModalOpen(false);
+    setPendingFiles([]);
+    setCurrentCropIdx(0);
+  }, []);
 
   // Remove image from preview and form
-  const handleRemoveImage = (url) => {
-    setForm((prev) => ({
-      ...prev,
-      images: prev.images.filter((img) => img !== url),
-    }));
-  };
+  const handleRemoveImage = useCallback(
+    (url) => {
+      setForm((prev) => ({
+        ...prev,
+        images: prev.images.filter((img) => img !== url),
+      }));
+    },
+    []
+  );
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -152,12 +209,11 @@ const CreateFoods = () => {
         ...form,
         companyId,
       };
-      // If no portions, send price as a single value and portions as empty array
       if (!form.portions || form.portions.length === 0) {
         payload.portions = [];
         payload.price = form.price;
       } else {
-        payload.price = undefined; // Don't send price if portions exist
+        payload.price = undefined;
       }
       const res = await fetch("http://localhost:5000/api/foods/create", {
         method: "POST",
@@ -168,22 +224,12 @@ const CreateFoods = () => {
       });
       if (res.ok) {
         setSuccess("Food item created successfully!");
-        setForm({
-          name: "",
-          description: "",
-          price: "",
-          category: categories[0],
-          isAvailable: true,
-          availableOn: [],
-          portions: [],
-          images: [],
-        });
+        setForm(initialFormState);
       } else {
         const data = await res.json();
         setError(data.message || "Failed to create food item.");
       }
-    } catch (err) {
-      console.error("Error creating food item:", err);
+    } catch {
       setError("Failed to create food item.");
     }
     setLoading(false);
@@ -299,7 +345,7 @@ const CreateFoods = () => {
             />
           </div>
         )}
-        {/* Multiple Image Upload Section */}
+        {/* Multiple Image Upload Section with Cropper */}
         <div>
           <label className="block font-semibold mb-1">Food Photos</label>
           <input
@@ -307,7 +353,7 @@ const CreateFoods = () => {
             accept="image/*"
             multiple
             onChange={handleImageUpload}
-            disabled={uploading}
+            disabled={uploading || cropModalOpen}
             className="block"
           />
           {form.images.length > 0 && (
@@ -347,12 +393,23 @@ const CreateFoods = () => {
         </div>
         <button
           type="submit"
-          disabled={loading || !companyId || uploading}
+          disabled={loading || !companyId || uploading || cropModalOpen}
           className="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700"
         >
           {loading ? "Creating..." : "Create Food"}
         </button>
       </form>
+      {/* Image Cropper Modal */}
+      {cropModalOpen && cropImageSrc && (
+        <ImageCropper
+          imageSrc={cropImageSrc}
+          onCropComplete={handleCropComplete}
+          onCancel={handleCropCancel}
+          aspectRatios={cropAspectRatios}
+          cropShape="rect"
+          title="Crop Food Image"
+        />
+      )}
     </div>
   );
 };
