@@ -9,14 +9,16 @@ const CreateFoods = () => {
   const [form, setForm] = useState({
     name: "",
     description: "",
-    price: "", // default price if no portions
+    price: "",
     category: categories[0],
     isAvailable: true,
     availableOn: [],
     portions: [],
+    images: [],
   });
   const [companyId, setCompanyId] = useState("");
   const [loading, setLoading] = useState(false);
+  const [uploading, setUploading] = useState(false);
   const [success, setSuccess] = useState("");
   const [error, setError] = useState("");
 
@@ -94,6 +96,52 @@ const CreateFoods = () => {
     });
   };
 
+  // Handle multiple image uploads to Cloudinary
+  const handleImageUpload = async (e) => {
+    const files = Array.from(e.target.files);
+    if (!files.length) return;
+    setUploading(true);
+    setError("");
+    try {
+      const uploadedUrls = [];
+      for (const file of files) {
+        const formData = new FormData();
+        formData.append("file", file);
+        formData.append("upload_preset", import.meta.env.VITE_APP_CLOUDINARY_UPLOAD_PRESET);
+
+        const res = await fetch(
+          `https://api.cloudinary.com/v1_1/${import.meta.env.VITE_APP_CLOUDINARY_CLOUD_NAME}/image/upload`,
+          {
+            method: "POST",
+            body: formData,
+          }
+        );
+        const data = await res.json();
+        if (data.secure_url) {
+          uploadedUrls.push(data.secure_url);
+        } else {
+          setError("One or more images failed to upload.");
+        }
+      }
+      setForm((prev) => ({
+        ...prev,
+        images: [...prev.images, ...uploadedUrls],
+      }));
+    } catch (err) {
+      console.error("Error uploading images:", err);
+      setError("Image upload failed.");
+    }
+    setUploading(false);
+  };
+
+  // Remove image from preview and form
+  const handleRemoveImage = (url) => {
+    setForm((prev) => ({
+      ...prev,
+      images: prev.images.filter((img) => img !== url),
+    }));
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
@@ -128,13 +176,14 @@ const CreateFoods = () => {
           isAvailable: true,
           availableOn: [],
           portions: [],
+          images: [],
         });
       } else {
         const data = await res.json();
         setError(data.message || "Failed to create food item.");
       }
     } catch (err) {
-      console.error(err);
+      console.error("Error creating food item:", err);
       setError("Failed to create food item.");
     }
     setLoading(false);
@@ -250,6 +299,39 @@ const CreateFoods = () => {
             />
           </div>
         )}
+        {/* Multiple Image Upload Section */}
+        <div>
+          <label className="block font-semibold mb-1">Food Photos</label>
+          <input
+            type="file"
+            accept="image/*"
+            multiple
+            onChange={handleImageUpload}
+            disabled={uploading}
+            className="block"
+          />
+          {form.images.length > 0 && (
+            <div className="flex gap-3 mt-2 flex-wrap">
+              {form.images.map((img, idx) => (
+                <div key={img} className="relative group">
+                  <img
+                    src={img}
+                    alt={`Food ${idx + 1}`}
+                    className="h-20 w-20 object-cover rounded shadow"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => handleRemoveImage(img)}
+                    className="absolute -top-2 -right-2 bg-red-600 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs opacity-80 hover:opacity-100"
+                    title="Remove"
+                  >
+                    ×
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
         <div className="flex items-center">
           <input
             type="checkbox"
@@ -265,7 +347,7 @@ const CreateFoods = () => {
         </div>
         <button
           type="submit"
-          disabled={loading || !companyId}
+          disabled={loading || !companyId || uploading}
           className="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700"
         >
           {loading ? "Creating..." : "Create Food"}
