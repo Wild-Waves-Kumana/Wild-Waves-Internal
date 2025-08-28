@@ -11,6 +11,7 @@ import companyRoutes from './routes/companyRoutes.js';
 import roomRoutes from './routes/roomRoutes.js';
 import villaRoutes from './routes/villaRoutes.js';
 import foodRoutes from './routes/foodRoutes.js';
+import foodOrderRoutes from './routes/foodOrderRoutes.js';
 
 
 dotenv.config();
@@ -35,6 +36,7 @@ app.use('/api/admin', adminRoutes); // Admin routes
 app.use('/api/rooms', roomRoutes);
 app.use('/api/villas', villaRoutes);
 app.use('/api/foods', foodRoutes);
+app.use('/api/food-orders', foodOrderRoutes);
 
 app.listen(PORT, () => {
   console.log(`Server running on http://localhost:${PORT}`);
