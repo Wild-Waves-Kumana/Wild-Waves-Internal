@@ -3,7 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import axios from "axios";
 import EditFoodModal from "../../components/modals/EditFoodModal";
 
-const FoodProfile = () => {
+const CompanyFoodProfile = () => {
   const { foodId } = useParams();
   const [food, setFood] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -29,19 +29,6 @@ const FoodProfile = () => {
     fetchFood();
   }, [foodId]);
 
-  const handlePrev = () => {
-    if (!food?.images?.length) return;
-    setCurrentImgIdx((prev) =>
-      prev === 0 ? food.images.length - 1 : prev - 1
-    );
-  };
-
-  const handleNext = () => {
-    if (!food?.images?.length) return;
-    setCurrentImgIdx((prev) =>
-      prev === food.images.length - 1 ? 0 : prev + 1
-    );
-  };
 
   const handleEdit = () => setEditModalOpen(true);
 
@@ -125,26 +112,7 @@ const FoodProfile = () => {
                   alt={food.name}
                   className="h-72 w-72 object-cover rounded shadow"
                 />
-                {food.images.length > 1 && (
-                  <>
-                    <button
-                      onClick={handlePrev}
-                      className="absolute left-0 top-1/2 -translate-y-1/2 bg-gray-700 bg-opacity-60 text-white rounded-full w-8 h-8 flex items-center justify-center hover:bg-opacity-90"
-                      aria-label="Previous photo"
-                      style={{ zIndex: 1 }}
-                    >
-                      &#8592;
-                    </button>
-                    <button
-                      onClick={handleNext}
-                      className="absolute right-0 top-1/2 -translate-y-1/2 bg-gray-700 bg-opacity-60 text-white rounded-full w-8 h-8 flex items-center justify-center hover:bg-opacity-90"
-                      aria-label="Next photo"
-                      style={{ zIndex: 1 }}
-                    >
-                      &#8594;
-                    </button>
-                  </>
-                )}
+                
               </>
             ) : (
               <div className="h-72 w-72 bg-gray-200 flex items-center justify-center rounded text-gray-400">
@@ -256,4 +224,4 @@ const FoodProfile = () => {
   );
 };
 
-export default FoodProfile;
+export default CompanyFoodProfile;
