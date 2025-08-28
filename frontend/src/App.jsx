@@ -26,6 +26,7 @@ import FoodCreate from './pages/CreateFoods';
 import CompanyFoods from './pages/foods/CompanyFoods';
 import CompanyFoodProfile from './pages/foods/CompanyFoodProfile';
 import FoodMenu from './pages/foods/UserFoodMenu';
+import UserFoodProfile from './pages/foods/UserFoodProfile';
 
 
 function App() {
@@ -105,6 +106,17 @@ function App() {
           <ProtectedRoute allowedRoles={['user']}>
             <Layout>
               <FoodMenu />
+            </Layout>
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/user-food-profile/:foodId"
+        element={
+          <ProtectedRoute allowedRoles={['user']}>
+            <Layout>
+              <UserFoodProfile />
             </Layout>
           </ProtectedRoute>
         }
