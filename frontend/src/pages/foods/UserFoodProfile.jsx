@@ -1,14 +1,18 @@
 import React, { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
+import CreateFoodOrderModal from "../../components/modals/CreateFoodOrderModal";
 import axios from "axios";
 
 const UserFoodProfile = () => {
   const { foodId } = useParams();
   const [food, setFood] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [selectedPortion, setSelectedPortion] = useState("");
-  const [quantity, setQuantity] = useState(1);
   const [currentImgIdx, setCurrentImgIdx] = useState(0);
+  const [orderModalOpen, setOrderModalOpen] = useState(false);
+
+  // Replace with actual user and villa IDs from your auth context or state management
+  const userId = "loggedInUserId"; // TODO: Get logged-in user ID
+  const villaId = "userVillaId"; // TODO: Get user's villa ID
 
   useEffect(() => {
     const fetchFood = async () => {
@@ -17,9 +21,6 @@ const UserFoodProfile = () => {
           `http://localhost:5000/api/foods/${foodId}`
         );
         setFood(res.data);
-        if (res.data.portions && res.data.portions.length > 0) {
-          setSelectedPortion(res.data.portions[0].name);
-        }
         setCurrentImgIdx(0);
       } catch (err) {
         console.error("Error fetching food:", err);
@@ -29,20 +30,6 @@ const UserFoodProfile = () => {
     };
     fetchFood();
   }, [foodId]);
-
-  const handleOrder = () => {
-    // Implement order logic here (e.g., call order API or show a modal)
-    alert(
-      `Order placed!\nFood: ${food.name}\nPortion: ${
-        selectedPortion || "Default"
-      }\nQuantity: ${quantity}\nTotal: ${
-        food.portions && food.portions.length > 0
-          ? (food.portions.find((p) => p.name === selectedPortion)?.price || 0) *
-            quantity
-          : (food.price || 0) * quantity
-      } LKR`
-    );
-  };
 
   if (loading) {
     return <div className="text-center py-10">Loading food details...</div>;
@@ -56,11 +43,6 @@ const UserFoodProfile = () => {
     );
   }
 
-  const price =
-    food.portions && food.portions.length > 0
-      ? food.portions.find((p) => p.name === selectedPortion)?.price || 0
-      : food.price || 0;
-
   return (
     <div className="mx-auto mt-10 bg-white shadow rounded p-6">
       <div className="flex flex-col sm:flex-row gap-6">
@@ -68,13 +50,11 @@ const UserFoodProfile = () => {
         <div className="flex-shrink-0 flex flex-col items-center">
           <div className="relative">
             {food.images && food.images.length > 0 ? (
-              <>
-                <img
-                  src={food.images[currentImgIdx]}
-                  alt={food.name}
-                  className="h-72 w-72 object-cover rounded shadow"
-                />
-              </>
+              <img
+                src={food.images[currentImgIdx]}
+                alt={food.name}
+                className="h-72 w-72 object-cover rounded shadow"
+              />
             ) : (
               <div className="h-72 w-72 bg-gray-200 flex items-center justify-center rounded text-gray-400">
                 No Image
@@ -129,18 +109,17 @@ const UserFoodProfile = () => {
           {/* Portions or Price */}
           {food.portions && food.portions.length > 0 ? (
             <div className="mb-2">
-              <span className="font-semibold">Select Portion:</span>
-              <select
-                className="ml-2 border rounded px-2 py-1"
-                value={selectedPortion}
-                onChange={(e) => setSelectedPortion(e.target.value)}
-              >
+              <span className="font-semibold">Portions & Prices:</span>
+              <ul className="list-disc ml-6 mt-1">
                 {food.portions.map((portion) => (
-                  <option key={portion.name} value={portion.name}>
-                    {portion.name} - {portion.price} LKR
-                  </option>
+                  <li key={portion.name}>
+                    <span className="font-medium">{portion.name}:</span>{" "}
+                    <span>
+                      {portion.price != null ? `${portion.price} LKR` : "N/A"}
+                    </span>
+                  </li>
                 ))}
-              </select>
+              </ul>
             </div>
           ) : (
             <div className="mb-2">
@@ -148,29 +127,23 @@ const UserFoodProfile = () => {
               {food.price != null ? `${food.price} LKR` : "N/A"}
             </div>
           )}
-          <div className="mb-2 flex items-center">
-            <span className="font-semibold mr-2">Quantity:</span>
-            <input
-              type="number"
-              min={1}
-              value={quantity}
-              onChange={(e) => setQuantity(Number(e.target.value))}
-              className="border rounded px-2 py-1 w-20"
-            />
-          </div>
-          <div className="mb-4">
-            <span className="font-semibold">Total:</span>{" "}
-            <span className="text-lg font-bold">{price * quantity} LKR</span>
-          </div>
           <button
-            className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
+            className="mt-4 bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
             disabled={!food.isAvailable}
-            onClick={handleOrder}
+            onClick={() => setOrderModalOpen(true)}
           >
             {food.isAvailable ? "Place Order" : "Not Available"}
           </button>
         </div>
       </div>
+      <CreateFoodOrderModal
+        isVisible={orderModalOpen}
+        onClose={() => setOrderModalOpen(false)}
+        food={food}
+        userId={userId}
+        villaId={villaId}
+        onOrderSuccess={() => {}}
+      />
     </div>
   );
 };
