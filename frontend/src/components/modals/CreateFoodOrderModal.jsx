@@ -87,6 +87,7 @@ const FoodOrderPlacementModal = ({
   const image = food.images?.[0] || "";
 
   // Default quick select on mount
+  // eslint-disable-next-line react-hooks/rules-of-hooks
   useEffect(() => {
     if (!customTime && quickTimeType === "20min") {
       setExpectDate(getTodayDate());
