@@ -1,4 +1,5 @@
 import FoodOrder from "../models/foodOrder.js";
+import User from "../models/user.js"; // <-- import User model
 
 // Helper to generate orderId: yyyymmdd-xxxx (xxxx = 0000+count for the day)
 const generateOrderId = async () => {
@@ -37,19 +38,22 @@ export const createFoodOrder = async (req, res) => {
       return res.status(400).json({ message: "Missing required fields." });
     }
 
+    // Fetch companyId from user
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({ message: "User not found." });
+    }
+    const companyId = user.companyId || null;
+
     // Generate unique orderId
     let orderId;
     let unique = false;
     let tryCount = 0;
     while (!unique && tryCount < 5) {
       orderId = await generateOrderId();
-      // Check uniqueness
       const exists = await FoodOrder.findOne({ orderId });
       if (!exists) unique = true;
-      else {
-        // If exists, artificially increment count for next try
-        tryCount++;
-      }
+      else tryCount++;
     }
     if (!unique) {
       return res.status(500).json({ message: "Failed to generate unique orderId." });
@@ -59,6 +63,7 @@ export const createFoodOrder = async (req, res) => {
       orderId,
       userId,
       villaId,
+      companyId, // <-- add companyId here
       items,
       totalPrice,
       expectTime,
