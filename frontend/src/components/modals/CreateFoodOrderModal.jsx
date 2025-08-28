@@ -23,7 +23,19 @@ const getFutureTime = (minutes) => {
   return getTimeString(now);
 };
 
-const getMinCustomTime = () => getFutureTime(20); // ✅ enforce +20 mins
+const getMinCustomTime = () => getFutureTime(20); // enforce +20 mins
+
+const getUserIdFromToken = () => {
+  // Example: JWT in localStorage under "token"
+  const token = localStorage.getItem("token");
+  if (!token) return null;
+  try {
+    const payload = JSON.parse(atob(token.split(".")[1]));
+    return payload.userId || payload.id || null;
+  } catch {
+    return null;
+  }
+};
 
 const FoodOrderPlacementModal = ({
   isVisible,
@@ -31,8 +43,6 @@ const FoodOrderPlacementModal = ({
   food,
   selectedPortion,
   quantity,
-  userId,
-  villaId,
   onOrderSuccess,
 }) => {
   const [orderQuantity, setOrderQuantity] = useState(quantity || 1);
@@ -43,10 +53,30 @@ const FoodOrderPlacementModal = ({
   const [expectDate, setExpectDate] = useState(getTodayDate());
   const [expectTime, setExpectTime] = useState("");
   const [customTime, setCustomTime] = useState(false);
-  const [quickTimeType, setQuickTimeType] = useState("20min"); // ✅ default
+  const [quickTimeType, setQuickTimeType] = useState("20min");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+  const [villaId, setVillaId] = useState(null);
+
+  // Get userId from token
+  const userId = getUserIdFromToken();
+
+  // Fetch villaId from user collection
+  useEffect(() => {
+    const fetchVillaId = async () => {
+      if (!userId) return;
+      try {
+        const res = await axios.get(
+          `http://localhost:5000/api/users/${userId}`
+        );
+        setVillaId(res.data.villaId || null);
+      } catch {
+        setVillaId(null);
+      }
+    };
+    fetchVillaId();
+  }, [userId]);
 
   if (!food) return null;
 
@@ -56,7 +86,7 @@ const FoodOrderPlacementModal = ({
   const price = portionObj ? portionObj.price : food.price || 0;
   const image = food.images?.[0] || "";
 
-  // ✅ Default quick select on mount
+  // Default quick select on mount
   useEffect(() => {
     if (!customTime && quickTimeType === "20min") {
       setExpectDate(getTodayDate());
@@ -141,6 +171,12 @@ const FoodOrderPlacementModal = ({
         return;
       }
 
+      if (!userId || !villaId) {
+        setError("User or villa information missing.");
+        setLoading(false);
+        return;
+      }
+
       const orderPayload = {
         userId,
         villaId,
@@ -151,7 +187,7 @@ const FoodOrderPlacementModal = ({
             portion: portionObj?.name,
             quantity: orderQuantity,
             price,
-            image,
+            // image, // <-- REMOVE this line so image is not sent to DB
           },
         ],
         totalPrice: price * orderQuantity,
