@@ -149,7 +149,7 @@ const UserFoodMenu = () => {
             <div
               key={food._id}
               className="bg-white rounded shadow p-4 flex flex-col items-center cursor-pointer hover:shadow-lg transition"
-              onClick={() => navigate(`/food-profile/${food._id}`)}
+              onClick={() => navigate(`/user-food-profile/${food._id}`)}
               tabIndex={0}
               onKeyDown={e => {
                 if (e.key === "Enter" || e.key === " ") {
