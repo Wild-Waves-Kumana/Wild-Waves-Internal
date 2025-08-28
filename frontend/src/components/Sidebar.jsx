@@ -122,18 +122,7 @@ const Sidebar = () => {
                   <FaUserFriends /> Users
                 </NavLink>
               </li>
-              <li>
-                <NavLink
-                  to="/company-foods"
-                  className={({ isActive }) =>
-                    isActive
-                      ? " text-blue-600 flex items-center gap-4 dark:text-blue-400"
-                      : "text-gray-600 flex items-center gap-2 dark:text-slate-400"
-                  }
-                >
-                  <FaUserFriends /> Foods
-                </NavLink>
-              </li>
+              
 
               {/* <li>
                 <NavLink
@@ -149,6 +138,18 @@ const Sidebar = () => {
               </li> */}
             </>
           )}
+          <li>
+                <NavLink
+                  to={userRole === 'user' ? "/food-menu" : userRole === 'admin' ? "/company-foods" : userRole === 'superadmin' ? "/company-foods" : "/unauthorized"}
+                  className={({ isActive }) =>
+                    isActive
+                      ? " text-blue-600 flex items-center gap-4 dark:text-blue-400"
+                      : "text-gray-600 flex items-center gap-2 dark:text-slate-400"
+                  }
+                >
+                  <FaUserFriends /> Foods
+                </NavLink>
+              </li>
           {userRole === 'superadmin' && (
             <>
               <li>

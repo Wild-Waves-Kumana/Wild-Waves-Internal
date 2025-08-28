@@ -24,7 +24,9 @@ import VillaProfile from './pages/VillaProfile';
 import UserFaceRegistration from './pages/UserFaceRegistration';
 import FoodCreate from './pages/CreateFoods';
 import CompanyFoods from './pages/foods/CompanyFoods';
-import FoodProfile from './pages/foods/FoodProfile';
+import CompanyFoodProfile from './pages/foods/CompanyFoodProfile';
+import FoodMenu from './pages/foods/UserFoodMenu';
+
 
 function App() {
   const { isLoggedIn, login, role } = useContext(UserContext);
@@ -98,6 +100,17 @@ function App() {
       />
 
       <Route
+        path="/food-menu"
+        element={
+          <ProtectedRoute allowedRoles={['user']}>
+            <Layout>
+              <FoodMenu />
+            </Layout>
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
         path="/face-registration/:userId"
         element={
           <ProtectedRoute allowedRoles={['user']}>
@@ -166,11 +179,11 @@ function App() {
       />
 
       <Route
-        path="/food-profile/:foodId"
+        path="/company-food-profile/:foodId"
         element={
           <ProtectedRoute allowedRoles={['user', 'admin', 'superadmin']}>
             <Layout>
-              <FoodProfile />
+              <CompanyFoodProfile />
             </Layout>
 
           </ProtectedRoute>
