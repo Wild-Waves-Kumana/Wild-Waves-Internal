@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import CreateFoodOrderModal from "../../components/modals/CreateFoodOrderModal";
+import AddFoodtoCartModal from "../../components/modals/AddFoodtoCartModal"; // <-- import the modal
 import axios from "axios";
 
 const UserFoodProfile = () => {
@@ -9,6 +10,7 @@ const UserFoodProfile = () => {
   const [loading, setLoading] = useState(true);
   const [currentImgIdx, setCurrentImgIdx] = useState(0);
   const [orderModalOpen, setOrderModalOpen] = useState(false);
+  const [cartModalOpen, setCartModalOpen] = useState(false); // <-- state for cart modal
 
   // Replace with actual user and villa IDs from your auth context or state management
   const userId = "loggedInUserId"; // TODO: Get logged-in user ID
@@ -127,13 +129,22 @@ const UserFoodProfile = () => {
               {food.price != null ? `${food.price} LKR` : "N/A"}
             </div>
           )}
-          <button
-            className="mt-4 bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
-            disabled={!food.isAvailable}
-            onClick={() => setOrderModalOpen(true)}
-          >
-            {food.isAvailable ? "Place Order" : "Not Available"}
-          </button>
+          <div className="flex gap-3 mt-4">
+            <button
+              className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
+              disabled={!food.isAvailable}
+              onClick={() => setOrderModalOpen(true)}
+            >
+              {food.isAvailable ? "Place Order" : "Not Available"}
+            </button>
+            <button
+              className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700"
+              disabled={!food.isAvailable}
+              onClick={() => setCartModalOpen(true)}
+            >
+              Add to Cart
+            </button>
+          </div>
         </div>
       </div>
       <CreateFoodOrderModal
@@ -143,6 +154,12 @@ const UserFoodProfile = () => {
         userId={userId}
         villaId={villaId}
         onOrderSuccess={() => {}}
+      />
+      <AddFoodtoCartModal
+        isVisible={cartModalOpen}
+        onClose={() => setCartModalOpen(false)}
+        food={food}
+        onCartSuccess={() => {}}
       />
     </div>
   );
