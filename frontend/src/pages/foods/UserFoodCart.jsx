@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 import { jwtDecode } from "jwt-decode";
-import CartFoodOrderModal from "../../components/modals/CartFoodOrderModal"; // <-- import the modal
+import CartFoodOrderModal from "../../components/modals/CartFoodOrderModal";
+import { ShoppingCart } from "lucide-react"; // <-- Add this import
 
 const UserFoodCart = () => {
   const [cart, setCart] = useState(null);
@@ -162,7 +163,7 @@ const UserFoodCart = () => {
                         ))}
                       </div>
                     ) : (
-                      item.portion || "-"
+                      item.portion || "Standard"
                     )}
                   </td>
                   <td className="py-2 px-2 text-right">
@@ -225,7 +226,11 @@ const UserFoodCart = () => {
         </>
       )}
       {!loading && !error && (!cart || !cart.items || cart.items.length === 0) && (
-        <div className="text-gray-500">Your cart is empty.</div>
+        <div className="flex flex-col items-center justify-center py-16 text-gray-500">
+          {/* Lucide ShoppingCart Icon */}
+          <ShoppingCart className="h-16 w-16 mb-4 text-gray-400" />
+          <div className="text-lg font-semibold">No Items In Cart</div>
+        </div>
       )}
     </div>
   );
