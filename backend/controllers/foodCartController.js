@@ -64,7 +64,11 @@ export const getCartItems = async (req, res) => {
       .populate("items.foodId");
 
     if (!cart) {
-      return res.status(404).json({ message: "No cart found." });
+      return res.status(200).json({
+        items: [],
+        user: null,
+        itemTotalPrice: 0,
+      });
     }
 
     res.status(200).json({
@@ -145,32 +149,41 @@ export const editCartItems = async (req, res) => {
       0
     );
 
-    await cart.save();
-    res.status(200).json({ message: "Cart item updated.", cart });
+  await cart.save();
+  res.status(200).json({ message: "Cart item updated.", cart });
   } catch (error) {
     console.error("Error editing cart item quantity:", error);
     res.status(500).json({ message: "Failed to edit cart item." });
   }
 };
 
-export const setCartStatus = async (req, res) => {
+// Update the cartStatus of a user's cart
+export const updateCartStatus = async (req, res) => {
   try {
-    const { cartStatus } = req.body;
-    const { cartId } = req.params;
-    if (typeof cartStatus !== "boolean" || !cartId) {
-      return res.status(400).json({ message: "Missing or invalid data." });
+    const { userId, cartStatus } = req.body;
+    if (!userId || typeof cartStatus !== "boolean") {
+      return res.status(400).json({ message: "Missing or invalid fields." });
     }
-    const cart = await FoodCart.findByIdAndUpdate(
-      cartId,
+
+    // Find the user's in-cart cart and update its status
+    const cart = await FoodCart.findOneAndUpdate(
+      { userId, cartStatus: true },
       { cartStatus },
       { new: true }
     );
+
     if (!cart) {
       return res.status(404).json({ message: "Cart not found." });
     }
-    res.status(200).json(cart);
+
+    res.status(200).json({ message: "Cart status updated.", cart });
   } catch (error) {
+    console.error("Error updating cart status:", error);
     res.status(500).json({ message: "Failed to update cart status." });
   }
 };
+
+
+
+
 
