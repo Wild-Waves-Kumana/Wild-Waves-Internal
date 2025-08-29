@@ -8,8 +8,8 @@ export const addToCart = async (req, res) => {
       return res.status(400).json({ message: "Invalid payload." });
     }
 
-    // Find existing cart for the user
-    let cart = await FoodCart.findOne({ userId, cartStatus: "in-cart" });
+    // Find existing cart for the user (cartStatus: true means in-cart)
+    let cart = await FoodCart.findOne({ userId, cartStatus: true });
 
     if (cart) {
       // For each new item, check if it matches an existing item (same foodId, portion, price)
@@ -40,6 +40,7 @@ export const addToCart = async (req, res) => {
           (total, item) => total + item.price * item.quantity,
           0
         ),
+        cartStatus: true, // explicitly set as in-cart
       });
     }
 
@@ -57,7 +58,8 @@ export const getCartItems = async (req, res) => {
     const { userId } = req.params;
     if (!userId) return res.status(400).json({ message: "Missing userId." });
 
-    const cart = await FoodCart.findOne({ userId })
+    // Only get carts with cartStatus: true (in-cart)
+    const cart = await FoodCart.findOne({ userId, cartStatus: true })
       .populate("userId")
       .populate("items.foodId");
 
@@ -88,8 +90,8 @@ export const editCartItems = async (req, res) => {
     const oldPortionNorm = oldPortion ?? "";
     const newPortionNorm = newPortion ?? oldPortionNorm;
 
-    // Find the user's cart
-    const cart = await FoodCart.findOne({ userId, cartStatus: "in-cart" });
+    // Find the user's cart (cartStatus: true means in-cart)
+    const cart = await FoodCart.findOne({ userId, cartStatus: true });
     if (!cart) {
       return res.status(404).json({ message: "Cart not found." });
     }
@@ -148,6 +150,27 @@ export const editCartItems = async (req, res) => {
   } catch (error) {
     console.error("Error editing cart item quantity:", error);
     res.status(500).json({ message: "Failed to edit cart item." });
+  }
+};
+
+export const setCartStatus = async (req, res) => {
+  try {
+    const { cartStatus } = req.body;
+    const { cartId } = req.params;
+    if (typeof cartStatus !== "boolean" || !cartId) {
+      return res.status(400).json({ message: "Missing or invalid data." });
+    }
+    const cart = await FoodCart.findByIdAndUpdate(
+      cartId,
+      { cartStatus },
+      { new: true }
+    );
+    if (!cart) {
+      return res.status(404).json({ message: "Cart not found." });
+    }
+    res.status(200).json(cart);
+  } catch (error) {
+    res.status(500).json({ message: "Failed to update cart status." });
   }
 };
 
