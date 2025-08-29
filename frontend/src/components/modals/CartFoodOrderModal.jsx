@@ -185,6 +185,12 @@ const CartFoodOrderModal = ({
         orderPayload
       );
 
+      // Instantly update cartStatus to false
+      await axios.put("http://localhost:5000/api/food-cart/set-status", {
+        userId,
+        cartStatus: false,
+      });
+
       setSuccess("Order placed successfully!");
       if (onOrderSuccess) onOrderSuccess();
       setTimeout(() => {
