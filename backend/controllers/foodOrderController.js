@@ -16,7 +16,7 @@ const generateOrderId = async () => {
     orderedAt: { $gte: startOfDay, $lte: endOfDay },
   });
 
-  const orderNum = String(count).padStart(4, "0");
+  const orderNum = String(count + 1).padStart(3, "0");
   return `${dateStr}-${orderNum}`;
 };
 
