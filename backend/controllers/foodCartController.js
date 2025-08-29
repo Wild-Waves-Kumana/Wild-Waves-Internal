@@ -76,3 +76,74 @@ export const getCartItems = async (req, res) => {
   }
 };
 
+// Edit the quantity or portion of a specific item in the user's cart
+export const editCartItems = async (req, res) => {
+  try {
+    const { userId, foodId, oldPortion, oldPrice, quantity, newPortion, newPrice } = req.body;
+    if (!userId || !foodId || oldPortion == null || oldPrice == null || quantity == null) {
+      return res.status(400).json({ message: "Missing required fields." });
+    }
+
+    // Find the user's cart
+    const cart = await FoodCart.findOne({ userId, cartStatus: "in-cart" });
+    if (!cart) {
+      return res.status(404).json({ message: "Cart not found." });
+    }
+
+    // Find the item in the cart by old portion and price
+    const itemIdx = cart.items.findIndex(
+      (i) =>
+        String(i.foodId) === String(foodId) &&
+        i.portion === oldPortion &&
+        i.price === oldPrice
+    );
+
+    if (itemIdx === -1) {
+      return res.status(404).json({ message: "Item not found in cart." });
+    }
+
+    // If changing portion/price, check if an item with new portion/price already exists
+    let targetPortion = newPortion ?? oldPortion;
+    let targetPrice = newPrice ?? oldPrice;
+
+    if ((newPortion && newPortion !== oldPortion) || (newPrice != null && newPrice !== oldPrice)) {
+      const existingIdx = cart.items.findIndex(
+        (i, idx) =>
+          idx !== itemIdx &&
+          String(i.foodId) === String(foodId) &&
+          i.portion === targetPortion &&
+          i.price === targetPrice
+      );
+      if (existingIdx !== -1) {
+        // If exists, increase its quantity and remove the old item
+        cart.items[existingIdx].quantity += quantity;
+        cart.items.splice(itemIdx, 1);
+      } else {
+        // Change the portion/price of the item
+        cart.items[itemIdx].portion = targetPortion;
+        cart.items[itemIdx].price = targetPrice;
+        cart.items[itemIdx].quantity = quantity;
+      }
+    } else {
+      // Only change quantity or remove if 0
+      if (quantity > 0) {
+        cart.items[itemIdx].quantity = quantity;
+      } else {
+        cart.items.splice(itemIdx, 1);
+      }
+    }
+
+    // Recalculate total price
+    cart.itemTotalPrice = cart.items.reduce(
+      (total, i) => total + i.price * i.quantity,
+      0
+    );
+
+    await cart.save();
+    res.status(200).json({ message: "Cart item updated.", cart });
+  } catch (error) {
+    console.error("Error editing cart item quantity:", error);
+    res.status(500).json({ message: "Failed to edit cart item." });
+  }
+};
+
