@@ -1,12 +1,14 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 import { jwtDecode } from "jwt-decode";
+import CartFoodOrderModal from "../../components/modals/CartFoodOrderModal"; // <-- import the modal
 
 const UserFoodCart = () => {
   const [cart, setCart] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [updating, setUpdating] = useState(false);
+  const [orderModalOpen, setOrderModalOpen] = useState(false); // <-- modal state
 
   // Fetch cart items
   useEffect(() => {
@@ -202,6 +204,24 @@ const UserFoodCart = () => {
           <div className="text-right font-bold text-lg">
             Total: {cart.itemTotalPrice} LKR
           </div>
+          <div className="flex justify-end mt-4">
+            <button
+              className="bg-green-600 text-white px-6 py-2 rounded hover:bg-green-700"
+              disabled={updating}
+              onClick={() => setOrderModalOpen(true)}
+            >
+              Order Foods
+            </button>
+          </div>
+          <CartFoodOrderModal
+            isVisible={orderModalOpen}
+            onClose={() => setOrderModalOpen(false)}
+            cart={cart}
+            onOrderSuccess={() => {
+              setOrderModalOpen(false);
+              setUpdating(u => !u); // Refresh cart after order
+            }}
+          />
         </>
       )}
       {!loading && !error && (!cart || !cart.items || cart.items.length === 0) && (
