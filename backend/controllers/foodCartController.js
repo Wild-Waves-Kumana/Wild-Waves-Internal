@@ -80,9 +80,13 @@ export const getCartItems = async (req, res) => {
 export const editCartItems = async (req, res) => {
   try {
     const { userId, foodId, oldPortion, oldPrice, quantity, newPortion, newPrice } = req.body;
-    if (!userId || !foodId || oldPortion == null || oldPrice == null || quantity == null) {
+    if (!userId || !foodId || oldPrice == null || quantity == null) {
       return res.status(400).json({ message: "Missing required fields." });
     }
+
+    // Normalize portions for comparison (treat undefined/null as empty string)
+    const oldPortionNorm = oldPortion ?? "";
+    const newPortionNorm = newPortion ?? oldPortionNorm;
 
     // Find the user's cart
     const cart = await FoodCart.findOne({ userId, cartStatus: "in-cart" });
@@ -94,7 +98,7 @@ export const editCartItems = async (req, res) => {
     const itemIdx = cart.items.findIndex(
       (i) =>
         String(i.foodId) === String(foodId) &&
-        i.portion === oldPortion &&
+        (i.portion ?? "") === oldPortionNorm &&
         i.price === oldPrice
     );
 
@@ -103,7 +107,7 @@ export const editCartItems = async (req, res) => {
     }
 
     // If changing portion/price, check if an item with new portion/price already exists
-    let targetPortion = newPortion ?? oldPortion;
+    let targetPortion = newPortionNorm;
     let targetPrice = newPrice ?? oldPrice;
 
     if ((newPortion && newPortion !== oldPortion) || (newPrice != null && newPrice !== oldPrice)) {
@@ -111,7 +115,7 @@ export const editCartItems = async (req, res) => {
         (i, idx) =>
           idx !== itemIdx &&
           String(i.foodId) === String(foodId) &&
-          i.portion === targetPortion &&
+          (i.portion ?? "") === targetPortion &&
           i.price === targetPrice
       );
       if (existingIdx !== -1) {
