@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import axios from "axios";
 import { jwtDecode } from "jwt-decode";
 import { useNavigate } from "react-router-dom";
+import AddFoodtoCartModal from "../../components/modals/AddFoodtoCartModal"; // <-- import modal
 
 const categories = ["All", "Main", "Dessert", "Beverage", "Snack"];
 const availableOnOptions = [
@@ -21,6 +22,8 @@ const UserFoodMenu = () => {
   const [availableOnFilter, setAvailableOnFilter] = useState("All");
   const [availabilityFilter, setAvailabilityFilter] = useState("All");
   const [search, setSearch] = useState("");
+  const [cartModalOpen, setCartModalOpen] = useState(false);
+  const [selectedFood, setSelectedFood] = useState(null);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -34,7 +37,6 @@ const UserFoodMenu = () => {
         // Get user details to find companyId
         const userRes = await axios.get(`http://localhost:5000/api/users/${userId}`);
         const userCompanyId = userRes.data.companyId?._id || userRes.data.companyId;
-        // setCompanyId(userCompanyId); // Removed unused companyId
 
         // Get foods for this company
         const foodsRes = await axios.get(
@@ -148,15 +150,9 @@ const UserFoodMenu = () => {
           {filteredFoods.map((food) => (
             <div
               key={food._id}
-              className="bg-white rounded shadow p-4 flex flex-col items-center cursor-pointer hover:shadow-lg transition"
-              onClick={() => navigate(`/user-food-profile/${food._id}`)}
+              className="bg-white rounded shadow p-4 flex flex-col items-center hover:shadow-lg transition"
               tabIndex={0}
-              onKeyDown={e => {
-                if (e.key === "Enter" || e.key === " ") {
-                  navigate(`/food-profile/${food._id}`);
-                }
-              }}
-              role="button"
+              role="group"
               aria-label={`View details for ${food.name}`}
             >
               <div className="w-full flex justify-center mb-2">
@@ -189,10 +185,34 @@ const UserFoodMenu = () => {
                   {food.isAvailable ? "Available" : "Not Available"}
                 </span>
               </div>
+              <div className="flex gap-2 mt-2">
+                <button
+                  className="bg-blue-600 text-white px-3 py-1 rounded hover:bg-blue-700"
+                  onClick={() => navigate(`/user-food-profile/${food._id}`)}
+                >
+                  View
+                </button>
+                <button
+                  className="bg-green-600 text-white px-3 py-1 rounded hover:bg-green-700"
+                  disabled={!food.isAvailable}
+                  onClick={() => {
+                    setSelectedFood(food);
+                    setCartModalOpen(true);
+                  }}
+                >
+                  Add to Cart
+                </button>
+              </div>
             </div>
           ))}
         </div>
       )}
+      <AddFoodtoCartModal
+        isVisible={cartModalOpen}
+        onClose={() => setCartModalOpen(false)}
+        food={selectedFood}
+        onCartSuccess={() => setCartModalOpen(false)}
+      />
     </div>
   );
 };

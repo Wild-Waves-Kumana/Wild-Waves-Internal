@@ -1,34 +1,29 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
-
-// Helper to get userId from JWT token
-const getUserIdFromToken = () => {
-  const token = localStorage.getItem("token");
-  if (!token) return null;
-  try {
-    const payload = JSON.parse(atob(token.split(".")[1]));
-    return payload.userId || payload.id || null;
-  } catch {
-    return null;
-  }
-};
+import { jwtDecode } from "jwt-decode";
 
 const UserFoodCart = () => {
   const [cart, setCart] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const userId = getUserIdFromToken();
+  const [updating, setUpdating] = useState(false);
 
+  // Fetch cart items
   useEffect(() => {
     const fetchCart = async () => {
       setLoading(true);
       setError("");
+      const token = localStorage.getItem("token");
+      if (!token) return setLoading(false);
+      let userId;
       try {
-        if (!userId) {
-          setError("User not logged in.");
-          setLoading(false);
-          return;
-        }
+        const decoded = jwtDecode(token);
+        userId = decoded.id;
+      } catch {
+        setLoading(false);
+        return;
+      }
+      try {
         const res = await axios.get(
           `http://localhost:5000/api/food-cart/items/${userId}`
         );
@@ -42,10 +37,73 @@ const UserFoodCart = () => {
       setLoading(false);
     };
     fetchCart();
-  }, [userId]);
+  }, [updating]);
+
+  // Handle quantity or portion change
+  const handleCartEdit = async (item, newQuantity, newPortion, newPrice) => {
+    if (newQuantity < 1) return;
+    setUpdating(true);
+    const token = localStorage.getItem("token");
+    if (!token) return setUpdating(false);
+    let userId;
+    try {
+      const decoded = jwtDecode(token);
+      userId = decoded.id;
+    } catch {
+      setUpdating(false);
+      return;
+    }
+    try {
+      await axios.put("http://localhost:5000/api/food-cart/edit-cart", {
+        userId,
+        foodId: item.foodId?._id || item.foodId,
+        oldPortion: item.portion,
+        oldPrice: item.price,
+        quantity: newQuantity,
+        newPortion: newPortion ?? item.portion,
+        newPrice: newPrice ?? item.price,
+      });
+    } catch (err) {
+      alert(
+        err.response?.data?.message ||
+          "Failed to update cart. Please try again."
+      );
+    }
+    setUpdating(false);
+  };
+
+  // Handle remove item
+  const handleRemoveItem = async (item) => {
+    setUpdating(true);
+    const token = localStorage.getItem("token");
+    if (!token) return setUpdating(false);
+    let userId;
+    try {
+      const decoded = jwtDecode(token);
+      userId = decoded.id;
+    } catch {
+      setUpdating(false);
+      return;
+    }
+    try {
+      await axios.put("http://localhost:5000/api/food-cart/edit-cart", {
+        userId,
+        foodId: item.foodId?._id || item.foodId,
+        oldPortion: item.portion,
+        oldPrice: item.price,
+        quantity: 0,
+      });
+    } catch (err) {
+      alert(
+        err.response?.data?.message ||
+          "Failed to remove item. Please try again."
+      );
+    }
+    setUpdating(false);
+  };
 
   return (
-    <div className="max-w-2xl mx-auto mt-8 bg-white shadow rounded p-6">
+    <div className="mx-auto mt-8 bg-white shadow rounded p-6">
       <h2 className="text-2xl font-bold mb-4">Your Food Cart</h2>
       {loading && <div>Loading...</div>}
       {error && <div className="text-red-600 mb-4">{error}</div>}
@@ -63,6 +121,7 @@ const UserFoodCart = () => {
                 <th className="py-2 px-2 text-right">Price</th>
                 <th className="py-2 px-2 text-right">Qty</th>
                 <th className="py-2 px-2 text-right">Total</th>
+                <th className="py-2 px-2 text-center">Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -71,15 +130,70 @@ const UserFoodCart = () => {
                   <td className="py-2 px-2">
                     {item.foodId?.name || item.name}
                   </td>
-                  <td className="py-2 px-2">{item.portion || "-"}</td>
+                  <td className="py-2 px-2">
+                    {/* Portion as selectable buttons if multiple portions */}
+                    {item.foodId?.portions && item.foodId.portions.length > 0 ? (
+                      <div className="flex gap-1">
+                        {item.foodId.portions.map(portion => (
+                          <button
+                            key={portion.name}
+                            type="button"
+                            disabled={updating || item.portion === portion.name}
+                            className={`px-2 py-1 rounded border text-xs ${
+                              item.portion === portion.name
+                                ? "bg-blue-600 text-white border-blue-600"
+                                : "bg-gray-100 text-gray-700 border-gray-300 hover:bg-blue-100"
+                            }`}
+                            onClick={() => {
+                              if (item.portion !== portion.name) {
+                                handleCartEdit(
+                                  item,
+                                  item.quantity,
+                                  portion.name,
+                                  portion.price
+                                );
+                              }
+                            }}
+                          >
+                            {portion.name} - {portion.price} LKR
+                          </button>
+                        ))}
+                      </div>
+                    ) : (
+                      item.portion || "-"
+                    )}
+                  </td>
                   <td className="py-2 px-2 text-right">
                     {item.price} LKR
                   </td>
                   <td className="py-2 px-2 text-right">
-                    {item.quantity}
+                    <input
+                      type="number"
+                      min={1}
+                      value={item.quantity}
+                      disabled={updating}
+                      onChange={e =>
+                        handleCartEdit(
+                          item,
+                          Number(e.target.value),
+                          undefined,
+                          undefined
+                        )
+                      }
+                      className="w-16 border rounded px-1 py-0.5 text-right"
+                    />
                   </td>
                   <td className="py-2 px-2 text-right">
                     {item.price * item.quantity} LKR
+                  </td>
+                  <td className="py-2 px-2 text-center">
+                    <button
+                      className="text-red-600 hover:underline"
+                      disabled={updating}
+                      onClick={() => handleRemoveItem(item)}
+                    >
+                      Remove
+                    </button>
                   </td>
                 </tr>
               ))}
