@@ -28,7 +28,7 @@ import CompanyFoodProfile from './pages/foods/CompanyFoodProfile';
 import FoodMenu from './pages/foods/UserFoodMenu';
 import UserFoodProfile from './pages/foods/UserFoodProfile';
 import UserFoodCart from './pages/foods/UserFoodCart';
-
+import UserFoodOrders from './pages/foods/UserFoodOrders';  
 
 function App() {
   const { isLoggedIn, login, role } = useContext(UserContext);
@@ -133,6 +133,20 @@ function App() {
           </ProtectedRoute>
         }
       />
+
+      <Route
+        path="/user-food-orders"
+        element={
+          <ProtectedRoute allowedRoles={['user']}>
+            <Layout>
+              <UserFoodOrders />
+            </Layout>
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+      
 
       <Route
         path="/face-registration/:userId"
