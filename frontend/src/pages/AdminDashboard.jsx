@@ -29,7 +29,7 @@ const AdminDashboard = () => {
             <p className="text-white/90 text-sm text-center">Add a new user to your company</p>
           </button>
           <button
-            onClick={() => navigate('/equipment-create')}
+            onClick={() => navigate('/create-equipment')}
             className="group bg-gradient-to-br from-emerald-500 to-cyan-500 rounded-2xl shadow-xl p-8 flex flex-col items-center hover:scale-105 transition-transform duration-200"
           >
             <Cpu className="w-8 h-8 text-emerald-100 mb-2" />

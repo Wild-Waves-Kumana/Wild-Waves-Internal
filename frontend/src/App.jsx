@@ -12,7 +12,7 @@ import Layout from './components/Layout';
 import SuperAdminDashboard from './pages/SuperAdminDashboard';
 import CreateAdmin from './pages/CreateAdmin';
 import CreateUser from './pages/CreateUser';
-import EquipmentCreate from './pages/EquipmentCreation';
+import CreateEquipment from './pages/CreateEquipment';
 import Users from './pages/Users';
 import EquipmentUser from './pages/EquipmentUser';
 import UserProfile from './pages/UserProfile';
@@ -285,11 +285,11 @@ function App() {
       />
 
       <Route
-        path="/equipment-create"
+        path="/create-equipment"
         element={
           <ProtectedRoute allowedRoles={['admin', 'superadmin']}>
             <Layout>
-              <EquipmentCreate />
+              <CreateEquipment />
             </Layout>
           </ProtectedRoute>
         }
