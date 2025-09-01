@@ -4,14 +4,14 @@ import { UserContext } from './context/UserContext';
 import ProtectedRoute from './components/ProtectedRoute';
 
 import Login from './pages/Login';
-import Signup from './pages/UserCreation';
+import Signup from './pages/CreateUser';
 import AdminDashboard from './pages/AdminDashboard';
 import Unauthorized from './pages/Unauthorized';
 import UserDashboard from './pages/UserDashboard';
 import Layout from './components/Layout';
 import SuperAdminDashboard from './pages/SuperAdminDashboard';
 import AdminCreation from './pages/AdminCreation';
-import UserCreation from './pages/UserCreation';
+import CreateUser from './pages/CreateUser';
 import EquipmentCreate from './pages/EquipmentCreation';
 import Users from './pages/Users';
 import EquipmentUser from './pages/EquipmentUser';
@@ -144,8 +144,6 @@ function App() {
           </ProtectedRoute>
         }
       />
-
-      <Route
       
 
       <Route
@@ -276,10 +274,12 @@ function App() {
         }
       />
       <Route
-        path="/usercreation"
+        path="/create-user"
         element={
-          <ProtectedRoute>
-            <UserCreation />
+          <ProtectedRoute allowedRoles={['admin', 'superadmin']}>
+            <Layout>
+              <CreateUser />
+            </Layout> 
           </ProtectedRoute>
         }
       />

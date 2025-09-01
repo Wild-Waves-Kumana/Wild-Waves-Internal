@@ -21,7 +21,7 @@ const AdminDashboard = () => {
 
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
           <button
-            onClick={() => navigate('/usercreation')}
+            onClick={() => navigate('/create-user')}
             className="group bg-gradient-to-br from-cyan-500 to-blue-500 rounded-2xl shadow-xl p-8 flex flex-col items-center hover:scale-105 transition-transform duration-200"
           >
             <UserPlus className="w-8 h-8 text-cyan-100 mb-2" />
