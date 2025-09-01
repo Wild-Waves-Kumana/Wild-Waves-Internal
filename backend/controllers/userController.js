@@ -24,7 +24,7 @@ export const getUser =  async (req, res) => {
 export const updateUser = async (req, res) => {
   try {
     const { userId } = req.params;
-    const { checkinDate, checkoutDate, access, username, password } = req.body;
+    const { checkinDate, checkoutDate, access, username, password, faceRegistration } = req.body; // <-- add faceRegistration
 
     // Build update object
     const updateFields = {};
@@ -32,6 +32,7 @@ export const updateUser = async (req, res) => {
     if (checkoutDate) updateFields.checkoutDate = checkoutDate;
     if (access !== undefined) updateFields.access = access;
     if (username) updateFields.username = username;
+    if (faceRegistration !== undefined) updateFields.faceRegistration = faceRegistration; // <-- allow update
 
     // If password is provided, hash it and update
     if (password) {

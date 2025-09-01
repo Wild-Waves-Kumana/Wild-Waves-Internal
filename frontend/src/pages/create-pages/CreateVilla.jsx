@@ -80,8 +80,8 @@ const VillaCreation = () => {
   };
 
   return (
-    <div className="flex min-h-screen bg-gray-100 items-center justify-center">
-      <div className="bg-white rounded-lg shadow-lg flex w-full max-w-4xl overflow-hidden">
+    <div className="flex min-h-screen bg-gray-100 justify-center">
+      <div className="bg-white rounded-lg shadow-lg flex w-full overflow-hidden">
         {/* Left: Villa Creation */}
         <div className="w-1/2 p-8 border-r">
           <form onSubmit={handleVillaSubmit} className="space-y-4">
@@ -116,7 +116,7 @@ const VillaCreation = () => {
         </div>
 
         {/* Right: Room Creation */}
-        <div className="w-1/2 p-8 items-center justify-center">
+        <div className="w-1/2 p-8 justify-center">
           {!showRoomCreation ? (
             <div className="text-gray-400 text-center">
               <span className="text-2xl">🏠</span>

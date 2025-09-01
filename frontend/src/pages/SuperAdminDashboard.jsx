@@ -33,7 +33,7 @@ const SuperAdminDashboard = () => {
             </p>
           </button>
           <button
-            onClick={() => navigate("/admincreation")}
+            onClick={() => navigate("/create-admin")}
             className="group bg-gradient-to-br from-emerald-500 to-blue-400 rounded-2xl shadow-xl p-8 flex flex-col items-center hover:scale-105 transition-transform duration-200"
           >
             <FaUser className="w-10 h-10 text-emerald-100 mb-4" />

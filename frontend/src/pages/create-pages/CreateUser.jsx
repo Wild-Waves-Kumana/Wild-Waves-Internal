@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import { jwtDecode } from 'jwt-decode';
-import Modal from '../components/common/Modal';
+import Modal from '../../components/common/Modal';
 
 const UserCreation = () => {
   const [formData, setFormData] = useState({
@@ -211,7 +211,7 @@ const UserCreation = () => {
   const today = new Date().toISOString().split('T')[0];
 
   return (
-    <div className="flex min-h-screen bg-gray-100 items-center justify-center">
+    <div className="flex min-h-screen bg-gray-100 justify-center">
       <div className="bg-white rounded-lg shadow-lg flex w-full max-w-2xl overflow-hidden">
         {/* User Creation */}
         <div className="w-full p-8">

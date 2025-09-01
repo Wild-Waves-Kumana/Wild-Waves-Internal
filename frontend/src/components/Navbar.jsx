@@ -1,11 +1,13 @@
 import React from "react";
 import { jwtDecode } from "jwt-decode";
-import { User, Shield, Waves } from "lucide-react";
+import { User, Shield, Waves, ShoppingCart } from "lucide-react"; // <-- add ShoppingCart
+import { useNavigate } from "react-router-dom";
 
 const Navbar = () => {
   const token = localStorage.getItem("token");
   let username = "";
   let role = "";
+  const navigate = useNavigate();
 
   if (token) {
     try {
@@ -79,7 +81,19 @@ const Navbar = () => {
               </span>
             </div>
           )}
-          
+
+          {/* Cart Button for user role */}
+          {role && role.toLowerCase() === "user" && (
+            <button
+              className="flex items-center gap-2 px-3 py-2 rounded-full bg-white/20 hover:bg-white/30 border border-white/20 text-white transition"
+              title="View Cart"
+              onClick={() => navigate("/food-cart")}
+            >
+              <ShoppingCart className="w-5 h-5" />
+              <span className="hidden sm:inline text-sm font-medium">Cart</span>
+            </button>
+          )}
+
           {username && (
             <div className="flex items-center gap-3 bg-white/10 backdrop-blur-sm rounded-full px-4 py-2 border border-white/20">
               <div className="w-8 h-8 bg-white/20 rounded-full flex items-center justify-center">
@@ -96,11 +110,7 @@ const Navbar = () => {
             </div>
           )}
 
-          {/* Status Indicator */}
-          {/* <div className="flex items-center gap-2">
-            <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
-            <span className="text-blue-100 text-xs font-medium">Online</span>
-          </div> */}
+         
         </div>
       </div>
 
