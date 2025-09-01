@@ -37,7 +37,7 @@ const AdminDashboard = () => {
             <p className="text-white/90 text-sm text-center">Register new equipment</p>
           </button>
           <button
-            onClick={() => navigate('/villa-create')}
+            onClick={() => navigate('/create-villa')}
             className="group bg-gradient-to-br from-indigo-500 to-blue-400 rounded-2xl shadow-xl p-8 flex flex-col items-center hover:scale-105 transition-transform duration-200"
           >
             <Home className="w-8 h-8 text-indigo-100 mb-2" />
