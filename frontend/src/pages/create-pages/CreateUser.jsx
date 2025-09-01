@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import { jwtDecode } from 'jwt-decode';
-import Modal from '../components/common/Modal';
+import Modal from '../../components/common/Modal';
 
 const UserCreation = () => {
   const [formData, setFormData] = useState({

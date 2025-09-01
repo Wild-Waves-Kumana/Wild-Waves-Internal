@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect, useCallback } from "react";
 import { jwtDecode } from "jwt-decode";
-import ImageCropper from "../components/common/ImageCropper";
+import ImageCropper from "../../components/common/ImageCropper";
 
 const categories = ["Main", "Dessert", "Beverage", "Snack"];
 const availableOnOptions = ["Breakfast", "Lunch", "Dinner", "Teatime", "Anytime"];
