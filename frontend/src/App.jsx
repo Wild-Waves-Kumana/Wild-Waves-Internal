@@ -4,24 +4,31 @@ import { UserContext } from './context/UserContext';
 import ProtectedRoute from './components/ProtectedRoute';
 
 import Login from './pages/Login';
-import Signup from './pages/UserCreation';
+import Signup from './pages/create-pages/CreateUser';
 import AdminDashboard from './pages/AdminDashboard';
 import Unauthorized from './pages/Unauthorized';
 import UserDashboard from './pages/UserDashboard';
 import Layout from './components/Layout';
 import SuperAdminDashboard from './pages/SuperAdminDashboard';
-import AdminCreation from './pages/AdminCreation';
-import UserCreation from './pages/UserCreation';
-import EquipmentCreate from './pages/EquipmentCreation';
+import CreateAdmin from './pages/create-pages/CreateAdmin';
+import CreateUser from './pages/create-pages/CreateUser';
+import CreateEquipment from './pages/create-pages/CreateEquipment';
 import Users from './pages/Users';
 import EquipmentUser from './pages/EquipmentUser';
 import UserProfile from './pages/UserProfile';
 import CompanyProfile from './pages/CompanyProfile';
-import CreateCompany from './pages/CreateCompany';
+import CreateCompany from './pages/create-pages/CreateCompany';
 import CompanyList from './pages/CompanyList';
-import VillaCreate from './pages/VillaCreation';
+import CreateVilla from './pages/create-pages/CreateVilla';
 import VillaProfile from './pages/VillaProfile';
 import UserFaceRegistration from './pages/UserFaceRegistration';
+import FoodCreate from './pages/create-pages/CreateFoods';
+import CompanyFoods from './pages/food-pages/CompanyFoods';
+import CompanyFoodProfile from './pages/food-pages/CompanyFoodProfile';
+import FoodMenu from './pages/food-pages/UserFoodMenu';
+import UserFoodProfile from './pages/food-pages/UserFoodProfile';
+import UserFoodCart from './pages/food-pages/UserFoodCart';
+import UserFoodOrders from './pages/food-pages/UserFoodOrders';  
 
 function App() {
   const { isLoggedIn, login, role } = useContext(UserContext);
@@ -95,6 +102,51 @@ function App() {
       />
 
       <Route
+        path="/food-menu"
+        element={
+          <ProtectedRoute allowedRoles={['user']}>
+            <Layout>
+              <FoodMenu />
+            </Layout>
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/user-food-profile/:foodId"
+        element={
+          <ProtectedRoute allowedRoles={['user']}>
+            <Layout>
+              <UserFoodProfile />
+            </Layout>
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/food-cart"
+        element={
+          <ProtectedRoute allowedRoles={['user']}>
+            <Layout>
+              <UserFoodCart />
+            </Layout>
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/user-food-orders"
+        element={
+          <ProtectedRoute allowedRoles={['user']}>
+            <Layout>
+              <UserFoodOrders />
+            </Layout>
+          </ProtectedRoute>
+        }
+      />
+      
+
+      <Route
         path="/face-registration/:userId"
         element={
           <ProtectedRoute allowedRoles={['user']}>
@@ -106,11 +158,11 @@ function App() {
       />
 
       <Route
-        path="/admincreation"
+        path="/create-admin"
         element={
           <ProtectedRoute allowedRoles={['superadmin']}>
             <Layout>
-              <AdminCreation />
+              <CreateAdmin />
             </Layout>
             
           </ProtectedRoute>
@@ -129,15 +181,53 @@ function App() {
         }
       />
       <Route
-        path="/villa-create"
+        path="/create-villa"
         element={
           <ProtectedRoute allowedRoles={['admin', 'superadmin']}>
             <Layout>
-              <VillaCreate />
+              <CreateVilla />
             </Layout>
           </ProtectedRoute>
         }
       />
+
+      <Route
+        path="/create-foods"
+        element={
+          <ProtectedRoute allowedRoles={['admin', 'superadmin']}>
+            <Layout>
+              <FoodCreate />
+            </Layout>
+            
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/company-foods"
+        element={
+          <ProtectedRoute allowedRoles={['admin', 'superadmin']}>
+            <Layout>
+              <CompanyFoods />
+            </Layout>
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/company-food-profile/:foodId"
+        element={
+          <ProtectedRoute allowedRoles={['user', 'admin', 'superadmin']}>
+            <Layout>
+              <CompanyFoodProfile />
+            </Layout>
+
+          </ProtectedRoute>
+        }
+      />
+
+      
+    
 
       <Route
         path="/user-profile/:userId"
@@ -184,20 +274,22 @@ function App() {
         }
       />
       <Route
-        path="/usercreation"
+        path="/create-user"
         element={
-          <ProtectedRoute>
-            <UserCreation />
+          <ProtectedRoute allowedRoles={['admin', 'superadmin']}>
+            <Layout>
+              <CreateUser />
+            </Layout> 
           </ProtectedRoute>
         }
       />
 
       <Route
-        path="/equipment-create"
+        path="/create-equipment"
         element={
           <ProtectedRoute allowedRoles={['admin', 'superadmin']}>
             <Layout>
-              <EquipmentCreate />
+              <CreateEquipment />
             </Layout>
           </ProtectedRoute>
         }
