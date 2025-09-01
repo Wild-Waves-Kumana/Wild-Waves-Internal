@@ -10,7 +10,7 @@ import Unauthorized from './pages/Unauthorized';
 import UserDashboard from './pages/UserDashboard';
 import Layout from './components/Layout';
 import SuperAdminDashboard from './pages/SuperAdminDashboard';
-import AdminCreation from './pages/AdminCreation';
+import CreateAdmin from './pages/CreateAdmin';
 import CreateUser from './pages/CreateUser';
 import EquipmentCreate from './pages/EquipmentCreation';
 import Users from './pages/Users';
@@ -158,11 +158,11 @@ function App() {
       />
 
       <Route
-        path="/admincreation"
+        path="/create-admin"
         element={
           <ProtectedRoute allowedRoles={['superadmin']}>
             <Layout>
-              <AdminCreation />
+              <CreateAdmin />
             </Layout>
             
           </ProtectedRoute>
