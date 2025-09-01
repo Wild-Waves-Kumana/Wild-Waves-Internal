@@ -23,12 +23,12 @@ import CreateVilla from './pages/create-pages/CreateVilla';
 import VillaProfile from './pages/VillaProfile';
 import UserFaceRegistration from './pages/UserFaceRegistration';
 import FoodCreate from './pages/create-pages/CreateFoods';
-import CompanyFoods from './pages/foods/CompanyFoods';
-import CompanyFoodProfile from './pages/foods/CompanyFoodProfile';
-import FoodMenu from './pages/foods/UserFoodMenu';
-import UserFoodProfile from './pages/foods/UserFoodProfile';
-import UserFoodCart from './pages/foods/UserFoodCart';
-import UserFoodOrders from './pages/foods/UserFoodOrders';  
+import CompanyFoods from './pages/food-pages/CompanyFoods';
+import CompanyFoodProfile from './pages/food-pages/CompanyFoodProfile';
+import FoodMenu from './pages/food-pages/UserFoodMenu';
+import UserFoodProfile from './pages/food-pages/UserFoodProfile';
+import UserFoodCart from './pages/food-pages/UserFoodCart';
+import UserFoodOrders from './pages/food-pages/UserFoodOrders';  
 
 function App() {
   const { isLoggedIn, login, role } = useContext(UserContext);
