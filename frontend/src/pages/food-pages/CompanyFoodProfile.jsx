@@ -142,6 +142,12 @@ const CompanyFoodProfile = () => {
         {/* 2 columns: Details */}
         <div className="col-span-2">
           <h2 className="text-2xl font-bold mb-2">{food.name}</h2>
+          {/* Add foodCode below the name */}
+          {food.foodCode && (
+            <div className="mb-2 text-xs text-gray-500 font-mono">
+              Code: {food.foodCode}
+            </div>
+          )}
           <div className="mb-2 text-gray-600">
             {food.description || "No description."}
           </div>

@@ -195,6 +195,10 @@ const CompanyFoods = () => {
               )}
             </div>
             <h3 className="text-lg font-bold mb-1">{food.name}</h3>
+            {/* Add foodCode below the name */}
+            <div className="mb-1 text-xs text-gray-500 font-mono">
+              {food.foodCode ? `Code: ${food.foodCode}` : ""}
+            </div>
             <div className="mb-1 text-sm text-gray-600">
               {food.availableOn && food.availableOn.length > 0
                 ? food.availableOn.join(", ")
