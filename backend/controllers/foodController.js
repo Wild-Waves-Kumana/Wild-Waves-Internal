@@ -1,5 +1,27 @@
 import Food from '../models/food.js';
 
+// Helper to generate foodCode based on category
+const generateUniqueFoodCode = async (category) => {
+  const prefixes = {
+    Main: "MN",
+    Dessert: "DT",
+    Beverage: "BV",
+    Snack: "SN",
+  };
+  const prefix = prefixes[category] || "FD";
+  let unique = false;
+  let foodCode = "";
+  let attempts = 0;
+  while (!unique && attempts < 10) {
+    const randomDigits = Math.floor(100 + Math.random() * 900); // 3 digits
+    foodCode = `${prefix}${randomDigits}`;
+    const exists = await Food.findOne({ foodCode });
+    if (!exists) unique = true;
+    attempts++;
+  }
+  return foodCode;
+};
+
 // Create a new food item
 export const createFood = async (req, res) => {
   try {
@@ -19,7 +41,11 @@ export const createFood = async (req, res) => {
       return res.status(400).json({ message: "companyId is required" });
     }
 
+    // Generate unique foodCode based on category
+    const foodCode = await generateUniqueFoodCode(category);
+
     const foodData = {
+      foodCode,
       name,
       description,
       category,
@@ -43,6 +69,7 @@ export const createFood = async (req, res) => {
     res.status(400).json({ message: err.message });
   }
 };
+
 
 // Get all food items (optionally filter by companyId)
 export const getFoods = async (req, res) => {
