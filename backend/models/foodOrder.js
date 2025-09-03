@@ -9,6 +9,7 @@ const foodOrderSchema = new mongoose.Schema({
     {
       foodId: { type: mongoose.Schema.Types.ObjectId, ref: "Food" },
       name: String,
+      foodCode: String,
       portion: String,
       quantity: { type: Number, required: true },
       price: { type: Number, required: true },
