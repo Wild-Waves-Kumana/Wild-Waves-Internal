@@ -1,6 +1,6 @@
 import Food from '../models/food.js';
 
-// Helper to generate foodCode based on category
+// Helper to generate foodCode based on category, incrementing by 1 for each category, starting at 001
 const generateUniqueFoodCode = async (category) => {
   const prefixes = {
     Main: "MN",
@@ -9,16 +9,22 @@ const generateUniqueFoodCode = async (category) => {
     Snack: "SN",
   };
   const prefix = prefixes[category] || "FD";
-  let unique = false;
-  let foodCode = "";
-  let attempts = 0;
-  while (!unique && attempts < 10) {
-    const randomDigits = Math.floor(100 + Math.random() * 900); // 3 digits
-    foodCode = `${prefix}${randomDigits}`;
-    const exists = await Food.findOne({ foodCode });
-    if (!exists) unique = true;
-    attempts++;
+
+  // Find the highest foodCode for this category
+  const regex = new RegExp(`^${prefix}(\\d{3})$`);
+  const latestFood = await Food.find({ foodCode: { $regex: regex } })
+    .sort({ foodCode: -1 })
+    .limit(1);
+
+  let nextNumber = 1;
+  if (latestFood.length > 0) {
+    // Extract the numeric part and increment
+    const match = latestFood[0].foodCode.match(regex);
+    if (match && match[1]) {
+      nextNumber = parseInt(match[1], 10) + 1;
+    }
   }
+  const foodCode = `${prefix}${String(nextNumber).padStart(3, "0")}`;
   return foodCode;
 };
 
