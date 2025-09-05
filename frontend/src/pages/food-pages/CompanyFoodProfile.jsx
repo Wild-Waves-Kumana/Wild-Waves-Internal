@@ -100,7 +100,7 @@ const CompanyFoodProfile = () => {
   }
 
   return (
-    <div className="max-w-5xl mx-auto mt-10 bg-white shadow rounded p-6">
+    <div className=" mx-auto  bg-white shadow rounded p-6">
       <div className="grid grid-cols-5 gap-6 items-start">
         {/* 2 columns: Image Slider */}
         <div className="col-span-2 flex flex-col items-center">
