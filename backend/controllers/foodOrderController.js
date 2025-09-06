@@ -78,3 +78,23 @@ export const createFoodOrder = async (req, res) => {
     res.status(500).json({ message: "Failed to create food order." });
   }
 };
+
+// Get all food orders for a company (populate user, villa, items.foodId)
+export const getFoodOrdersByCompany = async (req, res) => {
+  try {
+    const { companyId } = req.params;
+    if (!companyId) {
+      return res.status(400).json({ message: "Missing companyId." });
+    }
+
+    const orders = await FoodOrder.find({ companyId })
+      .populate("userId")
+      .populate("villaId")
+      .populate("items.foodId");
+
+    res.status(200).json(orders);
+  } catch (error) {
+    console.error("Error fetching company food orders:", error);
+    res.status(500).json({ message: "Failed to fetch company food orders." });
+  }
+};

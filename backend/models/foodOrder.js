@@ -23,6 +23,7 @@ const foodOrderSchema = new mongoose.Schema({
     default: "Pending",
   },
   specialRequest: { type: String },
+  order: { type: Boolean, default: true },
   orderedAt: { type: Date, default: Date.now },
 });
 
