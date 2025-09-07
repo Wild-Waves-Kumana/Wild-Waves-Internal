@@ -27,7 +27,7 @@ const UserList = () => {
 
         // Fetch all users, companies, and villas
         const [usersRes, companiesRes, villasRes] = await Promise.all([
-          axios.get('http://localhost:5000/api/user'),
+          axios.get('http://localhost:5000/api/users'),
           axios.get('http://localhost:5000/api/company/all'),
           axios.get('http://localhost:5000/api/villa/all')
         ]);

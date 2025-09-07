@@ -43,7 +43,7 @@ const DoorList = ({ userId: propUserId, selectedRoomId, roomIds, role: propRole 
       }
 
       // Fetch user to get rooms
-      const userRes = await axios.get(`http://localhost:5000/api/user/${userId}`);
+      const userRes = await axios.get(`http://localhost:5000/api/users/${userId}`);
       const user = userRes.data;
       if (!user.rooms || user.rooms.length === 0) {
         setDoors([]);

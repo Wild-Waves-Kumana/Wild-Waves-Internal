@@ -68,7 +68,7 @@ const FoodOrderPlacementModal = ({
       if (!userId) return;
       try {
         const res = await axios.get(
-          `http://localhost:5000/api/user/${userId}`
+          `http://localhost:5000/api/users/${userId}`
         );
         setVillaId(res.data.villaId || null);
       } catch {
