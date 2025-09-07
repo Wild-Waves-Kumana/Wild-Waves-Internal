@@ -2,12 +2,15 @@ import React, { useEffect, useState } from "react";
 import axios from "axios";
 import { jwtDecode } from "jwt-decode";
 
+const statusOptions = ["Pending", "Preparing", "Delivered", "Cancelled"];
+
 const CompanyFoodOrders = () => {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [companyId, setCompanyId] = useState("");
   const [usernames, setUsernames] = useState({});
   const [villaNames, setVillaNames] = useState({});
+  const [updatingStatus, setUpdatingStatus] = useState({}); // Track updating status per order
 
   // Get adminId from token
   useEffect(() => {
@@ -84,6 +87,27 @@ const CompanyFoodOrders = () => {
     if (orders.length > 0) fetchAllVillaNames();
   }, [orders]);
 
+  // Handler to update order status
+  const handleStatusUpdate = async (orderId, newStatus) => {
+    setUpdatingStatus((prev) => ({ ...prev, [orderId]: true }));
+    try {
+      await axios.post(
+        `http://localhost:5000/api/food-orders/update-status/${orderId}`,
+        { status: newStatus }
+      );
+      // Refresh orders after update
+      if (companyId) {
+        const res = await axios.get(
+          `http://localhost:5000/api/food-orders/all/${companyId._id}`
+        );
+        setOrders(res.data);
+      }
+    } catch {
+      // Optionally show error
+    }
+    setUpdatingStatus((prev) => ({ ...prev, [orderId]: false }));
+  };
+
   if (loading) return <div>Loading...</div>;
 
   return (
@@ -92,57 +116,129 @@ const CompanyFoodOrders = () => {
       {orders.length === 0 ? (
         <div>No orders found.</div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="flex flex-col gap-6">
           {orders.map((order) => (
             <div
               key={order._id}
-              className="bg-white rounded shadow p-4 flex flex-col mb-4"
+              className="bg-white rounded shadow p-4 mb-4"
             >
-              <div className="flex justify-between items-center mb-2">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+
                 <span className="font-bold text-blue-700">Order ID: {order.orderId}</span>
-                <span className="text-xs px-2 py-1 rounded bg-gray-100 text-gray-700">
-                  {order.status}
-                </span>
-              </div>
-              <div className="mb-1">
-                <span className="font-semibold">User:</span>{" "}
-                {order.userId ? usernames[order.userId] || "-" : "-"}
-              </div>
-              <div className="mb-1">
-                <span className="font-semibold">Villa:</span>{" "}
-                {order.villaId ? villaNames[order.villaId] || "-" : "-"}
-              </div>
-              <div className="mb-1">
-                <span className="font-semibold">Ordered At:</span>{" "}
-                {order.orderedAt
-                  ? new Date(order.orderedAt).toLocaleString()
-                  : "-"}
-              </div>
-              <div className="mb-1">
-                <span className="font-semibold">Expect Time:</span>{" "}
-                {order.expectTime
-                  ? new Date(order.expectTime).toLocaleString()
-                  : "-"}
-              </div>
-              <div className="mb-1">
-                <span className="font-semibold">Total:</span>{" "}
-                {order.totalPrice} LKR
-              </div>
-              <div className="mb-2">
-                <span className="font-semibold">Items:</span>
-                <ul className="list-disc ml-6 mt-1">
-                  {order.items.map((item, idx) => (
-                    <li key={idx}>
-                      {item.foodId?.name || item.name} [{item.foodCode}] × {item.quantity}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-              {order.specialRequest && (
-                <div className="mt-2 text-sm text-gray-600">
-                  <span className="font-semibold">Special Request:</span> {order.specialRequest}
+                    <div className="flex gap-2">
+                      {statusOptions.map((status) => {
+                        let activeBg = "";
+                        let activeBorder = "";
+                        let activeText = "";
+                        if (status === "Pending") {
+                          activeBg = "bg-yellow-500";
+                          activeBorder = "border-yellow-600";
+                          activeText = "text-white";
+                        } else if (status === "Preparing") {
+                          activeBg = "bg-blue-500";
+                          activeBorder = "border-blue-600";
+                          activeText = "text-white";
+                        } else if (status === "Delivered") {
+                          activeBg = "bg-green-500";
+                          activeBorder = "border-green-600";
+                          activeText = "text-white";
+                        } else if (status === "Cancelled") {
+                          activeBg = "bg-red-500";
+                          activeBorder = "border-red-600";
+                          activeText = "text-white";
+                        }
+
+                        return (
+                          <button
+                            key={status}
+                            className={`px-2 py-1 rounded text-xs border transition-all duration-150
+                              ${
+                                order.status === status
+                                  ? `${activeBg} ${activeText} ${activeBorder} font-bold shadow`
+                                  : "bg-gray-100 text-gray-700 border-gray-300 hover:bg-blue-100"
+                              }
+                            `}
+                            disabled={updatingStatus[order.orderId]}
+                            onClick={() => handleStatusUpdate(order.orderId, status)}
+                          >
+                            {status}
+                          </button>
+                        );
+                      })}
+                    </div>
+                {/* Left: Order Details */}
+                <div>
+                  <div className="flex justify-between items-center mb-2">
+                    
+                  </div>
+                  <div className="mb-1">
+                    <span className="font-semibold">User:</span>{" "}
+                    {order.userId ? usernames[order.userId] || "-" : "-"}
+                  </div>
+                  <div className="mb-1">
+                    <span className="font-semibold">Villa:</span>{" "}
+                    {order.villaId ? villaNames[order.villaId] || "-" : "-"}
+                  </div>
+                  <div className="mb-1">
+                    <span className="font-semibold">Ordered At:</span>{" "}
+                    {order.orderedAt
+                      ? new Date(order.orderedAt).toLocaleString()
+                      : "-"}
+                  </div>
+                  <div className="mb-1">
+                    <span className="font-semibold">Expect Time:</span>{" "}
+                    {order.expectTime
+                      ? new Date(order.expectTime).toLocaleString()
+                      : "-"}
+                  </div>
+                  <div className="mb-1">
+                    <span className="font-semibold">Total:</span>{" "}
+                    {order.totalPrice} LKR
+                  </div>
+                  
                 </div>
-              )}
+                {/* Right: Items */}
+                <div>
+                  
+                  <table className="w-full mt-2 border">
+                    <thead>
+                      <tr className="bg-gray-100">
+                        <th className="py-1 px-2 text-left text-xs">Code</th>
+                        <th className="py-1 px-2 text-left text-xs">Name</th>
+                        <th className="py-1 px-2 text-right text-xs">Quantity</th>
+                        <th className="py-1 px-2 text-right text-xs">Price</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {order.items.map((item, idx) => (
+                        <tr key={idx}>
+                          <td className="py-1 px-2 font-mono text-xs text-gray-500">
+                            {item.foodCode || "-"}
+                          </td>
+                          <td className="py-1 px-2">
+                            {item.foodId?.name || item.name}
+                          </td>
+                          <td className="py-1 px-2 text-right">
+                            {item.quantity}
+                          </td>
+                          
+                          <td className="py-1 px-2 text-right">
+                            {item.quantity > 1
+                                ? `${item.quantity} x ${item.price}`
+                                : `${item.price}`}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+
+                  {order.specialRequest && (
+                    <div className="mt-2 text-sm text-gray-600">
+                      <span className="font-semibold">Special Request:</span> {order.specialRequest}
+                    </div>
+                  )}
+                </div>
+              </div>
             </div>
           ))}
         </div>
