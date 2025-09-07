@@ -113,6 +113,18 @@ const CompanyFoodOrders = () => {
                 {order.villaId ? villaNames[order.villaId] || "-" : "-"}
               </div>
               <div className="mb-1">
+                <span className="font-semibold">Ordered At:</span>{" "}
+                {order.orderedAt
+                  ? new Date(order.orderedAt).toLocaleString()
+                  : "-"}
+              </div>
+              <div className="mb-1">
+                <span className="font-semibold">Expect Time:</span>{" "}
+                {order.expectTime
+                  ? new Date(order.expectTime).toLocaleString()
+                  : "-"}
+              </div>
+              <div className="mb-1">
                 <span className="font-semibold">Total:</span>{" "}
                 {order.totalPrice} LKR
               </div>
