@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 import { jwtDecode } from "jwt-decode";
+import Modal from "../../components/common/Modal"; // Reference your Modal
 
 const statusOptions = ["Pending", "Preparing", "Delivered", "Cancelled"];
 
@@ -12,6 +13,11 @@ const CompanyFoodOrders = () => {
   const [villaNames, setVillaNames] = useState({});
   const [updatingStatus, setUpdatingStatus] = useState({});
   const [now, setNow] = useState(Date.now());
+  const [confirmModal, setConfirmModal] = useState({
+    isVisible: false,
+    orderId: null,
+    newStatus: "",
+  });
 
   // Live timer effect
   useEffect(() => {
@@ -96,6 +102,16 @@ const CompanyFoodOrders = () => {
 
   // Handler to update order status
   const handleStatusUpdate = async (orderId, newStatus) => {
+    // For Delivered or Cancelled, show confirmation modal
+    if (newStatus === "Delivered" || newStatus === "Cancelled") {
+      setConfirmModal({ isVisible: true, orderId, newStatus });
+      return;
+    }
+    await updateOrderStatus(orderId, newStatus);
+  };
+
+  // Actual update function
+  const updateOrderStatus = async (orderId, newStatus) => {
     setUpdatingStatus((prev) => ({ ...prev, [orderId]: true }));
     try {
       await axios.post(
@@ -113,6 +129,7 @@ const CompanyFoodOrders = () => {
       // Optionally show error
     }
     setUpdatingStatus((prev) => ({ ...prev, [orderId]: false }));
+    setConfirmModal({ isVisible: false, orderId: null, newStatus: "" });
   };
 
   // Helper to format timer
@@ -138,19 +155,16 @@ const CompanyFoodOrders = () => {
               key={order._id}
               className="bg-white rounded shadow p-4 mb-4"
             >
-                
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                
                 {/* Status & Order ID */}
-                <span className="font-bold text-blue-700">Order ID: {order.orderId}  
-                {/* Live timer for Pending and Preparing */}
-                {(order.status === "Pending" || order.status === "Preparing") && order.expectTime && (
+                <span className="font-bold text-blue-700">
+                  Order ID: {order.orderId}
+                  {(order.status === "Pending" || order.status === "Preparing") && order.expectTime && (
                     <span className="ml-5 px-4 rounded bg-gray-200 text-blue-700 font-mono text-xs">
-                    {getTimer(order.expectTime)}
+                      {getTimer(order.expectTime)}
                     </span>
-                )}
+                  )}
                 </span>
-                
                 <div className="flex gap-2">
                   {statusOptions.map((status) => {
                     let activeBg = "";
@@ -189,11 +203,8 @@ const CompanyFoodOrders = () => {
                       >
                         {status}
                       </button>
-
-                      
                     );
                   })}
-
                 </div>
                 {/* Left: Order Details */}
                 <div>
@@ -216,13 +227,16 @@ const CompanyFoodOrders = () => {
                     {order.expectTime
                       ? new Date(order.expectTime).toLocaleString()
                       : "-"}
-                    
                   </div>
                   <div className="mb-1">
                     <span className="font-semibold">Total:</span>{" "}
                     {order.totalPrice} LKR
                   </div>
-                  
+                  {order.specialRequest && (
+                    <div className="mt-2 text-sm text-gray-600">
+                      <span className="font-semibold">Special Request:</span> {order.specialRequest}
+                    </div>
+                  )}
                 </div>
                 {/* Right: Items */}
                 <div>
@@ -254,20 +268,49 @@ const CompanyFoodOrders = () => {
                           </td>
                         </tr>
                       ))}
-                      
+                      <tr>
+                        <td colSpan={3} className="py-1 px-2 text-right font-semibold">
+                          Total
+                        </td>
+                        <td className="py-1 px-2 text-right font-bold text-blue-700">
+                          {order.totalPrice} LKR
+                        </td>
+                      </tr>
                     </tbody>
                   </table>
-                  {order.specialRequest && (
-                    <div className="mt-2 text-sm text-gray-600">
-                      <span className="font-semibold">Special Request:</span> {order.specialRequest}
-                    </div>
-                  )}
                 </div>
               </div>
             </div>
           ))}
         </div>
       )}
+      {/* Confirmation Modal */}
+      <Modal
+        isVisible={confirmModal.isVisible}
+        onClose={() => setConfirmModal({ isVisible: false, orderId: null, newStatus: "" })}
+        width="max-w-sm"
+      >
+        <div className="text-center">
+          <h3 className="text-lg font-bold mb-2">Confirm Status Change</h3>
+          <p className="mb-4">
+            Are you sure you want to change the status to <span className="font-semibold">{confirmModal.newStatus}</span>?
+          </p>
+          <div className="flex justify-center gap-4">
+            <button
+              className="px-4 py-2 rounded bg-blue-600 text-white font-semibold"
+              onClick={() => updateOrderStatus(confirmModal.orderId, confirmModal.newStatus)}
+            >
+              Yes, Change
+            </button>
+            <button
+              className="px-4 py-2 rounded bg-gray-300 text-gray-700 font-semibold"
+              onClick={() => setConfirmModal({ isVisible: false, orderId: null, newStatus: "" })}
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      </Modal>
     </div>
   );
 };
