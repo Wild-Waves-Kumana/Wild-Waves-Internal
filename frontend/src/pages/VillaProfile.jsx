@@ -16,7 +16,7 @@ const VillaProfile = () => {
   useEffect(() => {
     const fetchVilla = async () => {
       try {
-        const villaRes = await axios.get(`http://localhost:5000/api/villas/${villa_id}`);
+        const villaRes = await axios.get(`http://localhost:5000/api/villa/${villa_id}`);
         setVilla(villaRes.data);
 
         // Fetch all rooms and filter those belonging to this villa

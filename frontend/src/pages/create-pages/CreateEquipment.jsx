@@ -35,7 +35,7 @@ const EquipmentCreation = () => {
         const companyId = adminRes.data.companyId?._id || adminRes.data.companyId;
 
         // Fetch all villas
-        const villasRes = await axios.get("http://localhost:5000/api/villas/all");
+        const villasRes = await axios.get("http://localhost:5000/api/villa/all");
         // Filter villas by companyId
         const filteredVillas = villasRes.data.filter(
           (v) =>
