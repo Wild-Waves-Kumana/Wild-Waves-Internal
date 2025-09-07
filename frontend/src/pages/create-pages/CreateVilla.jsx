@@ -32,7 +32,7 @@ const VillaCreation = () => {
     setLoading(true);
     setMessage('');
     try {
-      const res = await axios.post('http://localhost:5000/api/villa/create', {
+      const res = await axios.post('http://localhost:5000/api/villas/create', {
         villaId,
         villaName,
         adminId,

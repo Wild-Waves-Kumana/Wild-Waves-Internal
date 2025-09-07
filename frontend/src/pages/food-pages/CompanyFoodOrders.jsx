@@ -72,7 +72,7 @@ const CompanyFoodOrders = () => {
       await Promise.all(
         uniqueIds.map(async (villaId) => {
           try {
-            const res = await axios.get(`http://localhost:5000/api/villa/${villaId}`);
+            const res = await axios.get(`http://localhost:5000/api/villas/${villaId}`);
             newVillaNames[villaId] = res.data.villaName || "-";
           } catch {
             newVillaNames[villaId] = "-";

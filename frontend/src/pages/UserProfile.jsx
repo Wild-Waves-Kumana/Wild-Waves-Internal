@@ -45,7 +45,7 @@ const UserProfile = () => {
         const [userRes, companiesRes, villasRes, roomsRes] = await Promise.all([
           axios.get(`http://localhost:5000/api/users/${userId}`),
           axios.get('http://localhost:5000/api/company/all'),
-          axios.get('http://localhost:5000/api/villa/all'),
+          axios.get('http://localhost:5000/api/villas/all'),
           axios.get('http://localhost:5000/api/rooms/all')
         ]);
         setUser(userRes.data);

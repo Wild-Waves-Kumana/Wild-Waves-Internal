@@ -35,7 +35,7 @@ app.use('/api/users', userRoutes);
 app.use('/api/company', companyRoutes);
 app.use('/api/admin', adminRoutes); // Admin routes
 app.use('/api/rooms', roomRoutes);
-app.use('/api/villa', villaRoutes);
+app.use('/api/villas', villaRoutes);
 app.use('/api/foods', foodRoutes);
 app.use('/api/food-orders', foodOrderRoutes);
 app.use('/api/food-cart', foodCartRoutes);
