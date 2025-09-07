@@ -87,10 +87,42 @@ export const getFoodOrdersByCompany = async (req, res) => {
       return res.status(400).json({ message: "Missing companyId." });
     }
     const orders = await FoodOrder.find({ companyId });
-
     res.status(200).json(orders);
   } catch (error) {
     console.error("Error fetching company food orders:", error);
     res.status(500).json({ message: "Failed to fetch company food orders." });
+  }
+};
+
+// Update the status of a food order
+export const updateFoodOrderStatus = async (req, res) => {
+  try {
+    const { orderId } = req.params;
+    const { status } = req.body;
+
+    if (!orderId || !status) {
+      return res.status(400).json({ message: "Missing orderId or status." });
+    }
+
+    // Only allow valid status values
+    const validStatuses = ["Pending", "Preparing", "Delivered", "Cancelled"];
+    if (!validStatuses.includes(status)) {
+      return res.status(400).json({ message: "Invalid status value." });
+    }
+
+    const updatedOrder = await FoodOrder.findOneAndUpdate(
+      { orderId },
+      { status },
+      { new: true }
+    );
+
+    if (!updatedOrder) {
+      return res.status(404).json({ message: "Order not found." });
+    }
+
+    res.status(200).json({ message: "Order status updated.", order: updatedOrder });
+  } catch (error) {
+    console.error("Error updating order status:", error);
+    res.status(500).json({ message: "Failed to update order status." });
   }
 };
