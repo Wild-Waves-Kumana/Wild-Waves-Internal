@@ -10,7 +10,14 @@ const CompanyFoodOrders = () => {
   const [companyId, setCompanyId] = useState("");
   const [usernames, setUsernames] = useState({});
   const [villaNames, setVillaNames] = useState({});
-  const [updatingStatus, setUpdatingStatus] = useState({}); // Track updating status per order
+  const [updatingStatus, setUpdatingStatus] = useState({});
+  const [now, setNow] = useState(Date.now());
+
+  // Live timer effect
+  useEffect(() => {
+    const interval = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(interval);
+  }, []);
 
   // Get adminId from token
   useEffect(() => {
@@ -108,6 +115,15 @@ const CompanyFoodOrders = () => {
     setUpdatingStatus((prev) => ({ ...prev, [orderId]: false }));
   };
 
+  // Helper to format timer
+  const getTimer = (expectTime) => {
+    if (!expectTime) return "-";
+    const diff = Math.max(0, new Date(expectTime) - now);
+    const mins = Math.floor(diff / 60000);
+    const secs = Math.floor((diff % 60000) / 1000);
+    return `${String(mins).padStart(2, "0")}:${String(secs).padStart(2, "0")}`;
+  };
+
   if (loading) return <div>Loading...</div>;
 
   return (
@@ -122,55 +138,65 @@ const CompanyFoodOrders = () => {
               key={order._id}
               className="bg-white rounded shadow p-4 mb-4"
             >
+                
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                
+                {/* Status & Order ID */}
+                <span className="font-bold text-blue-700">Order ID: {order.orderId}  
+                {/* Live timer for Pending and Preparing */}
+                {(order.status === "Pending" || order.status === "Preparing") && order.expectTime && (
+                    <span className="ml-5 px-4 rounded bg-gray-200 text-blue-700 font-mono text-xs">
+                    {getTimer(order.expectTime)}
+                    </span>
+                )}
+                </span>
+                
+                <div className="flex gap-2">
+                  {statusOptions.map((status) => {
+                    let activeBg = "";
+                    let activeBorder = "";
+                    let activeText = "";
+                    if (status === "Pending") {
+                      activeBg = "bg-yellow-500";
+                      activeBorder = "border-yellow-600";
+                      activeText = "text-white";
+                    } else if (status === "Preparing") {
+                      activeBg = "bg-blue-500";
+                      activeBorder = "border-blue-600";
+                      activeText = "text-white";
+                    } else if (status === "Delivered") {
+                      activeBg = "bg-green-500";
+                      activeBorder = "border-green-600";
+                      activeText = "text-white";
+                    } else if (status === "Cancelled") {
+                      activeBg = "bg-red-500";
+                      activeBorder = "border-red-600";
+                      activeText = "text-white";
+                    }
 
-                <span className="font-bold text-blue-700">Order ID: {order.orderId}</span>
-                    <div className="flex gap-2">
-                      {statusOptions.map((status) => {
-                        let activeBg = "";
-                        let activeBorder = "";
-                        let activeText = "";
-                        if (status === "Pending") {
-                          activeBg = "bg-yellow-500";
-                          activeBorder = "border-yellow-600";
-                          activeText = "text-white";
-                        } else if (status === "Preparing") {
-                          activeBg = "bg-blue-500";
-                          activeBorder = "border-blue-600";
-                          activeText = "text-white";
-                        } else if (status === "Delivered") {
-                          activeBg = "bg-green-500";
-                          activeBorder = "border-green-600";
-                          activeText = "text-white";
-                        } else if (status === "Cancelled") {
-                          activeBg = "bg-red-500";
-                          activeBorder = "border-red-600";
-                          activeText = "text-white";
-                        }
+                    return (
+                      <button
+                        key={status}
+                        className={`px-2 py-1 rounded text-xs border transition-all duration-150
+                          ${
+                            order.status === status
+                              ? `${activeBg} ${activeText} ${activeBorder} font-bold shadow`
+                              : "bg-gray-100 text-gray-700 border-gray-300 hover:bg-blue-100"
+                          }
+                        `}
+                        disabled={updatingStatus[order.orderId]}
+                        onClick={() => handleStatusUpdate(order.orderId, status)}
+                      >
+                        {status}
+                      </button>
 
-                        return (
-                          <button
-                            key={status}
-                            className={`px-2 py-1 rounded text-xs border transition-all duration-150
-                              ${
-                                order.status === status
-                                  ? `${activeBg} ${activeText} ${activeBorder} font-bold shadow`
-                                  : "bg-gray-100 text-gray-700 border-gray-300 hover:bg-blue-100"
-                              }
-                            `}
-                            disabled={updatingStatus[order.orderId]}
-                            onClick={() => handleStatusUpdate(order.orderId, status)}
-                          >
-                            {status}
-                          </button>
-                        );
-                      })}
-                    </div>
+                      
+                    );
+                  })}
+
+                </div>
                 {/* Left: Order Details */}
                 <div>
-                  <div className="flex justify-between items-center mb-2">
-                    
-                  </div>
                   <div className="mb-1">
                     <span className="font-semibold">User:</span>{" "}
                     {order.userId ? usernames[order.userId] || "-" : "-"}
@@ -190,6 +216,7 @@ const CompanyFoodOrders = () => {
                     {order.expectTime
                       ? new Date(order.expectTime).toLocaleString()
                       : "-"}
+                    
                   </div>
                   <div className="mb-1">
                     <span className="font-semibold">Total:</span>{" "}
@@ -199,7 +226,6 @@ const CompanyFoodOrders = () => {
                 </div>
                 {/* Right: Items */}
                 <div>
-                  
                   <table className="w-full mt-2 border">
                     <thead>
                       <tr className="bg-gray-100">
@@ -221,17 +247,16 @@ const CompanyFoodOrders = () => {
                           <td className="py-1 px-2 text-right">
                             {item.quantity}
                           </td>
-                          
                           <td className="py-1 px-2 text-right">
                             {item.quantity > 1
-                                ? `${item.quantity} x ${item.price}`
-                                : `${item.price}`}
+                              ? `${item.quantity} x ${item.price}`
+                              : `${item.price}`}
                           </td>
                         </tr>
                       ))}
+                      
                     </tbody>
                   </table>
-
                   {order.specialRequest && (
                     <div className="mt-2 text-sm text-gray-600">
                       <span className="font-semibold">Special Request:</span> {order.specialRequest}
