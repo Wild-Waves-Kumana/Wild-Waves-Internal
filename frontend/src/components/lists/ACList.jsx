@@ -43,7 +43,7 @@ const ACList = ({ userId: propUserId, selectedRoomId, roomIds, role: propRole })
         userId = propUserId;
       }
 
-      const userRes = await axios.get(`http://localhost:5000/api/users/${userId}`);
+      const userRes = await axios.get(`http://localhost:5000/api/user/${userId}`);
       const user = userRes.data;
       if (!user.rooms || user.rooms.length === 0) {
         setAcs([]);

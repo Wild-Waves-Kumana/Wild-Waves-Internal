@@ -51,7 +51,7 @@ const CompanyFoodOrders = () => {
       await Promise.all(
         uniqueIds.map(async (userId) => {
           try {
-            const res = await axios.get(`http://localhost:5000/api/users/${userId}`);
+            const res = await axios.get(`http://localhost:5000/api/user/${userId}`);
             newUsernames[userId] = res.data.username || "-";
           } catch {
             newUsernames[userId] = "-";

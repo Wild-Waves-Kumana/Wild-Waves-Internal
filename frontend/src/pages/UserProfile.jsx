@@ -43,7 +43,7 @@ const UserProfile = () => {
     const fetchData = async () => {
       try {
         const [userRes, companiesRes, villasRes, roomsRes] = await Promise.all([
-          axios.get(`http://localhost:5000/api/users/${userId}`),
+          axios.get(`http://localhost:5000/api/user/${userId}`),
           axios.get('http://localhost:5000/api/company/all'),
           axios.get('http://localhost:5000/api/villa/all'),
           axios.get('http://localhost:5000/api/rooms/all')
@@ -115,10 +115,10 @@ const UserProfile = () => {
   const handleEditSubmit = async (e) => {
     e.preventDefault();
     try {
-      await axios.put(`http://localhost:5000/api/users/${userId}`, editForm);
+      await axios.put(`http://localhost:5000/api/user/${userId}`, editForm);
       setShowEditModal(false);
       // Refetch user data
-      const res = await axios.get(`http://localhost:5000/api/users/${userId}`);
+      const res = await axios.get(`http://localhost:5000/api/user/${userId}`);
       setUser(res.data);
     } catch (err) {
       console.error('Failed to update user:', err);

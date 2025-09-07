@@ -31,7 +31,7 @@ connectDB();
 app.use('/api/auth', authRoutes);
 app.use('/api/protected', protectedRoutes); 
 app.use('/api/equipment', equipmentRoutes);
-app.use('/api/users', userRoutes);
+app.use('/api/user', userRoutes);
 app.use('/api/company', companyRoutes);
 app.use('/api/admin', adminRoutes); // Admin routes
 app.use('/api/rooms', roomRoutes);

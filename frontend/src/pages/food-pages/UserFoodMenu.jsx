@@ -35,7 +35,7 @@ const UserFoodMenu = () => {
         const userId = decoded.id;
 
         // Get user details to find companyId
-        const userRes = await axios.get(`http://localhost:5000/api/users/${userId}`);
+        const userRes = await axios.get(`http://localhost:5000/api/user/${userId}`);
         const userCompanyId = userRes.data.companyId?._id || userRes.data.companyId;
 
         // Get foods for this company

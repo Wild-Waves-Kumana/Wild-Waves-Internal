@@ -31,7 +31,7 @@ const DashboardController = () => {
     const fetchUserRooms = async () => {
       setLoading(true);
       try {
-        const userRes = await axios.get(`http://localhost:5000/api/users/${userId}`);
+        const userRes = await axios.get(`http://localhost:5000/api/user/${userId}`);
         const user = userRes.data;
         
         // Fetch all rooms and filter by user's room ids
