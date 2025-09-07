@@ -86,11 +86,7 @@ export const getFoodOrdersByCompany = async (req, res) => {
     if (!companyId) {
       return res.status(400).json({ message: "Missing companyId." });
     }
-
-    const orders = await FoodOrder.find({ companyId })
-      .populate("userId")
-      .populate("villaId")
-      .populate("items.foodId");
+    const orders = await FoodOrder.find({ companyId });
 
     res.status(200).json(orders);
   } catch (error) {
