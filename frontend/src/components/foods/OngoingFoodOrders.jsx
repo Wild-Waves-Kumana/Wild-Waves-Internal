@@ -35,6 +35,10 @@ const OngoingFoodOrders = () => {
     orderId: null,
     newStatus: "",
   });
+  const [searchTerm, setSearchTerm] = useState("");
+  const [dateOrderedAt, setDateOrderedAt] = useState("");
+  const [dateExpectTime, setDateExpectTime] = useState("");
+  const [statusFilter, setStatusFilter] = useState(""); // <-- Add status filter
 
   // Live timer effect
   useEffect(() => {
@@ -172,119 +176,239 @@ const OngoingFoodOrders = () => {
     const mins = Math.floor((diff % 3600000) / 60000);
     const secs = Math.floor((diff % 60000) / 1000);
     return `${String(hours).padStart(2, "0")}:${String(mins).padStart(2, "0")}:${String(secs).padStart(2, "0")}`;
-  };
+  }; 
+
+  // Filtered and sorted orders
+  const filteredOrders = useMemo(() => {
+    let result = [...orders];
+
+    // Status dropdown filter
+    if (statusFilter) {
+      result = result.filter(order => order.status === statusFilter);
+    }
+
+    // Search by orderId, villa name, userId
+    if (searchTerm) {
+      const term = searchTerm.toLowerCase();
+      result = result.filter(order =>
+        (order.orderId && order.orderId.toLowerCase().includes(term)) ||
+        (order.villaId && villaNames[order.villaId] && villaNames[order.villaId].toLowerCase().includes(term)) ||
+        (order.userId && usernames[order.userId] && usernames[order.userId].toLowerCase().includes(term))
+      );
+    }
+
+    // Date search for orderedAt
+    if (dateOrderedAt) {
+      result = result.filter(order => {
+        if (!order.orderedAt) return false;
+        const orderDate = new Date(order.orderedAt);
+        const selectedDate = new Date(dateOrderedAt);
+        return (
+          orderDate.getFullYear() === selectedDate.getFullYear() &&
+          orderDate.getMonth() === selectedDate.getMonth() &&
+          orderDate.getDate() === selectedDate.getDate()
+        );
+      });
+    }
+
+    // Date search for expectTime
+    if (dateExpectTime) {
+      result = result.filter(order => {
+        if (!order.expectTime) return false;
+        const expectDate = new Date(order.expectTime);
+        const selectedDate = new Date(dateExpectTime);
+        return (
+          expectDate.getFullYear() === selectedDate.getFullYear() &&
+          expectDate.getMonth() === selectedDate.getMonth() &&
+          expectDate.getDate() === selectedDate.getDate()
+        );
+      });
+    }
+
+    // Sort by timer ascending (lowest timer first)
+    result.sort((a, b) => {
+      const aTime = a.expectTime ? new Date(a.expectTime) - Date.now() : Infinity;
+      const bTime = b.expectTime ? new Date(b.expectTime) - Date.now() : Infinity;
+      return aTime - bTime;
+    });
+
+    return result;
+  }, [orders, searchTerm, villaNames, usernames, dateOrderedAt, dateExpectTime, statusFilter]);
 
   if (loading) return <div>Loading...</div>;
 
   return (
     <div>
-      {orders.length === 0 ? (
+      <h2 className="text-xl font-bold mb-4">Ongoing Food Orders</h2>
+      {/* Search Bar, Status Dropdown, and Date Filters */}
+      <div className="flex flex-col md:flex-row gap-4 mb-4">
+        <input
+          type="text"
+          placeholder="Search Order ID, Villa Name, User ID..."
+          value={searchTerm}
+          onChange={e => setSearchTerm(e.target.value)}
+          className="px-3 py-2 border border-gray-300 rounded-md w-full md:w-1/3"
+        />
+        <div className="flex items-center gap-2">
+          <label className="text-sm text-gray-600">Status:</label>
+          <select
+            value={statusFilter}
+            onChange={e => setStatusFilter(e.target.value)}
+            className="px-3 py-1 border border-gray-300 rounded-md text-sm"
+          >
+            <option value="">All</option>
+            <option value="Pending">Pending</option>
+            <option value="Preparing">Preparing</option>
+          </select>
+        </div>
+        <div className="flex items-center gap-2">
+          <label className="text-sm text-gray-600">Ordered At:</label>
+          <input
+            type="date"
+            value={dateOrderedAt}
+            onChange={e => setDateOrderedAt(e.target.value)}
+            className="px-3 py-1 border border-gray-300 rounded-md text-sm"
+          />
+          {dateOrderedAt && (
+            <button
+              className="px-2 py-1 rounded bg-gray-200 text-gray-700 text-xs"
+              onClick={() => setDateOrderedAt("")}
+            >
+              Clear
+            </button>
+          )}
+        </div>
+        <div className="flex items-center gap-2">
+          <label className="text-sm text-gray-600">Expected Time:</label>
+          <input
+            type="date"
+            value={dateExpectTime}
+            onChange={e => setDateExpectTime(e.target.value)}
+            className="px-3 py-1 border border-gray-300 rounded-md text-sm"
+          />
+          {dateExpectTime && (
+            <button
+              className="px-2 py-1 rounded bg-gray-200 text-gray-700 text-xs"
+              onClick={() => setDateExpectTime("")}
+            >
+              Clear
+            </button>
+          )}
+        </div>
+      </div>
+      {filteredOrders.length === 0 ? (
         <div>No ongoing orders found.</div>
       ) : (
         <div className="flex flex-col gap-2">
-          {orders.map((order) => (
-            <div
-              key={order._id}
-              className="bg-white rounded shadow p-4 mb-4"
-            >
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {/* Status & Order ID */}
-                <span className="font-bold text-blue-700">
-                  Order ID: {order.orderId}
-                  {(order.status === "Pending" || order.status === "Preparing") && order.expectTime && (
-                    <span className="ml-5 px-4 rounded bg-gray-200 text-blue-700 font-mono text-xs">
-                      {getTimer(order.expectTime)}
-                    </span>
-                  )}
-                </span>
-                <div className="flex gap-2">
-                  {statusOptions.map((status) => (
-                    <button
-                      key={status}
-                      className={getStatusStyles(status, order.status === status)}
-                      disabled={updatingStatus[order.orderId]}
-                      onClick={() => handleStatusUpdate(order.orderId, status)}
-                    >
-                      {status}
-                    </button>
-                  ))}
-                </div>
-                {/* Left: Order Details */}
-                <div>
-                  <div className="mb-1">
-                    <span className="font-semibold">User:</span>{" "}
-                    {order.userId ? usernames[order.userId] || "-" : "-"}
+          {filteredOrders.map((order) => {
+            const timer = getTimer(order.expectTime);
+            const isTimerZero = timer === "00:00:00";
+            return (
+              <div
+                key={order._id}
+                className={`rounded-lg shadow-md p-4 mb-4 w-full overflow-hidden ${
+                  isTimerZero ? "bg-red-100" : "bg-white"
+                }`}
+              >
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {/* Status & Order ID */}
+                  <span className="font-bold text-blue-700">
+                    Order ID: {order.orderId}
+                    {(order.status === "Pending" || order.status === "Preparing") && order.expectTime && (
+                      <span className="ml-5 px-4 rounded bg-gray-200 text-blue-700 font-mono text-xs">
+                        {timer}
+                      </span>
+                    )}
+                  </span>
+                  <div className="flex gap-2">
+                    {statusOptions.map((status) => (
+                      <button
+                        key={status}
+                        className={getStatusStyles(status, order.status === status)}
+                        disabled={updatingStatus[order.orderId]}
+                        onClick={() => handleStatusUpdate(order.orderId, status)}
+                      >
+                        {status}
+                      </button>
+                    ))}
                   </div>
-                  <div className="mb-1">
-                    <span className="font-semibold">Villa:</span>{" "}
-                    {order.villaId ? villaNames[order.villaId] || "-" : "-"}
-                  </div>
-                  <div className="mb-1">
-                    <span className="font-semibold">Ordered At:</span>{" "}
-                    {order.orderedAt
-                      ? new Date(order.orderedAt).toLocaleString()
-                      : "-"}
-                  </div>
-                  <div className="mb-1">
-                    <span className="font-semibold">Expect Time:</span>{" "}
-                    {order.expectTime
-                      ? new Date(order.expectTime).toLocaleString()
-                      : "-"}
-                  </div>
-                  <div className="mb-1">
-                    <span className="font-semibold">Total:</span>{" "}
-                    {order.totalPrice} LKR
-                  </div>
-                  {order.specialRequest && (
-                    <div className="mt-2 text-sm text-gray-600">
-                      <span className="font-semibold">Special Request:</span> {order.specialRequest}
+                  {/* Left: Order Details */}
+                  <div>
+                    <div className="mb-1">
+                      <span className="font-semibold">User:</span>{" "}
+                      {order.userId ? usernames[order.userId] || "-" : "-"}
                     </div>
-                  )}
-                </div>
-                {/* Right: Items */}
-                <div>
-                  <table className="w-full mt-2 border">
-                    <thead>
-                      <tr className="bg-gray-100">
-                        <th className="py-1 px-2 text-left text-xs">Code</th>
-                        <th className="py-1 px-2 text-left text-xs">Name</th>
-                        <th className="py-1 px-2 text-right text-xs">Quantity</th>
-                        <th className="py-1 px-2 text-right text-xs">Price</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {order.items.map((item, idx) => (
-                        <tr key={idx}>
-                          <td className="py-1 px-2 font-mono text-xs text-gray-500">
-                            {item.foodCode || "-"}
+                    <div className="mb-1">
+                      <span className="font-semibold">Villa:</span>{" "}
+                      {order.villaId ? villaNames[order.villaId] || "-" : "-"}
+                    </div>
+                    <div className="mb-1">
+                      <span className="font-semibold">Ordered At:</span>{" "}
+                      {order.orderedAt
+                        ? new Date(order.orderedAt).toLocaleString()
+                        : "-"}
+                    </div>
+                    <div className="mb-1">
+                      <span className="font-semibold">Expect Time:</span>{" "}
+                      {order.expectTime
+                        ? new Date(order.expectTime).toLocaleString()
+                        : "-"}
+                    </div>
+                    <div className="mb-1">
+                      <span className="font-semibold">Total:</span>{" "}
+                      {order.totalPrice} LKR
+                    </div>
+                    {order.specialRequest && (
+                      <div className="mt-2 text-sm text-gray-600">
+                        <span className="font-semibold">Special Request:</span> {order.specialRequest}
+                      </div>
+                    )}
+                  </div>
+                  {/* Right: Items */}
+                  <div>
+                    <table className="w-full  bg-white shadow-md rounded-lg overflow-hidden ">
+                      <thead>
+                        <tr className="bg-gray-100">
+                          <th className="py-2 px-4 text-left text-xs">Code</th>
+                          <th className="py-2 px-4 text-left text-xs">Name</th>
+                          <th className="py-2 px-4 text-right text-xs">Quantity</th>
+                          <th className="py-2 px-4 text-right text-xs">Price</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {order.items.map((item, idx) => (
+                          <tr key={idx}>
+                            <td className="py-1 px-2 font-mono text-xs text-gray-500">
+                              {item.foodCode || "-"}
+                            </td>
+                            <td className="py-1 px-2">
+                              {item.foodId?.name || item.name}
+                            </td>
+                            <td className="py-1 px-2 text-right">
+                              {item.quantity}
+                            </td>
+                            <td className="py-1 px-2 text-right">
+                              {item.quantity > 1
+                                ? `${item.quantity} x ${item.price}`
+                                : `${item.price}`}
+                            </td>
+                          </tr>
+                        ))}
+                        <tr>
+                          <td colSpan={3} className="py-1 px-2 text-right font-semibold">
+                            Total
                           </td>
-                          <td className="py-1 px-2">
-                            {item.foodId?.name || item.name}
-                          </td>
-                          <td className="py-1 px-2 text-right">
-                            {item.quantity}
-                          </td>
-                          <td className="py-1 px-2 text-right">
-                            {item.quantity > 1
-                              ? `${item.quantity} x ${item.price}`
-                              : `${item.price}`}
+                          <td className="py-1 px-2 text-right font-bold text-blue-700">
+                            {order.totalPrice} LKR
                           </td>
                         </tr>
-                      ))}
-                      <tr>
-                        <td colSpan={3} className="py-1 px-2 text-right font-semibold">
-                          Total
-                        </td>
-                        <td className="py-1 px-2 text-right font-bold text-blue-700">
-                          {order.totalPrice} LKR
-                        </td>
-                      </tr>
-                    </tbody>
-                  </table>
+                      </tbody>
+                    </table>
+                  </div>
                 </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
       {/* Confirmation Modal */}
