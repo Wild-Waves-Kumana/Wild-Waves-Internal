@@ -71,7 +71,13 @@ const OngoingFoodOrders = () => {
           (order) =>
             (order.status === "Pending" || order.status === "Preparing")
         );
-        setOrders(filtered);
+        // Sort by timer ascending (lowest timer first)
+        const sorted = filtered.sort((a, b) => {
+          const aTime = a.expectTime ? new Date(a.expectTime) - Date.now() : Infinity;
+          const bTime = b.expectTime ? new Date(b.expectTime) - Date.now() : Infinity;
+          return aTime - bTime;
+        });
+        setOrders(sorted);
       })
       .catch(() => setOrders([]))
       .finally(() => setLoading(false));
