@@ -167,7 +167,7 @@ const RecentFoodOrder = () => {
       {orders.length === 0 ? (
         <div>No orders found.</div>
       ) : (
-        <div className="flex flex-col gap-6">
+        <div className="flex flex-col gap-2">
           {orders.map((order) => (
             <div
               key={order._id}
