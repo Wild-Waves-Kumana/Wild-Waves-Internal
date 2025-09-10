@@ -94,6 +94,20 @@ export const getFoodOrdersByCompany = async (req, res) => {
   }
 };
 
+export const getFoodOrderByUser = async (req, res) => {
+  try {
+    const { userId } = req.params;
+    if (!userId) {
+      return res.status(400).json({ message: "Missing userId." });
+    }
+    const orders = await FoodOrder.find({ userId });
+    res.status(200).json(orders);
+  } catch (error) {
+    console.error("Error fetching user food orders:", error);
+    res.status(500).json({ message: "Failed to fetch user food orders." });
+  }
+};
+
 // Update the status of a food order
 export const updateFoodOrderStatus = async (req, res) => {
   try {
