@@ -276,7 +276,7 @@ const ReusableTable = ({
 
       {/* Table */}
       <div className="overflow-x-auto">
-        <table className="min-w-full border border-gray-300 rounded-lg">
+        <table className="w-full  bg-white shadow-md rounded-lg overflow-hidden ">
           <thead className={`bg-gray-200 ${headerClassName}`}>
             <tr>
               {paginatedColumns.map((col) => (
