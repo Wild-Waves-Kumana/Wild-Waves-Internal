@@ -7,6 +7,7 @@ import LightList from '../components/lists/LightList';
 import Modal from "../components/common/Modal";
 import { jwtDecode } from 'jwt-decode';
 import EditUserModal from "../components/modals/EditUserModal";
+import ReusableTable from "../components/common/ReusableTable";
 
 const UserProfile = () => {
   const { userId } = useParams();
@@ -26,6 +27,9 @@ const UserProfile = () => {
     access: false,
   });
   const [selectedRoomId, setSelectedRoomId] = useState(""); // for room filter
+  const [userOrders, setUserOrders] = useState([]);
+  const [userOrdersLoading, setUserOrdersLoading] = useState(true);
+ 
 
   // Fetch user, companies, villas, and all rooms
   useEffect(() => {
@@ -60,6 +64,90 @@ const UserProfile = () => {
     };
     fetchData();
   }, [userId]);
+
+  // Fetch user's food orders
+  useEffect(() => {
+    if (!userId) return;
+    setUserOrdersLoading(true);
+    axios
+      .get(`http://localhost:5000/api/food-orders/user/${userId}`)
+      .then((res) => {
+        setUserOrders(res.data || []);
+      })
+      .catch(() => setUserOrders([]))
+      .finally(() => setUserOrdersLoading(false));
+  }, [userId]);
+
+
+
+  // Table columns for user food orders
+  const userOrderColumns = [
+    {
+      key: "orderId",
+      header: "Order ID",
+      sortable: true,
+    },
+    {
+      key: "orderedAt",
+      header: "Ordered At",
+      sortable: true,
+      render: (val) => val ? new Date(val).toLocaleString() : "-",
+    },
+    {
+      key: "expectTime",
+      header: "Expect Time",
+      sortable: true,
+      render: (val) => val ? new Date(val).toLocaleString() : "-",
+    },
+    
+    {
+      key: "status",
+      header: "Status",
+      sortable: true,
+      render: (val) => {
+        let style = "";
+        if (val === "Delivered") {
+          style = "bg-green-500 text-white";
+        } else if (val === "Cancelled") {
+          style = "bg-red-500 text-white";
+        } else if (val === "Cancelled by User") {
+          style = "bg-yellow-500 text-white";
+        } else if (val === "Pending") {
+          style = "bg-blue-500 text-white";
+        } else if (val === "Preparing") {
+          style = "bg-indigo-500 text-white";
+        }
+        return (
+          <span className={`px-3 py-1 rounded font-semibold text-xs shadow ${style}`}>
+            {val}
+          </span>
+        );
+      },
+    },
+    {
+      key: "totalPrice",
+      header: "Total Price",
+      sortable: true,
+      render: (val) => `${val} LKR`,
+    },
+    {
+      key: "items",
+      header: "Items",
+      render: (items) =>
+        <ul className="list-disc ml-4">
+          {items.map((item, idx) => (
+            <li key={idx}>
+              <span className="font-mono">{item.foodCode}</span> - {item.foodId?.name || item.name} ({item.quantity} x {item.price} LKR)
+            </li>
+          ))}
+        </ul>,
+    },
+    {
+      key: "specialRequest",
+      header: "Special Request",
+      render: (val) => val || "-",
+    },
+  ];
 
   // Helpers
   const getCompanyName = (companyId) => {
@@ -230,6 +318,23 @@ const UserProfile = () => {
         <ACList userId={userId} selectedRoomId={selectedRoomId} />
         <DoorList userId={userId} selectedRoomId={selectedRoomId} />
         <LightList userId={userId} selectedRoomId={selectedRoomId} />
+      </div>
+
+      {/* User Food Orders Section */}
+      <div className="mt-10">
+        <h3 className="text-xl font-bold mb-4">User Food Orders</h3>
+        <ReusableTable
+          columns={userOrderColumns}
+          data={userOrders}
+          searchable={true}
+          sortable={true}
+          pagination={true}
+          pageSize={10}
+          striped={true}
+          hover={true}
+          loading={userOrdersLoading}
+          emptyMessage="No food orders found for this user."
+        />
       </div>
 
       <EditUserModal
