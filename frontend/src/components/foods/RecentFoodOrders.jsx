@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useMemo } from "react";
 import axios from "axios";
 import { jwtDecode } from "jwt-decode";
 import Modal from "../common/Modal";
@@ -18,6 +18,10 @@ const RecentFoodOrder = () => {
     orderId: null,
     newStatus: "",
   });
+  const [searchTerm, setSearchTerm] = useState("");
+  const [dateOrderedAt, setDateOrderedAt] = useState("");
+  const [dateExpectTime, setDateExpectTime] = useState("");
+  const [statusFilter, setStatusFilter] = useState("");
 
   // Live timer effect
   useEffect(() => {
@@ -160,15 +164,130 @@ const RecentFoodOrder = () => {
     return `${String(hours).padStart(2, "0")}:${String(mins).padStart(2, "0")}:${String(secs).padStart(2, "0")}`;
   };
 
+  // Filtered and sorted orders
+  const filteredOrders = useMemo(() => {
+    let result = [...orders];
+
+    // Status dropdown filter
+    if (statusFilter) {
+      result = result.filter(order => order.status === statusFilter);
+    }
+
+    // Search by orderId, villa name, userId
+    if (searchTerm) {
+      const term = searchTerm.toLowerCase();
+      result = result.filter(order =>
+        (order.orderId && order.orderId.toLowerCase().includes(term)) ||
+        (order.villaId && villaNames[order.villaId] && villaNames[order.villaId].toLowerCase().includes(term)) ||
+        (order.userId && usernames[order.userId] && usernames[order.userId].toLowerCase().includes(term))
+      );
+    }
+
+    // Date search for orderedAt
+    if (dateOrderedAt) {
+      result = result.filter(order => {
+        if (!order.orderedAt) return false;
+        const orderDate = new Date(order.orderedAt);
+        const selectedDate = new Date(dateOrderedAt);
+        return (
+          orderDate.getFullYear() === selectedDate.getFullYear() &&
+          orderDate.getMonth() === selectedDate.getMonth() &&
+          orderDate.getDate() === selectedDate.getDate()
+        );
+      });
+    }
+
+    // Date search for expectTime
+    if (dateExpectTime) {
+      result = result.filter(order => {
+        if (!order.expectTime) return false;
+        const expectDate = new Date(order.expectTime);
+        const selectedDate = new Date(dateExpectTime);
+        return (
+          expectDate.getFullYear() === selectedDate.getFullYear() &&
+          expectDate.getMonth() === selectedDate.getMonth() &&
+          expectDate.getDate() === selectedDate.getDate()
+        );
+      });
+    }
+
+    // Sort by timer ascending (lowest timer first)
+    result.sort((a, b) => {
+      const aTime = a.expectTime ? new Date(a.expectTime) - Date.now() : Infinity;
+      const bTime = b.expectTime ? new Date(b.expectTime) - Date.now() : Infinity;
+      return aTime - bTime;
+    });
+
+    return result;
+  }, [orders, searchTerm, villaNames, usernames, dateOrderedAt, dateExpectTime, statusFilter]);
+
   if (loading) return <div>Loading...</div>;
 
   return (
     <div>
-      {orders.length === 0 ? (
+      {/* Search Bar, Status Dropdown, and Date Filters */}
+      <div className="flex flex-col md:flex-row gap-4 mb-4">
+        <input
+          type="text"
+          placeholder="Search Order ID, Villa Name, User ID..."
+          value={searchTerm}
+          onChange={e => setSearchTerm(e.target.value)}
+          className="px-3 py-2 border border-gray-300 rounded-md w-full md:w-1/3"
+        />
+        <div className="flex items-center gap-2">
+          <label className="text-sm text-gray-600">Status:</label>
+          <select
+            value={statusFilter}
+            onChange={e => setStatusFilter(e.target.value)}
+            className="px-3 py-1 border border-gray-300 rounded-md text-sm"
+          >
+            <option value="">All</option>
+            <option value="Pending">Pending</option>
+            <option value="Preparing">Preparing</option>
+            <option value="Delivered">Delivered</option>
+            <option value="Cancelled">Cancelled</option>
+          </select>
+        </div>
+        <div className="flex items-center gap-2">
+          <label className="text-sm text-gray-600">Ordered At:</label>
+          <input
+            type="date"
+            value={dateOrderedAt}
+            onChange={e => setDateOrderedAt(e.target.value)}
+            className="px-3 py-1 border border-gray-300 rounded-md text-sm"
+          />
+          {dateOrderedAt && (
+            <button
+              className="px-2 py-1 rounded bg-gray-200 text-gray-700 text-xs"
+              onClick={() => setDateOrderedAt("")}
+            >
+              Clear
+            </button>
+          )}
+        </div>
+        <div className="flex items-center gap-2">
+          <label className="text-sm text-gray-600">Expected Time:</label>
+          <input
+            type="date"
+            value={dateExpectTime}
+            onChange={e => setDateExpectTime(e.target.value)}
+            className="px-3 py-1 border border-gray-300 rounded-md text-sm"
+          />
+          {dateExpectTime && (
+            <button
+              className="px-2 py-1 rounded bg-gray-200 text-gray-700 text-xs"
+              onClick={() => setDateExpectTime("")}
+            >
+              Clear
+            </button>
+          )}
+        </div>
+      </div>
+      {filteredOrders.length === 0 ? (
         <div>No orders found.</div>
       ) : (
         <div className="flex flex-col gap-2">
-          {orders.map((order) => (
+          {filteredOrders.map((order) => (
             <div
               key={order._id}
               className="bg-white rounded shadow p-4 mb-4"
@@ -258,13 +377,13 @@ const RecentFoodOrder = () => {
                 </div>
                 {/* Right: Items */}
                 <div>
-                  <table className="w-full mt-2 border">
+                  <table className="w-full  bg-white shadow-md rounded-lg overflow-hidden ">
                     <thead>
                       <tr className="bg-gray-100">
-                        <th className="py-1 px-2 text-left text-xs">Code</th>
-                        <th className="py-1 px-2 text-left text-xs">Name</th>
-                        <th className="py-1 px-2 text-right text-xs">Quantity</th>
-                        <th className="py-1 px-2 text-right text-xs">Price</th>
+                        <th className="py-2 px-4 text-left text-xs">Code</th>
+                        <th className="py-2 px-4 text-left text-xs">Name</th>
+                        <th className="py-2 px-4 text-right text-xs">Quantity</th>
+                        <th className="py-2 px-4 text-right text-xs">Price</th>
                       </tr>
                     </thead>
                     <tbody>
