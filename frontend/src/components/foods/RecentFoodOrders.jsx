@@ -5,7 +5,7 @@ import Modal from "../common/Modal";
 
 const statusOptions = ["Pending", "Preparing", "Delivered", "Cancelled"];
 
-const CompanyFoodOrder = () => {
+const RecentFoodOrder = () => {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [companyId, setCompanyId] = useState("");
@@ -53,7 +53,17 @@ const CompanyFoodOrder = () => {
     setLoading(true);
     axios
       .get(`http://localhost:5000/api/food-orders/all/${companyId._id}`)
-      .then((res) => setOrders(res.data))
+      .then((res) => {
+        // Filter: exclude "Cancelled by User" and only show orders with expectTime >= today
+        const today = new Date();
+        today.setHours(0, 0, 0, 0); // Set to start of today
+        const filtered = (res.data || []).filter(
+          (order) =>
+            order.status !== "Cancelled by User" &&
+            (!order.expectTime || new Date(order.expectTime) >= today)
+        );
+        setOrders(filtered);
+      })
       .catch(() => setOrders([]))
       .finally(() => setLoading(false));
   }, [companyId]);
@@ -123,7 +133,15 @@ const CompanyFoodOrder = () => {
         const res = await axios.get(
           `http://localhost:5000/api/food-orders/all/${companyId._id}`
         );
-        setOrders(res.data);
+        // Filter again after update
+        const today = new Date();
+        today.setHours(0, 0, 0, 0); // Set to start of today
+        const filtered = (res.data || []).filter(
+          (order) =>
+            order.status !== "Cancelled by User" &&
+            (!order.expectTime || new Date(order.expectTime) >= today)
+        );
+        setOrders(filtered);
       }
     } catch {
       // Optionally show error
@@ -136,16 +154,16 @@ const CompanyFoodOrder = () => {
   const getTimer = (expectTime) => {
     if (!expectTime) return "-";
     const diff = Math.max(0, new Date(expectTime) - now);
-    const mins = Math.floor(diff / 60000);
+    const hours = Math.floor(diff / 3600000);
+    const mins = Math.floor((diff % 3600000) / 60000);
     const secs = Math.floor((diff % 60000) / 1000);
-    return `${String(mins).padStart(2, "0")}:${String(secs).padStart(2, "0")}`;
+    return `${String(hours).padStart(2, "0")}:${String(mins).padStart(2, "0")}:${String(secs).padStart(2, "0")}`;
   };
 
   if (loading) return <div>Loading...</div>;
 
   return (
     <div>
-      <h2 className="text-xl font-bold mb-4">Company Food Orders</h2>
       {orders.length === 0 ? (
         <div>No orders found.</div>
       ) : (
@@ -315,4 +333,4 @@ const CompanyFoodOrder = () => {
   );
 };
 
-export default CompanyFoodOrder;
+export default RecentFoodOrder;
