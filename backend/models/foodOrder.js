@@ -19,7 +19,7 @@ const foodOrderSchema = new mongoose.Schema({
   expectTime: { type: Date },
   status: {
     type: String,
-    enum: ["Pending", "Preparing", "Delivered", "Cancelled"],
+    enum: ["Pending", "Preparing", "Delivered", "Cancelled", "Cancelled by User"],
     default: "Pending",
   },
   specialRequest: { type: String },
