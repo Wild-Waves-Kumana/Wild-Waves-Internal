@@ -68,7 +68,7 @@ const OngoingFoodOrders = () => {
     if (!companyId) return;
     setLoading(true);
     axios
-      .get(`http://localhost:5000/api/food-orders/all/${companyId._id}`)
+      .get(`http://localhost:5000/api/food-orders/company/${companyId._id}`)
       .then((res) => {
         // Only Pending and Preparing
         const filtered = (res.data || []).filter(
@@ -153,7 +153,7 @@ const OngoingFoodOrders = () => {
       // Refresh orders after update
       if (companyId) {
         const res = await axios.get(
-          `http://localhost:5000/api/food-orders/all/${companyId._id}`
+          `http://localhost:5000/api/food-orders/company/${companyId._id}`
         );
         const filtered = (res.data || []).filter(
           (order) =>

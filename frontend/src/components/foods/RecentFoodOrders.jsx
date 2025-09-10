@@ -56,7 +56,7 @@ const RecentFoodOrder = () => {
     if (!companyId) return;
     setLoading(true);
     axios
-      .get(`http://localhost:5000/api/food-orders/all/${companyId._id}`)
+      .get(`http://localhost:5000/api/food-orders/company/${companyId._id}`)
       .then((res) => {
         // Filter: exclude "Cancelled by User" and only show orders with expectTime >= today
         const today = new Date();
@@ -135,7 +135,7 @@ const RecentFoodOrder = () => {
       // Refresh orders after update
       if (companyId) {
         const res = await axios.get(
-          `http://localhost:5000/api/food-orders/all/${companyId._id}`
+          `http://localhost:5000/api/food-orders/company/${companyId._id}`
         );
         // Filter again after update
         const today = new Date();

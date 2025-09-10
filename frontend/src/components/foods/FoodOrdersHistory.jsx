@@ -36,7 +36,7 @@ const FoodOrdersHistory = () => {
     if (!companyId) return;
     setLoading(true);
     axios
-      .get(`http://localhost:5000/api/food-orders/all/${companyId._id}`)
+      .get(`http://localhost:5000/api/food-orders/company/${companyId._id}`)
       .then((res) => {
         // Show all orders for the company
         setOrders(res.data || []);
