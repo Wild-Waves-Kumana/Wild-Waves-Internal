@@ -110,13 +110,37 @@ const FoodOrdersHistory = () => {
       key: "userId",
       header: "User",
       sortable: true,
-      render: (val) => val ? usernames[val] || "-" : "-",
+      render: (val) =>
+        val && usernames[val] ? (
+          <a
+            href={`/user-profile/${val}`}
+            className="text-blue-600 hover:text-blue-800"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            {usernames[val]}
+          </a>
+        ) : (
+          "-"
+        ),
     },
     {
       key: "villaId",
       header: "Villa",
       sortable: true,
-      render: (val) => val ? villaNames[val] || "-" : "-",
+      render: (val) =>
+        val && villaNames[val] ? (
+          <a
+            href={`/villa-profile/${val}`}
+            className="text-blue-600 hover:text-blue-800"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            {villaNames[val]}
+          </a>
+        ) : (
+          "-"
+        ),          
     },
     {
       key: "status",
@@ -174,14 +198,43 @@ const FoodOrdersHistory = () => {
     return 0;
   });
 
+  // Dashboard stats for history
+  const totalDelivered = sortedOrders.filter(order => order.status === "Delivered").length;
+  const totalCancelled = sortedOrders.filter(order => order.status === "Cancelled").length;
+  const totalUserCancelled = sortedOrders.filter(order => order.status === "Cancelled by User").length;
+  const totalHistoryOrders = sortedOrders.length;
+  const totalHistoryAmount = sortedOrders.reduce((sum, order) => sum + (order.totalPrice || 0), 0);
+
   return (
     <div>
-      <h2 className="text-xl font-bold mb-4">Food Orders History</h2>
+      {/* Dashboard Section */}
+      <div className="flex flex-wrap justify-between gap-4 mb-6">
+        <div className="bg-green-100 border-l-4 border-green-500 rounded-lg p-4 min-w-[180px]">
+          <div className="text-lg font-bold text-green-700">{totalDelivered}</div>
+          <div className="text-sm text-green-800">Delivered Orders</div>
+        </div>
+        <div className="bg-red-100 border-l-4 border-red-500 rounded-lg p-4 min-w-[180px]">
+          <div className="text-lg font-bold text-red-700">{totalCancelled}</div>
+          <div className="text-sm text-red-800">Cancelled Orders</div>
+        </div>
+        <div className="bg-yellow-100 border-l-4 border-yellow-500 rounded-lg p-4 min-w-[180px]">
+          <div className="text-lg font-bold text-yellow-700">{totalUserCancelled}</div>
+          <div className="text-sm text-yellow-800">User Cancelled Orders</div>
+        </div>
+        <div className="bg-gray-100 border-l-4 border-gray-500 rounded-lg p-4 min-w-[180px]">
+          <div className="text-lg font-bold text-gray-700">{totalHistoryOrders}</div>
+          <div className="text-sm text-gray-800">Total Orders</div>
+        </div>
+        <div className="bg-blue-100 border-l-4 border-blue-500 rounded-lg p-4 min-w-[180px]">
+          <div className="text-lg font-bold text-blue-700">{totalHistoryAmount} LKR</div>
+          <div className="text-sm text-blue-800">Total Amount</div>
+        </div>
+      </div>
       <ReusableTable
         columns={columns}
         data={sortedOrders}
-        dateSearch={true} // Enable date search
-        dateSearchKey="orderedAt" // Or "expectTime" or any date column key
+        dateSearch={true}
+        dateSearchKey="orderedAt"
         searchable={true}
         sortable={true}
         pagination={true}

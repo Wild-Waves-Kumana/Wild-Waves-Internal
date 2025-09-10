@@ -235,11 +235,41 @@ const OngoingFoodOrders = () => {
     return result;
   }, [orders, searchTerm, villaNames, usernames, dateOrderedAt, dateExpectTime, statusFilter]);
 
+  // Dashboard stats
+  const totalPending = filteredOrders.filter(order => order.status === "Pending").length;
+  const totalPreparing = filteredOrders.filter(order => order.status === "Preparing").length;
+  const totalOrders = filteredOrders.length;
+  const totalAmount = filteredOrders.reduce((sum, order) => sum + (order.totalPrice || 0), 0);
+  const totalTimerZero = filteredOrders.filter(order => getTimer(order.expectTime) === "00:00:00").length;
+
   if (loading) return <div>Loading...</div>;
 
   return (
     <div>
-      <h2 className="text-xl font-bold mb-4">Ongoing Food Orders</h2>
+      {/* Dashboard Section */}
+      <div className="flex flex-wrap justify-between gap-4 mb-6">
+        <div className="bg-yellow-100 border-l-4 border-yellow-500 rounded-lg p-4 min-w-[180px]">
+          <div className="text-lg font-bold text-yellow-700">{totalPending}</div>
+          <div className="text-sm text-yellow-800">Pending Orders</div>
+        </div>
+        <div className="bg-blue-100 border-l-4 border-blue-500 rounded-lg p-4 min-w-[180px]">
+          <div className="text-lg font-bold text-blue-700">{totalPreparing}</div>
+          <div className="text-sm text-blue-800">Preparing Orders</div>
+        </div>
+        <div className="bg-red-100 border-l-4 border-red-500 rounded-lg p-4 min-w-[180px]">
+          <div className="text-lg font-bold text-red-700">{totalTimerZero}</div>
+          <div className="text-sm text-red-800">Expired (00:00:00) Orders</div>
+        </div>
+        <div className="bg-gray-100 border-l-4 border-gray-500 rounded-lg p-4 min-w-[180px]">
+          <div className="text-lg font-bold text-gray-700">{totalOrders}</div>
+          <div className="text-sm text-gray-800">Total Ongoing Orders</div>
+        </div>
+        <div className="bg-green-100 border-l-4 border-green-500 rounded-lg p-4 min-w-[180px]">
+          <div className="text-lg font-bold text-green-700">{totalAmount} LKR</div>
+          <div className="text-sm text-green-800">Total Amount</div>
+        </div>
+        
+      </div>
       {/* Search Bar, Status Dropdown, and Date Filters */}
       <div className="flex flex-col md:flex-row gap-4 mb-4">
         <input
@@ -336,11 +366,33 @@ const OngoingFoodOrders = () => {
                   <div>
                     <div className="mb-1">
                       <span className="font-semibold">User:</span>{" "}
-                      {order.userId ? usernames[order.userId] || "-" : "-"}
+                      {order.userId && usernames[order.userId] && order.userId ? (
+                        <a
+                          href={`/user-profile/${order.userId}`}
+                          className="text-blue-600 hover:text-blue-800"
+                          target="_blank"
+                          rel="noopener noreferrer"
+                        >
+                          {usernames[order.userId]}
+                        </a>
+                      ) : (
+                        "-"
+                      )}
                     </div>
                     <div className="mb-1">
                       <span className="font-semibold">Villa:</span>{" "}
-                      {order.villaId ? villaNames[order.villaId] || "-" : "-"}
+                      {order.villaId && villaNames[order.villaId] && order.villaId ? (
+                        <a
+                          href={`/villa-profile/${order.villaId}`}
+                          className="text-blue-600 hover:text-blue-800"
+                          target="_blank"
+                          rel="noopener noreferrer"
+                        >
+                          {villaNames[order.villaId]}
+                        </a>
+                      ) : (
+                        "-"
+                      )}    
                     </div>
                     <div className="mb-1">
                       <span className="font-semibold">Ordered At:</span>{" "}

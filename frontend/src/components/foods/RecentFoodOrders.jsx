@@ -345,14 +345,36 @@ const RecentFoodOrder = () => {
                 </div>
                 {/* Left: Order Details */}
                 <div>
-                  <div className="mb-1">
-                    <span className="font-semibold">User:</span>{" "}
-                    {order.userId ? usernames[order.userId] || "-" : "-"}
-                  </div>
-                  <div className="mb-1">
-                    <span className="font-semibold">Villa:</span>{" "}
-                    {order.villaId ? villaNames[order.villaId] || "-" : "-"}
-                  </div>
+                    <div className="mb-1">
+                      <span className="font-semibold">User:</span>{" "}
+                      {order.userId && usernames[order.userId] && order.userId ? (
+                        <a
+                          href={`/user-profile/${order.userId}`}
+                          className="text-blue-600 hover:text-blue-800"
+                          target="_blank"
+                          rel="noopener noreferrer"
+                        >
+                          {usernames[order.userId]}
+                        </a>
+                      ) : (
+                        "-"
+                      )}
+                    </div>
+                    <div className="mb-1">
+                      <span className="font-semibold">Villa:</span>{" "}
+                      {order.villaId && villaNames[order.villaId] && order.villaId ? (
+                        <a
+                          href={`/villa-profile/${order.villaId}`}
+                          className="text-blue-600 hover:text-blue-800"
+                          target="_blank"
+                          rel="noopener noreferrer"
+                        >
+                          {villaNames[order.villaId]}
+                        </a>
+                      ) : (
+                        "-"
+                      )}    
+                    </div>
                   <div className="mb-1">
                     <span className="font-semibold">Ordered At:</span>{" "}
                     {order.orderedAt
