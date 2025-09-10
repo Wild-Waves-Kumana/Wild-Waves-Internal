@@ -8,33 +8,33 @@ const CompanyFoodOrders = () => {
 
   return (
     <div>
-      <div className="flex gap-2 mb-6">
+      <div className="flex justify-center gap-2 mb-6">
         <button
-          className={`px-4 py-2 rounded font-semibold ${
-            activeTab === "ongoing"
-              ? "bg-blue-600 text-white"
-              : "bg-gray-100 text-gray-700"
-          }`}
+          className={`px-6 py-2 rounded-full font-semibold shadow transition-all duration-150
+            ${activeTab === "ongoing"
+              ? "bg-blue-600 text-white scale-105"
+              : "bg-gray-100 text-gray-700 hover:bg-blue-100"}
+          `}
           onClick={() => setActiveTab("ongoing")}
         >
           Ongoing Food Orders
         </button>
         <button
-          className={`px-4 py-2 rounded font-semibold ${
-            activeTab === "total"
-              ? "bg-green-600 text-white"
-              : "bg-gray-100 text-gray-700"
-          }`}
+          className={`px-6 py-2 rounded-full font-semibold shadow transition-all duration-150
+            ${activeTab === "total"
+              ? "bg-green-600 text-white scale-105"
+              : "bg-gray-100 text-gray-700 hover:bg-green-100"}
+          `}
           onClick={() => setActiveTab("total")}
         >
           Recent Food Orders
         </button>
         <button
-          className={`px-4 py-2 rounded font-semibold ${
-            activeTab === "history"
-              ? "bg-gray-700 text-white"
-              : "bg-gray-100 text-gray-700"
-          }`}
+          className={`px-6 py-2 rounded-full font-semibold shadow transition-all duration-150
+            ${activeTab === "history"
+              ? "bg-gray-700 text-white scale-105"
+              : "bg-gray-100 text-gray-700 hover:bg-gray-200"}
+          `}
           onClick={() => setActiveTab("history")}
         >
           History
