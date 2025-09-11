@@ -41,35 +41,32 @@ const UserFoodMenu = () => {
     availability: "All",
     search: ""
   });
-  const [viewMode, setViewMode] = useState("grid"); // grid or list
+  const [viewMode, setViewMode] = useState("grid");
   const [cartModalOpen, setCartModalOpen] = useState(false);
   const [selectedFood, setSelectedFood] = useState(null);
-  const [isRefreshing, setIsRefreshing] = useState(false);
-  
+  const [currentPage, setCurrentPage] = useState(1);
+  const pageSize = 12;
+
   const navigate = useNavigate();
 
   // Memoized filtered foods for performance
   const filteredFoods = useMemo(() => {
     let filtered = [...foods];
-    
     if (filters.category !== "All") {
       filtered = filtered.filter(food => food.category === filters.category);
     }
-    
     if (filters.availableOn !== "All") {
       filtered = filtered.filter(food =>
         Array.isArray(food.availableOn) &&
         food.availableOn.includes(filters.availableOn)
       );
     }
-    
     if (filters.availability !== "All") {
       filtered = filtered.filter(food =>
         (filters.availability === "Available" && food.isAvailable) ||
         (filters.availability === "Not Available" && !food.isAvailable)
       );
     }
-    
     if (filters.search.trim()) {
       const searchLower = filters.search.trim().toLowerCase();
       filtered = filtered.filter(food =>
@@ -78,45 +75,46 @@ const UserFoodMenu = () => {
         (food.foodCode && food.foodCode.toLowerCase().includes(searchLower))
       );
     }
-    
+    // Sort: available items first, not available items last
+    filtered.sort((a, b) => {
+      if (a.isAvailable === b.isAvailable) return 0;
+      return a.isAvailable ? -1 : 1;
+    });
     return filtered;
   }, [foods, filters]);
 
-  const fetchFoodsByUserCompany = useCallback(async (showRefresh = false) => {
+  // Pagination logic
+  const totalPages = Math.ceil(filteredFoods.length / pageSize);
+  const paginatedFoods = useMemo(() => {
+    const start = (currentPage - 1) * pageSize;
+    return filteredFoods.slice(start, start + pageSize);
+  }, [filteredFoods, currentPage, pageSize]);
+
+  const fetchFoodsByUserCompany = useCallback(async () => {
     try {
-      if (showRefresh) setIsRefreshing(true);
       setError(null);
-      
       const token = localStorage.getItem("token");
       if (!token) {
         setError("Authentication required");
         return;
       }
-      
       const decoded = jwtDecode(token);
       const userId = decoded.id;
-
-      // Get user details to find companyId
       const userRes = await axios.get(`http://localhost:5000/api/users/${userId}`);
       const userCompanyId = userRes.data.companyId?._id || userRes.data.companyId;
-
       if (!userCompanyId) {
         setError("No company associated with your account");
         return;
       }
-
-      // Get foods for this company
       const foodsRes = await axios.get(
         `http://localhost:5000/api/foods/all?companyId=${userCompanyId}`
       );
       setFoods(foodsRes.data || []);
     } catch (err) {
-      console.error("Error fetching foods:", err);
       setError(err.response?.data?.message || "Failed to load menu items");
       setFoods([]);
     } finally {
       setLoading(false);
-      if (showRefresh) setIsRefreshing(false);
     }
   }, []);
 
@@ -135,24 +133,16 @@ const UserFoodMenu = () => {
 
   const handleCartSuccess = useCallback(() => {
     setCartModalOpen(false);
-    // Optionally show a success toast here
   }, []);
 
   const TruncatedText = ({ text, maxLength = 80 }) => {
     const [isExpanded, setIsExpanded] = useState(false);
-    
-    if (!text || text.length <= maxLength) {
-      return <span>{text}</span>;
-    }
-    
+    if (!text || text.length <= maxLength) return <span>{text}</span>;
     return (
       <span>
         {isExpanded ? text : `${text.substring(0, maxLength)}...`}
         <button
-          onClick={(e) => {
-            e.stopPropagation();
-            setIsExpanded(!isExpanded);
-          }}
+          onClick={e => { e.stopPropagation(); setIsExpanded(!isExpanded); }}
           className="ml-1 text-blue-600 hover:text-blue-700 text-sm font-medium"
         >
           {isExpanded ? 'see less' : 'see more'}
@@ -162,61 +152,34 @@ const UserFoodMenu = () => {
   };
 
   const FoodCard = ({ food, isListView = false }) => (
-    <div className={`
-      bg-white rounded-xl shadow-sm border border-gray-100 hover:shadow-md transition-all duration-300
+    <div className={`bg-white rounded-xl shadow-sm border border-gray-100 hover:shadow-md transition-all duration-300
       ${isListView ? 'flex items-stretch p-4 space-x-4' : 'p-6 flex flex-col h-full'}
-      hover:border-blue-200 group
-    `}>
-      {/* Image */}
-      <div className={`
-        ${isListView ? 'w-24 h-24 flex-shrink-0' : 'w-full mb-4'}
-        relative overflow-hidden rounded-lg bg-gray-50
-      `}>
+      hover:border-blue-200 group`}>
+      <div className={`${isListView ? 'w-24 h-24 flex-shrink-0' : 'w-full mb-4'} relative overflow-hidden rounded-lg bg-gray-50`}>
         {food.images && food.images.length > 0 ? (
           <img
             src={food.images[0]}
             alt={food.name}
-            className={`
-              ${isListView ? 'w-24 h-24' : 'w-full h-48'}
-              object-cover group-hover:scale-105 transition-transform duration-300
-            `}
+            className={`${isListView ? 'w-24 h-24' : 'w-full h-48'} object-cover group-hover:scale-105 transition-transform duration-300`}
             loading="lazy"
           />
         ) : (
-          <div className={`
-            ${isListView ? 'w-24 h-24' : 'w-full h-48'}
-            bg-gradient-to-br from-gray-100 to-gray-200 
-            flex items-center justify-center text-gray-400
-          `}>
+          <div className={`${isListView ? 'w-24 h-24' : 'w-full h-48'} bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center text-gray-400`}>
             <ImageIcon size={isListView ? 24 : 32} />
           </div>
         )}
-        
-        {/* Availability badge */}
         <div className="absolute top-2 right-2">
-          <span className={`
-            inline-flex items-center px-2 py-1 rounded-full text-xs font-medium
-            ${food.isAvailable 
-              ? 'bg-green-100 text-green-800 border border-green-200' 
-              : 'bg-red-100 text-red-800 border border-red-200'
-            }
-          `}>
-            <div className={`
-              w-1.5 h-1.5 rounded-full mr-1
-              ${food.isAvailable ? 'bg-green-500' : 'bg-red-500'}
-            `} />
+          <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium
+            ${food.isAvailable ? 'bg-green-100 text-green-800 border border-green-200' : 'bg-red-100 text-red-800 border border-red-200'}`}>
+            <div className={`w-1.5 h-1.5 rounded-full mr-1 ${food.isAvailable ? 'bg-green-500' : 'bg-red-500'}`} />
             {food.isAvailable ? 'Available' : 'Out of Stock'}
           </span>
         </div>
       </div>
-
-      {/* Content */}
       <div className={`${isListView ? 'flex-1 min-w-0 flex flex-col justify-between' : 'flex-1 flex flex-col'}`}>
-        <div className="flex-1">
-          <div className="mb-2">
-            <h3 className="text-lg font-semibold text-gray-900 mb-1 line-clamp-1">
-              {food.name}
-            </h3>
+        <div className="flex-1 flex flex-col">
+          <div className="mb-1">
+            <h3 className="text-lg font-semibold text-gray-900 mb-1 line-clamp-1">{food.name}</h3>
             {food.foodCode && (
               <div className="flex items-center text-sm text-gray-500 mb-1">
                 <Tag size={14} className="mr-1" />
@@ -224,33 +187,41 @@ const UserFoodMenu = () => {
               </div>
             )}
           </div>
-
-          {food.description && (
-            <p className="text-sm text-gray-600 mb-3">
-              <TruncatedText text={food.description} />
-            </p>
-          )}
-
-          {/* Available times */}
-          {food.availableOn && food.availableOn.length > 0 && (
-            <div className="flex items-center mb-3">
-              <Clock size={14} className="text-gray-400 mr-1" />
-              <span className="text-sm text-gray-600">
-                <TruncatedText text={food.availableOn.join(", ")} maxLength={30} />
+          {/* Fixed height for description */}
+          <div className="mb-1 min-h-[40px] flex items-start">
+            {food.description ? (
+              <p className="text-xs text-gray-600">
+                <TruncatedText text={food.description} maxLength={40} />
+              </p>
+            ) : (
+              <span className="text-xs text-gray-400">No description</span>
+            )}
+          </div>
+          {/* Fixed height for availableOn */}
+          <div className="mb-1 min-h-[24px] flex items-center">
+            {food.availableOn && food.availableOn.length > 0 ? (
+              <>
+                <Clock size={14} className="text-gray-400 mr-1" />
+                <span className="text-xs text-gray-600">
+                  <TruncatedText text={food.availableOn.join(", ")} maxLength={30} />
+                </span>
+              </>
+            ) : (
+              <span className="text-xs text-gray-400">-</span>
+            )}
+          </div>
+          {/* Fixed height for price */}
+          <div className="mb-3 min-h-[28px] flex items-center">
+            {food.price ? (
+              <span className="text-lg font-bold text-black-600">
+                Rs. {food.price.toFixed(2)}
               </span>
-            </div>
-          )}
-
-          {/* Price if available */}
-          {food.price && (
-            <div className="text-lg font-bold text-black-600 mb-3">
-              Rs. {food.price.toFixed(2)}
-            </div>
-          )}
+            ) : (
+              <span className="text-xs text-gray-400">No price</span>
+            )}
+          </div>
         </div>
-
-        {/* Action buttons */}
-        <div className={`flex gap-3 mt-auto ${isListView ? '' : ''}`}>
+        <div className="flex gap-3 mt-auto">
           <button
             onClick={() => navigate(`/user-food-profile/${food._id}`)}
             className="flex items-center justify-center px-4 py-2 text-sm font-medium text-blue-700 bg-blue-50 border border-blue-200 rounded-lg hover:bg-blue-100 transition-colors duration-200 flex-1"
@@ -258,20 +229,13 @@ const UserFoodMenu = () => {
             <Eye size={16} className="mr-1" />
             View Details
           </button>
-          
           <button
             onClick={() => handleAddToCart(food)}
             disabled={!food.isAvailable}
-            className={`
-              flex items-center justify-center px-4 py-2 text-sm font-medium rounded-lg transition-colors duration-200 flex-1
-              ${food.isAvailable
-                ? 'text-white bg-green-600 hover:bg-green-700 shadow-sm hover:shadow-md'
-                : 'text-gray-400 bg-gray-100 cursor-not-allowed'
-              }
-            `}
+            className={`flex items-center justify-center px-4 py-2 text-sm font-medium rounded-lg transition-colors duration-200 flex-1
+              ${food.isAvailable ? 'text-white bg-green-600 hover:bg-green-700 shadow-sm hover:shadow-md' : 'text-gray-400 bg-gray-100 cursor-not-allowed'}`}
           >
             <ShoppingCart size={16} className="mr-1" />
-            
           </button>
         </div>
       </div>
@@ -322,17 +286,13 @@ const UserFoodMenu = () => {
               Discover delicious meals from your company kitchen
             </p>
           </div>
-          
           <div className="flex items-center space-x-3">
             <button
-              onClick={() => fetchFoodsByUserCompany(true)}
-              disabled={isRefreshing}
-              className="flex items-center px-3 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors duration-200 disabled:opacity-50"
+              onClick={() => navigate("/user-food-orders")}
+              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-200 font-medium"
             >
-              <RefreshCw size={16} className={`mr-1 ${isRefreshing ? 'animate-spin' : ''}`} />
-              Refresh
+              Food Orders
             </button>
-            
             {/* View mode toggle */}
             <div className="flex bg-gray-100 rounded-lg p-1">
               <button
@@ -358,14 +318,10 @@ const UserFoodMenu = () => {
             </div>
           </div>
         </div>
-
-       
       </div>
 
       {/* Filters */}
-      <div >
-        
-        
+      <div>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
           {/* Category Filter */}
           <div>
@@ -382,7 +338,6 @@ const UserFoodMenu = () => {
               ))}
             </select>
           </div>
-
           {/* Available On Filter */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -398,7 +353,6 @@ const UserFoodMenu = () => {
               ))}
             </select>
           </div>
-
           {/* Availability Filter */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -414,7 +368,6 @@ const UserFoodMenu = () => {
               ))}
             </select>
           </div>
-
           {/* Search */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -432,7 +385,6 @@ const UserFoodMenu = () => {
             </div>
           </div>
         </div>
-
         {/* Active filters count */}
         {(filters.category !== "All" || filters.availableOn !== "All" || filters.availability !== "All" || filters.search) && (
           <div className="flex items-center justify-between pt-4 border-t border-gray-200">
@@ -474,22 +426,51 @@ const UserFoodMenu = () => {
           )}
         </div>
       ) : (
-        <div className={
-          viewMode === "grid"
+        <>
+          <div className={viewMode === "grid"
             ? "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"
-            : "space-y-4"
-        }>
-          {filteredFoods.map((food) => (
-            <FoodCard
-              key={food._id}
-              food={food}
-              isListView={viewMode === "list"}
-            />
-          ))}
-        </div>
+            : "space-y-4"}>
+            {paginatedFoods.map(food => (
+              <FoodCard
+                key={food._id}
+                food={food}
+                isListView={viewMode === "list"}
+              />
+            ))}
+          </div>
+          {/* Pagination Controls */}
+          <div className="flex justify-center items-center mt-8 gap-2">
+            <button
+              className="px-3 py-1 rounded bg-gray-200 text-gray-700 text-sm disabled:opacity-50"
+              onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+              disabled={currentPage === 1}
+            >
+              Prev
+            </button>
+            {Array.from({ length: totalPages }, (_, i) => (
+              <button
+                key={i + 1}
+                className={`px-3 py-1 rounded text-sm font-semibold ${
+                  currentPage === i + 1
+                    ? "bg-blue-600 text-white"
+                    : "bg-gray-100 text-gray-700 hover:bg-blue-100"
+                }`}
+                onClick={() => setCurrentPage(i + 1)}
+              >
+                {i + 1}
+              </button>
+            ))}
+            <button
+              className="px-3 py-1 rounded bg-gray-200 text-gray-700 text-sm disabled:opacity-50"
+              onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+              disabled={currentPage === totalPages}
+            >
+              Next
+            </button>
+          </div>
+        </>
       )}
 
-      {/* Add to Cart Modal */}
       <AddFoodtoCartModal
         isVisible={cartModalOpen}
         onClose={() => setCartModalOpen(false)}
