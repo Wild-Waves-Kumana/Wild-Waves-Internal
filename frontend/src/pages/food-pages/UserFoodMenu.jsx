@@ -45,51 +45,12 @@ const UserFoodMenu = () => {
   const [cartModalOpen, setCartModalOpen] = useState(false);
   const [selectedFood, setSelectedFood] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
-  const pageSize = 12;
+  const pageSize = 8;
 
+  const [foodOrderCounts, setFoodOrderCounts] = useState({});
   const navigate = useNavigate();
 
-  // Memoized filtered foods for performance
-  const filteredFoods = useMemo(() => {
-    let filtered = [...foods];
-    if (filters.category !== "All") {
-      filtered = filtered.filter(food => food.category === filters.category);
-    }
-    if (filters.availableOn !== "All") {
-      filtered = filtered.filter(food =>
-        Array.isArray(food.availableOn) &&
-        food.availableOn.includes(filters.availableOn)
-      );
-    }
-    if (filters.availability !== "All") {
-      filtered = filtered.filter(food =>
-        (filters.availability === "Available" && food.isAvailable) ||
-        (filters.availability === "Not Available" && !food.isAvailable)
-      );
-    }
-    if (filters.search.trim()) {
-      const searchLower = filters.search.trim().toLowerCase();
-      filtered = filtered.filter(food =>
-        food.name.toLowerCase().includes(searchLower) ||
-        (food.description && food.description.toLowerCase().includes(searchLower)) ||
-        (food.foodCode && food.foodCode.toLowerCase().includes(searchLower))
-      );
-    }
-    // Sort: available items first, not available items last
-    filtered.sort((a, b) => {
-      if (a.isAvailable === b.isAvailable) return 0;
-      return a.isAvailable ? -1 : 1;
-    });
-    return filtered;
-  }, [foods, filters]);
-
-  // Pagination logic
-  const totalPages = Math.ceil(filteredFoods.length / pageSize);
-  const paginatedFoods = useMemo(() => {
-    const start = (currentPage - 1) * pageSize;
-    return filteredFoods.slice(start, start + pageSize);
-  }, [filteredFoods, currentPage, pageSize]);
-
+  // Fetch foods and food order counts
   const fetchFoodsByUserCompany = useCallback(async () => {
     try {
       setError(null);
@@ -106,13 +67,30 @@ const UserFoodMenu = () => {
         setError("No company associated with your account");
         return;
       }
+      // Fetch foods
       const foodsRes = await axios.get(
         `http://localhost:5000/api/foods/all?companyId=${userCompanyId}`
       );
       setFoods(foodsRes.data || []);
+      // Fetch food orders for company
+      const ordersRes = await axios.get(
+        `http://localhost:5000/api/food-orders/company/${userCompanyId}`
+      );
+      // Count foodId occurrences in orders
+      const counts = {};
+      (ordersRes.data || []).forEach(order => {
+        (order.items || []).forEach(item => {
+          if (item.foodId) {
+            const id = typeof item.foodId === "object" ? item.foodId._id : item.foodId;
+            counts[id] = (counts[id] || 0) + item.quantity;
+          }
+        });
+      });
+      setFoodOrderCounts(counts);
     } catch (err) {
       setError(err.response?.data?.message || "Failed to load menu items");
       setFoods([]);
+      setFoodOrderCounts({});
     } finally {
       setLoading(false);
     }
@@ -241,6 +219,50 @@ const UserFoodMenu = () => {
       </div>
     </div>
   );
+
+  // Memoized filtered foods for performance
+  const filteredFoods = useMemo(() => {
+    let filtered = [...foods];
+    if (filters.category !== "All") {
+      filtered = filtered.filter(food => food.category === filters.category);
+    }
+    if (filters.availableOn !== "All") {
+      filtered = filtered.filter(food =>
+        Array.isArray(food.availableOn) &&
+        food.availableOn.includes(filters.availableOn)
+      );
+    }
+    if (filters.availability !== "All") {
+      filtered = filtered.filter(food =>
+        (filters.availability === "Available" && food.isAvailable) ||
+        (filters.availability === "Not Available" && !food.isAvailable)
+      );
+    }
+    if (filters.search.trim()) {
+      const searchLower = filters.search.trim().toLowerCase();
+      filtered = filtered.filter(food =>
+        food.name.toLowerCase().includes(searchLower) ||
+        (food.description && food.description.toLowerCase().includes(searchLower)) ||
+        (food.foodCode && food.foodCode.toLowerCase().includes(searchLower))
+      );
+    }
+    // Sort: available items first, not available items last
+    filtered.sort((a, b) => {
+      if (a.isAvailable !== b.isAvailable) return a.isAvailable ? -1 : 1;
+      // Sort by order count descending
+      const aCount = foodOrderCounts[a._id] || 0;
+      const bCount = foodOrderCounts[b._id] || 0;
+      return bCount - aCount;
+    });
+    return filtered;
+  }, [foods, filters, foodOrderCounts]);
+
+  // Pagination logic
+  const totalPages = Math.ceil(filteredFoods.length / pageSize);
+  const paginatedFoods = useMemo(() => {
+    const start = (currentPage - 1) * pageSize;
+    return filteredFoods.slice(start, start + pageSize);
+  }, [filteredFoods, currentPage, pageSize]);
 
   if (loading) {
     return (
