@@ -10,31 +10,55 @@ const CompanyFoodProfile = () => {
   const [currentImgIdx, setCurrentImgIdx] = useState(0);
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [availabilityLoading, setAvailabilityLoading] = useState(false);
+  const [orderCount, setOrderCount] = useState(0);
   const navigate = useNavigate();
 
   useEffect(() => {
-    const fetchFood = async () => {
+    const fetchFoodAndOrderCount = async () => {
       try {
+        // Fetch food details
         const res = await axios.get(
           `http://localhost:5000/api/foods/${foodId}`
         );
         setFood(res.data);
         setCurrentImgIdx(0);
+
+        // Fetch companyId from food
+        const companyId =
+          res.data.companyId?._id || res.data.companyId;
+
+        // Fetch food orders for company and count this food's orders
+        if (companyId) {
+          const ordersRes = await axios.get(
+            `http://localhost:5000/api/food-orders/company/${companyId}`
+          );
+          let count = 0;
+          (ordersRes.data || []).forEach((order) => {
+            (order.items || []).forEach((item) => {
+              const id =
+                typeof item.foodId === "object" ? item.foodId._id : item.foodId;
+              if (id === foodId) {
+                count += item.quantity;
+              }
+            });
+          });
+          setOrderCount(count);
+        }
       } catch (err) {
-        console.error("Error fetching food:", err);
+        console.error("Error fetching food or orders:", err);
         setFood(null);
+        setOrderCount(0);
       }
       setLoading(false);
     };
-    fetchFood();
+    fetchFoodAndOrderCount();
   }, [foodId]);
-
 
   const handleEdit = () => setEditModalOpen(true);
 
   const handleEditSave = async (updatedFood) => {
     await axios.put(`http://localhost:5000/api/foods/${foodId}`, updatedFood);
-    setFood({ ...food, ...updatedFood }); // Update local state with new data
+    setFood({ ...food, ...updatedFood });
     setEditModalOpen(false);
   };
 
@@ -62,7 +86,6 @@ const CompanyFoodProfile = () => {
     }
   };
 
-  // Handle availability dropdown change
   const handleAvailabilityChange = async (e) => {
     const newAvailability = e.target.value === "Available";
     setAvailabilityLoading(true);
@@ -100,7 +123,7 @@ const CompanyFoodProfile = () => {
   }
 
   return (
-    <div className=" mx-auto  bg-white shadow rounded p-6">
+    <div className="mx-auto bg-white shadow rounded p-6">
       <div className="grid grid-cols-5 gap-6 items-start">
         {/* 2 columns: Image Slider */}
         <div className="col-span-2 flex flex-col items-center">
@@ -112,7 +135,6 @@ const CompanyFoodProfile = () => {
                   alt={food.name}
                   className="h-72 w-72 object-cover rounded shadow"
                 />
-                
               </>
             ) : (
               <div className="h-72 w-72 bg-gray-200 flex items-center justify-center rounded text-gray-400">
@@ -197,6 +219,11 @@ const CompanyFoodProfile = () => {
               {food.price != null ? `${food.price} LKR` : "N/A"}
             </div>
           )}
+          {/* Most ordered count */}
+          <div className="mb-2">
+            <span className="font-semibold">Ordered:</span>{" "}
+            <span className="">{orderCount}</span> times
+          </div>
         </div>
         {/* 1 column: Edit/Delete Buttons */}
         <div className="col-span-1 flex flex-col items-end gap-2">
