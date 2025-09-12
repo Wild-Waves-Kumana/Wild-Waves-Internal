@@ -128,7 +128,7 @@ const RecentFoodOrder = () => {
   const updateOrderStatus = async (orderId, newStatus) => {
     setUpdatingStatus((prev) => ({ ...prev, [orderId]: true }));
     try {
-      await axios.post(
+      await axios.put(
         `http://localhost:5000/api/food-orders/update-status/${orderId}`,
         { status: newStatus }
       );
