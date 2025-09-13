@@ -76,7 +76,7 @@ const UserFoodOrders = () => {
     fetchOrders();
   }, []);
 
-  // Helper to format timer (hh:mm:ss)
+  // Helper to format timer (hh:mm:ss) - reference from OngoingFoodOrders
   const getTimer = (expectTime) => {
     if (!expectTime) return "-";
     const diff = Math.max(0, new Date(expectTime) - now);
@@ -278,89 +278,97 @@ const UserFoodOrders = () => {
       {!loading && !error && filteredOrders.length > 0 && (
         <div>
           <div className="flex flex-col gap-2">
-            {paginatedOrders.map(order => (
-              <div
-                key={order._id}
-                className="rounded-lg shadow-md p-4 mb-4 w-full overflow-hidden bg-white"
-              >
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {/* Status & Order ID */}
-                  <span className="font-bold text-blue-700">
-                    Order ID: {order.orderId}
-                  </span>
-                  {/* Only show current status as a button */}
-                  <div className="flex justify-start md:justify-end items-center gap-2">
-                    <span className={getStatusStyles(order.status)}>
-                      {order.status}
+            {paginatedOrders.map(order => {
+              const timer = getTimer(order.expectTime); // <-- add timer reference
+              return (
+                <div
+                  key={order._id}
+                  className="rounded-lg shadow-md p-4 mb-4 w-full overflow-hidden bg-white"
+                >
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {/* Status & Order ID */}
+                    <span className="font-bold text-blue-700">
+                      Order ID: {order.orderId}
+                      {(order.status === "Pending" || order.status === "Preparing") && order.expectTime && (
+                        <span className="ml-5 px-4 rounded bg-gray-200 text-blue-700 font-mono text-xs">
+                          {timer}
+                        </span>
+                      )}
                     </span>
-                    {order.status === "Pending" && (
-                      <button
-                        className="ml-2 px-3 py-1 rounded bg-red-500 text-white text-xs font-semibold shadow hover:bg-red-600 transition"
-                        onClick={() => {
-                          setSelectedOrderId(order.orderId);
-                          setCancelModalOpen(true);
-                        }}
-                      >
-                        Cancel Order
-                      </button>
-                    )}
-                  </div>
-                  {/* Left: Order Details */}
-                  <div>
-                    <div className="mb-1">
-                      <span className="font-semibold">Ordered At:</span>{" "}
-                      {order.orderedAt
-                        ? new Date(order.orderedAt).toLocaleString()
-                        : "-"}
+                    {/* Only show current status as a button */}
+                    <div className="flex justify-start md:justify-end items-center gap-2">
+                      <span className={getStatusStyles(order.status)}>
+                        {order.status}
+                      </span>
+                      {order.status === "Pending" && (
+                        <button
+                          className="ml-2 px-3 py-1 rounded bg-red-500 text-white text-xs font-semibold shadow hover:bg-red-600 transition"
+                          onClick={() => {
+                            setSelectedOrderId(order.orderId);
+                            setCancelModalOpen(true);
+                          }}
+                        >
+                          Cancel Order
+                        </button>
+                      )}
                     </div>
-                    <div className="mb-1">
-                      <span className="font-semibold">Expect Time:</span>{" "}
-                      {order.expectTime
-                        ? new Date(order.expectTime).toLocaleString()
-                        : "-"}
-                    </div>
-                    <div className="mb-1">
-                      <span className="font-semibold">Total:</span>{" "}
-                      {order.totalPrice} LKR
-                    </div>
-                    {order.specialRequest && (
-                      <div className="mt-2 text-sm text-gray-600">
-                        <span className="font-semibold">Special Request:</span> {order.specialRequest}
+                    {/* Left: Order Details */}
+                    <div>
+                      <div className="mb-1">
+                        <span className="font-semibold">Ordered At:</span>{" "}
+                        {order.orderedAt
+                          ? new Date(order.orderedAt).toLocaleString()
+                          : "-"}
                       </div>
-                    )}
-                  </div>
-                  {/* Right: Items */}
-                  <div>
-                    <table className="w-full bg-white shadow-md rounded-lg overflow-hidden ">
-                      <thead>
-                        <tr className="bg-gray-100">
-                          <th className="py-2 px-4 text-left text-xs">Name</th>
-                          <th className="py-2 px-4 text-left text-xs">Portion</th>
-                          <th className="py-2 px-4 text-right text-xs">Quantity</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {order.items.map((item, idx) => (
-                          <tr key={idx}>
-                            <td className="py-1 px-2">{item.name}</td>
-                            <td className="py-1 px-2">{item.portion || "Standard"}</td>
-                            <td className="py-1 px-2 text-right">{item.quantity}</td>
+                      <div className="mb-1">
+                        <span className="font-semibold">Expect Time:</span>{" "}
+                        {order.expectTime
+                          ? new Date(order.expectTime).toLocaleString()
+                          : "-"}
+                      </div>
+                      <div className="mb-1">
+                        <span className="font-semibold">Total:</span>{" "}
+                        {order.totalPrice} LKR
+                      </div>
+                      {order.specialRequest && (
+                        <div className="mt-2 text-sm text-gray-600">
+                          <span className="font-semibold">Special Request:</span> {order.specialRequest}
+                        </div>
+                      )}
+                    </div>
+                    {/* Right: Items */}
+                    <div>
+                      <table className="w-full bg-white shadow-md rounded-lg overflow-hidden ">
+                        <thead>
+                          <tr className="bg-gray-100">
+                            <th className="py-2 px-4 text-left text-xs">Name</th>
+                            <th className="py-2 px-4 text-left text-xs">Portion</th>
+                            <th className="py-2 px-4 text-right text-xs">Quantity</th>
                           </tr>
-                        ))}
-                        <tr>
-                          <td colSpan={2} className="py-1 px-2 text-right font-semibold">
-                            Total
-                          </td>
-                          <td className="py-1 px-2 text-right font-bold text-blue-700">
-                            {order.totalPrice} LKR
-                          </td>
-                        </tr>
-                      </tbody>
-                    </table>
+                        </thead>
+                        <tbody>
+                          {order.items.map((item, idx) => (
+                            <tr key={idx}>
+                              <td className="py-1 px-2">{item.name}</td>
+                              <td className="py-1 px-2">{item.portion || "Standard"}</td>
+                              <td className="py-1 px-2 text-right">{item.quantity}</td>
+                            </tr>
+                          ))}
+                          <tr>
+                            <td colSpan={2} className="py-1 px-2 text-right font-semibold">
+                              Total
+                            </td>
+                            <td className="py-1 px-2 text-right font-bold text-blue-700">
+                              {order.totalPrice} LKR
+                            </td>
+                          </tr>
+                        </tbody>
+                      </table>
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
           {/* Pagination Controls (ReusableTable style) */}
           {totalPages > 1 && (
@@ -467,15 +475,26 @@ const UserFoodOrders = () => {
       )}
 
       {/* Cancel Order Modal */}
-      <Modal
-        isOpen={cancelModalOpen}
-        onRequestClose={() => setCancelModalOpen(false)}
-        title="Cancel Order"
-        content={`Are you sure you want to cancel order ${selectedOrderId}?`}
-        onConfirm={handleCancelOrder}
-        confirmText="Yes, Cancel Order"
-        cancelText="No, Keep Order"
-      />
+      <Modal isVisible={cancelModalOpen} onClose={() => setCancelModalOpen(false)} width="max-w-sm">
+        <div className="text-center">
+          <h3 className="text-lg font-semibold mb-4 text-red-600">Cancel Order</h3>
+          <p className="mb-6">Are you sure you want to cancel order {selectedOrderId}?</p>
+          <div className="flex justify-center gap-4">
+            <button
+              className="px-4 py-2 rounded bg-gray-200 text-gray-700 font-semibold"
+              onClick={() => setCancelModalOpen(false)}
+            >
+              No, Keep Order
+            </button>
+            <button
+              className="px-4 py-2 rounded bg-red-500 text-white font-semibold shadow hover:bg-red-600 transition"
+              onClick={handleCancelOrder}
+            >
+              Yes, Cancel Order
+            </button>
+          </div>
+        </div>
+      </Modal>
     </div>
   );
 };
