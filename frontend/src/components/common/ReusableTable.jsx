@@ -23,7 +23,9 @@ const ReusableTable = ({
   emptyMessage = 'No data available',
   onRowClick = null,
   showPageSizeSelector = true,
-  pageSizeOptions = [5, 10, 25, 50, 100]
+  pageSizeOptions = [5, 10, 25, 50, 100],
+  dateSearch = false, // <-- Add this prop
+  dateSearchKey = "orderedAt", // <-- Which column to filter by date
 }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [sortConfig, setSortConfig] = useState({ key: null, direction: 'asc' });
@@ -31,6 +33,7 @@ const ReusableTable = ({
   const [currentPageSize, setCurrentPageSize] = useState(pageSize);
   const [currentColumnPage, setCurrentColumnPage] = useState(1);
   const [filters, setFilters] = useState({});
+  const [dateFilter, setDateFilter] = useState(""); // <-- Add date filter state
 
   // Handle sorting
   const handleSort = (key) => {
@@ -52,7 +55,7 @@ const ReusableTable = ({
     setCurrentPage(1);
   };
 
-  // Process data with search, filter, and sort
+  // Process data with search, filter, sort, and date filter
   const processedData = useMemo(() => {
     let result = [...data];
 
@@ -76,6 +79,22 @@ const ReusableTable = ({
       }
     });
 
+    // Apply date filter
+    if (dateSearch && dateFilter) {
+      result = result.filter(item => {
+        const dateValue = item[dateSearchKey];
+        if (!dateValue) return false;
+        const itemDate = new Date(dateValue);
+        const selectedDate = new Date(dateFilter);
+        // Compare only date part
+        return (
+          itemDate.getFullYear() === selectedDate.getFullYear() &&
+          itemDate.getMonth() === selectedDate.getMonth() &&
+          itemDate.getDate() === selectedDate.getDate()
+        );
+      });
+    }
+
     // Apply sorting
     if (sortConfig.key) {
       result.sort((a, b) => {
@@ -89,7 +108,7 @@ const ReusableTable = ({
     }
 
     return result;
-  }, [data, searchTerm, sortConfig, filters, columns, searchable]);
+  }, [data, searchTerm, sortConfig, filters, columns, searchable, dateSearch, dateFilter, dateSearchKey]);
 
   // Column pagination logic
   const totalColumnPages = Math.ceil(columns.length / columnsPerPage);
@@ -178,7 +197,28 @@ const ReusableTable = ({
             />
           </div>
         )}
-        
+
+        {/* Date Search only for tables that call it */}
+        {dateSearch && (
+          <div className="flex items-center gap-2">
+            <label className="text-sm text-gray-600 font-semibold">Date:</label>
+            <input
+              type="date"
+              value={dateFilter}
+              onChange={e => setDateFilter(e.target.value)}
+              className="px-3 py-1 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            />
+            {dateFilter && (
+              <button
+                className="px-2 py-1 rounded bg-gray-200 text-gray-700 text-xs"
+                onClick={() => setDateFilter("")}
+              >
+                Clear
+              </button>
+            )}
+          </div>
+        )}
+
         {filterable && (
           <div className="flex items-center gap-2">
             <Filter className="w-4 h-4 text-gray-400" />
@@ -236,7 +276,7 @@ const ReusableTable = ({
 
       {/* Table */}
       <div className="overflow-x-auto">
-        <table className="min-w-full border border-gray-300 rounded-lg">
+        <table className="w-full  bg-white shadow-md rounded-lg overflow-hidden ">
           <thead className={`bg-gray-200 ${headerClassName}`}>
             <tr>
               {paginatedColumns.map((col) => (

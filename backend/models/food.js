@@ -6,6 +6,7 @@ const portionSchema = new mongoose.Schema({
 }, { _id: false });
 
 const foodSchema = new mongoose.Schema({
+  foodCode: { type: String, required: true, unique: true },
   name: String,
   description: String,
   price: Number, // Default price if no portions

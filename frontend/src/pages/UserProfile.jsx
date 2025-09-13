@@ -7,6 +7,8 @@ import LightList from '../components/lists/LightList';
 import Modal from "../components/common/Modal";
 import { jwtDecode } from 'jwt-decode';
 import EditUserModal from "../components/modals/EditUserModal";
+import ReusableTable from "../components/common/ReusableTable";
+import UserFoodOrdersList from "../components/lists/UserFoodOrdersList";
 
 const UserProfile = () => {
   const { userId } = useParams();
@@ -26,6 +28,9 @@ const UserProfile = () => {
     access: false,
   });
   const [selectedRoomId, setSelectedRoomId] = useState(""); // for room filter
+  const [userOrders, setUserOrders] = useState([]);
+  const [userOrdersLoading, setUserOrdersLoading] = useState(true);
+ 
 
   // Fetch user, companies, villas, and all rooms
   useEffect(() => {
@@ -60,6 +65,20 @@ const UserProfile = () => {
     };
     fetchData();
   }, [userId]);
+
+  // Fetch user's food orders
+  useEffect(() => {
+    if (!userId) return;
+    setUserOrdersLoading(true);
+    axios
+      .get(`http://localhost:5000/api/food-orders/user/${userId}`)
+      .then((res) => {
+        setUserOrders(res.data || []);
+      })
+      .catch(() => setUserOrders([]))
+      .finally(() => setUserOrdersLoading(false));
+  }, [userId]);
+
 
   // Helpers
   const getCompanyName = (companyId) => {
@@ -226,11 +245,15 @@ const UserProfile = () => {
             ))}
           </div>
         </div>
-        {/* Pass selectedRoomId as prop to ACList */}
+
+        
         <ACList userId={userId} selectedRoomId={selectedRoomId} />
         <DoorList userId={userId} selectedRoomId={selectedRoomId} />
         <LightList userId={userId} selectedRoomId={selectedRoomId} />
+        <UserFoodOrdersList userOrders={userOrders} loading={userOrdersLoading}/>
+
       </div>
+
 
       <EditUserModal
         isVisible={showEditModal}

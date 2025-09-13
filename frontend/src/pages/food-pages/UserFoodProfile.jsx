@@ -1,8 +1,10 @@
 import React, { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
+import { ArrowLeft, Clock, Tag, DollarSign, Package, ShoppingCart, Plus, Eye, Star } from "lucide-react";
 import CreateFoodOrderModal from "../../components/modals/CreateFoodOrderModal";
-import AddFoodtoCartModal from "../../components/modals/AddFoodtoCartModal"; // <-- import the modal
+import AddFoodtoCartModal from "../../components/modals/AddFoodtoCartModal";
 import axios from "axios";
+import { jwtDecode } from "jwt-decode";
 
 const UserFoodProfile = () => {
   const { foodId } = useParams();
@@ -10,156 +12,308 @@ const UserFoodProfile = () => {
   const [loading, setLoading] = useState(true);
   const [currentImgIdx, setCurrentImgIdx] = useState(0);
   const [orderModalOpen, setOrderModalOpen] = useState(false);
-  const [cartModalOpen, setCartModalOpen] = useState(false); // <-- state for cart modal
+  const [cartModalOpen, setCartModalOpen] = useState(false);
+  const [orderCount, setOrderCount] = useState(0);
+  const navigate = useNavigate();
 
-  // Replace with actual user and villa IDs from your auth context or state management
-  const userId = "loggedInUserId"; // TODO: Get logged-in user ID
-  const villaId = "userVillaId"; // TODO: Get user's villa ID
+  // Get user info from token
+  const [userId, setUserId] = useState(null);
+  const [villaId, setVillaId] = useState(null);
 
   useEffect(() => {
-    const fetchFood = async () => {
+    const token = localStorage.getItem("token");
+    if (token) {
+      const decoded = jwtDecode(token);
+      setUserId(decoded.id);
+      fetchUserVilla(decoded.id);
+    }
+  }, []);
+
+  const fetchUserVilla = async (userId) => {
+    try {
+      const res = await axios.get(`http://localhost:5000/api/users/${userId}`);
+      setVillaId(res.data.villaId?._id || res.data.villaId);
+    } catch (err) {
+      console.error("Error fetching user villa:", err);
+    }
+  };
+
+  useEffect(() => {
+    const fetchFoodAndOrderCount = async () => {
       try {
-        const res = await axios.get(
-          `http://localhost:5000/api/foods/${foodId}`
-        );
+        // Fetch food details
+        const res = await axios.get(`http://localhost:5000/api/foods/${foodId}`);
         setFood(res.data);
         setCurrentImgIdx(0);
+
+        // Fetch companyId from food and get order count
+        const companyId = res.data.companyId?._id || res.data.companyId;
+        if (companyId) {
+          const ordersRes = await axios.get(
+            `http://localhost:5000/api/food-orders/company/${companyId}`
+          );
+          let count = 0;
+          (ordersRes.data || []).forEach((order) => {
+            (order.items || []).forEach((item) => {
+              const id = typeof item.foodId === "object" ? item.foodId._id : item.foodId;
+              if (id === foodId) {
+                count += item.quantity;
+              }
+            });
+          });
+          setOrderCount(count);
+        }
       } catch (err) {
         console.error("Error fetching food:", err);
         setFood(null);
+        setOrderCount(0);
       }
       setLoading(false);
     };
-    fetchFood();
+    fetchFoodAndOrderCount();
   }, [foodId]);
 
+  const handleBack = () => {
+    if (window.history.length > 2) {
+      navigate(-1);
+    } else {
+      navigate("/user-food-menu");
+    }
+  };
+
   if (loading) {
-    return <div className="text-center py-10">Loading food details...</div>;
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading food details...</p>
+        </div>
+      </div>
+    );
   }
 
   if (!food) {
     return (
-      <div className="text-center py-10 text-red-500">
-        Food not found.
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="text-center bg-white p-8 rounded-xl shadow-sm">
+          <div className="text-red-500 mb-4">
+            <svg className="w-16 h-16 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+          </div>
+          <h3 className="text-lg font-semibold text-gray-900 mb-2">Food not found</h3>
+          <button
+            onClick={handleBack}
+            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-200"
+          >
+            Back to Menu
+          </button>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="mx-auto mt-10 bg-white shadow rounded p-6">
-      <div className="flex flex-col sm:flex-row gap-6">
-        {/* Images with slider and thumbnails */}
-        <div className="flex-shrink-0 flex flex-col items-center">
-          <div className="relative">
-            {food.images && food.images.length > 0 ? (
-              <img
-                src={food.images[currentImgIdx]}
-                alt={food.name}
-                className="h-72 w-72 object-cover rounded shadow"
-              />
-            ) : (
-              <div className="h-72 w-72 bg-gray-200 flex items-center justify-center rounded text-gray-400">
-                No Image
+    <div className="min-h-screen">
+      <div className="max-w-6xl mx-auto px-4">
+        {/* Header */}
+        <div className="mb-6">
+          <button
+            onClick={handleBack}
+            className="flex items-center text-gray-600 hover:text-gray-900 transition-colors duration-200"
+          >
+            <ArrowLeft size={20} className="mr-2" />
+            Back to Menu
+          </button>
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* Image Section */}
+          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+            <div className="relative mb-4">
+              {food.images && food.images.length > 0 ? (
+                <img
+                  src={food.images[currentImgIdx]}
+                  alt={food.name}
+                  className="w-full  object-cover rounded-xl shadow-sm"
+                />
+              ) : (
+                <div className="w-full h-80 bg-gradient-to-br from-gray-100 to-gray-200 rounded-xl flex items-center justify-center text-gray-400">
+                  <Eye size={48} />
+                </div>
+              )}
+            </div>
+
+            {/* Thumbnails */}
+            {food.images && food.images.length > 1 && (
+              <div className="flex gap-2 overflow-x-auto">
+                {food.images.map((img, idx) => (
+                  <img
+                    key={img}
+                    src={img}
+                    alt={`Food ${idx + 1}`}
+                    className={`flex-shrink-0 w-16 h-16 object-cover rounded-lg cursor-pointer transition-all duration-200
+                      ${idx === currentImgIdx
+                        ? "ring-2 ring-blue-500 shadow-md"
+                        : "opacity-70 hover:opacity-100"
+                      }`}
+                    onClick={() => setCurrentImgIdx(idx)}
+                  />
+                ))}
               </div>
             )}
           </div>
-          {/* Thumbnails */}
-          {food.images && food.images.length > 1 && (
-            <div className="flex gap-2 mt-2 flex-wrap justify-center">
-              {food.images.map((img, idx) => (
-                <img
-                  key={img}
-                  src={img}
-                  alt={`Food ${idx + 1}`}
-                  className={`h-12 w-12 object-cover rounded border cursor-pointer ${
-                    idx === currentImgIdx
-                      ? "border-blue-500 ring-2 ring-blue-400"
-                      : "border-gray-300"
-                  }`}
-                  onClick={() => setCurrentImgIdx(idx)}
-                />
-              ))}
+
+          {/* Details & Action Section */}
+          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+            {/* Header Info */}
+            <div className="mb-4">
+              <h1 className="text-2xl font-bold text-gray-900 mb-2">{food.name}</h1>
+              <div className="flex items-center justify-between mb-3">
+                {food.foodCode && (
+                  <div className="flex items-center text-gray-500">
+                    <Tag size={14} className="mr-1" />
+                    <span className="font-mono text-sm bg-gray-100 px-2 py-1 rounded">{food.foodCode}</span>
+                  </div>
+                )}
+                <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium
+                  ${food.isAvailable 
+                    ? 'bg-green-100 text-green-800 border border-green-200' 
+                    : 'bg-red-100 text-red-800 border border-red-200'}`}>
+                  <div className={`w-1.5 h-1.5 rounded-full mr-1 ${food.isAvailable ? 'bg-green-500' : 'bg-red-500'}`} />
+                  {food.isAvailable ? 'Available' : 'Out of Stock'}
+                </span>
+              </div>
             </div>
-          )}
-        </div>
-        {/* Details */}
-        <div className="flex-1">
-          <h2 className="text-2xl font-bold mb-2">{food.name}</h2>
-          <div className="mb-2 text-gray-600">{food.description || "No description."}</div>
-          <div className="mb-2">
-            <span className="font-semibold">Category:</span>{" "}
-            <span>{food.category}</span>
-          </div>
-          <div className="mb-2">
-            <span className="font-semibold">Available On:</span>{" "}
-            {food.availableOn && food.availableOn.length > 0
-              ? food.availableOn.join(", ")
-              : "Not specified"}
-          </div>
-          <div className="mb-2">
-            <span className="font-semibold">Availability:</span>{" "}
-            <span
-              className={
-                food.isAvailable
-                  ? "text-green-700 font-semibold"
-                  : "text-red-700 font-semibold"
-              }
-            >
-              {food.isAvailable ? "Available" : "Not Available"}
-            </span>
-          </div>
-          {/* Portions or Price */}
-          {food.portions && food.portions.length > 0 ? (
-            <div className="mb-2">
-              <span className="font-semibold">Portions & Prices:</span>
-              <ul className="list-disc ml-6 mt-1">
-                {food.portions.map((portion) => (
-                  <li key={portion.name}>
-                    <span className="font-medium">{portion.name}:</span>{" "}
-                    <span>
-                      {portion.price != null ? `${portion.price} LKR` : "N/A"}
+
+            {/* Description */}
+            {food.description && (
+              <div className="mb-4">
+                <p className="text-gray-600 text-sm leading-relaxed">{food.description}</p>
+              </div>
+            )}
+
+            {/* Quick Stats */}
+            <div className="grid grid-cols-4 gap-2 mb-4">
+              <div className="text-center p-2 bg-gray-50 rounded-lg">
+                <Package size={16} className="mx-auto text-gray-400 mb-1" />
+                <p className="text-xs font-medium text-gray-900">{food.category}</p>
+                <p className="text-xs text-gray-500">Category</p>
+              </div>
+              <div className="text-center p-2 bg-gray-50 rounded-lg">
+                <Star size={16} className="mx-auto text-yellow-500 mb-1" />
+                <p className="text-xs font-medium text-gray-900">{orderCount}</p>
+                <p className="text-xs text-gray-500">Ordered</p>
+              </div>
+              <div className="text-center p-2 bg-gray-50 rounded-lg">
+                <Clock size={16} className="mx-auto text-gray-400 mb-1" />
+                <p className="text-xs font-medium text-gray-900">
+                  {food.availableOn && food.availableOn.length > 0 
+                    ? food.availableOn.length > 1 
+                      ? `${food.availableOn.length} times`
+                      : food.availableOn[0]
+                    : "Anytime"}
+                </p>
+                <p className="text-xs text-gray-500">Available</p>
+              </div>
+              <div className="text-center p-2 bg-gray-50 rounded-lg">
+                <DollarSign size={16} className="mx-auto text-gray-400 mb-1" />
+                <p className="text-xs font-medium text-gray-900">
+                  {food.price != null ? `Rs. ${food.price}` : "Varied"}
+                </p>
+                <p className="text-xs text-gray-500">Price</p>
+              </div>
+            </div>
+
+            {/* Available Times */}
+            {food.availableOn && food.availableOn.length > 0 && (
+              <div className="mb-4">
+                <h4 className="text-sm font-semibold text-gray-900 mb-2">Available Times</h4>
+                <div className="flex flex-wrap gap-1">
+                  {food.availableOn.map((time) => (
+                    <span
+                      key={time}
+                      className="inline-flex items-center px-2 py-1 bg-blue-100 text-blue-800 text-xs font-medium rounded-full"
+                    >
+                      <Clock size={10} className="mr-1" />
+                      {time}
                     </span>
-                  </li>
-                ))}
-              </ul>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Portions/Pricing */}
+            {food.portions && food.portions.length > 0 ? (
+              <div className="mb-4">
+                <h3 className="text-sm font-semibold text-gray-900 mb-2">Available Portions</h3>
+                <div className="space-y-2">
+                  {food.portions.map((portion, idx) => (
+                    <div key={idx} className="flex items-center justify-between p-2 bg-gradient-to-r from-blue-50 to-green-50 rounded-lg">
+                      <h4 className="font-medium text-sm text-gray-900">{portion.name}</h4>
+                      <span className="text-sm font-bold text-green-700">
+                        {portion.price != null ? `Rs. ${portion.price}` : "N/A"}
+                      </span>
+                    </div>
+                  ))}
+              </div>
+              </div>
+            ) : (
+              <div className="mb-4">
+                <div className="text-center p-3 bg-gradient-to-r from-blue-50 to-green-50 rounded-lg">
+                  <span className="text-xl font-bold text-green-700">
+                    {food.price != null ? `Rs. ${food.price}` : "Price varies"}
+                  </span>
+                </div>
+              </div>
+            )}
+
+            {/* Action Buttons */}
+            <div className="grid grid-cols-2 gap-3">
+              <button
+                onClick={() => setOrderModalOpen(true)}
+                disabled={!food.isAvailable}
+                className={`flex items-center justify-center px-4 py-3 rounded-lg font-semibold text-sm transition-all duration-200 shadow-sm hover:shadow-md
+                  ${food.isAvailable 
+                    ? 'bg-blue-600 text-white hover:bg-blue-700' 
+                    : 'bg-gray-300 text-gray-500 cursor-not-allowed'}`}
+              >
+                <ShoppingCart size={16} className="mr-2" />
+                {food.isAvailable ? 'Place Order' : 'Not Available'}
+              </button>
+              <button
+                onClick={() => setCartModalOpen(true)}
+                disabled={!food.isAvailable}
+                className={`flex items-center justify-center px-4 py-3 rounded-lg font-semibold text-sm transition-all duration-200 shadow-sm hover:shadow-md
+                  ${food.isAvailable 
+                    ? 'bg-green-600 text-white hover:bg-green-700' 
+                    : 'bg-gray-300 text-gray-500 cursor-not-allowed'}`}
+              >
+                <Plus size={16} className="mr-2" />
+                Add to Cart
+              </button>
             </div>
-          ) : (
-            <div className="mb-2">
-              <span className="font-semibold">Price:</span>{" "}
-              {food.price != null ? `${food.price} LKR` : "N/A"}
-            </div>
-          )}
-          <div className="flex gap-3 mt-4">
-            <button
-              className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
-              disabled={!food.isAvailable}
-              onClick={() => setOrderModalOpen(true)}
-            >
-              {food.isAvailable ? "Place Order" : "Not Available"}
-            </button>
-            <button
-              className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700"
-              disabled={!food.isAvailable}
-              onClick={() => setCartModalOpen(true)}
-            >
-              Add to Cart
-            </button>
           </div>
         </div>
       </div>
+
       <CreateFoodOrderModal
         isVisible={orderModalOpen}
         onClose={() => setOrderModalOpen(false)}
         food={food}
         userId={userId}
         villaId={villaId}
-        onOrderSuccess={() => {}}
+        onOrderSuccess={() => {
+          setOrderModalOpen(false);
+        }}
       />
       <AddFoodtoCartModal
         isVisible={cartModalOpen}
         onClose={() => setCartModalOpen(false)}
         food={food}
-        onCartSuccess={() => {}}
+        onCartSuccess={() => {
+          setCartModalOpen(false);
+        }}
       />
     </div>
   );

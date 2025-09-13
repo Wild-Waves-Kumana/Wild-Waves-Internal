@@ -57,6 +57,7 @@ export default function AddFoodtoCartModal({
         items: [
           {
             foodId: food._id,
+            foodCode: food.foodCode,
             name: food.name,
             portion: portionObj?.name,
             quantity: orderQuantity,

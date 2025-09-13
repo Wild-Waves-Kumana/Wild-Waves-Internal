@@ -9,6 +9,7 @@ const foodOrderSchema = new mongoose.Schema({
     {
       foodId: { type: mongoose.Schema.Types.ObjectId, ref: "Food" },
       name: String,
+      foodCode: String,
       portion: String,
       quantity: { type: Number, required: true },
       price: { type: Number, required: true },
@@ -18,10 +19,11 @@ const foodOrderSchema = new mongoose.Schema({
   expectTime: { type: Date },
   status: {
     type: String,
-    enum: ["Pending", "Preparing", "Delivered", "Cancelled"],
+    enum: ["Pending", "Preparing", "Delivered", "Cancelled", "Cancelled by User"],
     default: "Pending",
   },
   specialRequest: { type: String },
+  orderPlacement: { type: Boolean, default: true },
   orderedAt: { type: Date, default: Date.now },
 });
 
