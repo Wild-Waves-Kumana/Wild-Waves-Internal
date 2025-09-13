@@ -153,9 +153,12 @@ const UserFoodOrders = () => {
   const totalPending = filteredOrders.filter(order => order.status === "Pending").length;
   const totalPreparing = filteredOrders.filter(order => order.status === "Preparing").length;
   const totalDelivered = filteredOrders.filter(order => order.status === "Delivered").length;
-  const totalCancelled = filteredOrders.filter(order => order.status === "Cancelled").length;
+  const totalCancelled = filteredOrders.filter(order => order.status === "Cancelled" || order.status === "Cancelled by User").length;
   const totalOrders = filteredOrders.length;
-  const totalAmount = filteredOrders.reduce((sum, order) => sum + (order.totalPrice || 0), 0);
+  // Only sum prices for non-cancelled orders
+  const totalAmount = filteredOrders
+    .filter(order => order.status !== "Cancelled" && order.status !== "Cancelled by User")
+    .reduce((sum, order) => sum + (order.totalPrice || 0), 0);
 
   // Cancel order handler
   const handleCancelOrder = async () => {
@@ -181,10 +184,10 @@ const UserFoodOrders = () => {
   };
 
   return (
-    <div className="mx-auto mt-8 bg-white shadow rounded p-6">
+    <div className="mx-auto bg-white shadow rounded p-6">
       <h2 className="text-2xl font-bold mb-4">Your Food Orders</h2>
       {/* Dashboard Section */}
-      <div className="flex flex-wrap justify-between gap-4 mb-6">
+      <div className="flex flex-wrap justify-between gap-2 mb-6">
         <div className="bg-yellow-100 border-l-4 border-yellow-500 rounded-lg p-4 min-w-[120px]">
           <div className="text-lg font-bold text-yellow-700">{totalPending}</div>
           <div className="text-sm text-yellow-800">Pending</div>
