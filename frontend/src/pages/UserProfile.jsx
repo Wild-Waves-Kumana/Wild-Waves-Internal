@@ -9,6 +9,7 @@ import { jwtDecode } from 'jwt-decode';
 import EditUserModal from "../components/modals/EditUserModal";
 import ReusableTable from "../components/common/ReusableTable";
 import UserFoodOrdersList from "../components/lists/UserFoodOrdersList";
+import profileicon from '../assets/profile-icon.png';  
 import { Building2, Home, CalendarDays, User, Pencil, Trash2, DoorClosed, DoorOpen } from "lucide-react";
 
 const UserProfile = () => {
@@ -146,6 +147,11 @@ const UserProfile = () => {
     }
   };
 
+  // Helper to check if avatarUrl is valid (basic check)
+  const isValidAvatar = (url) => {
+    return url && typeof url === "string" && url.trim() !== "";
+  };
+
   if (loading) return <div>Loading...</div>;
   if (!user) return <div>User not found.</div>;
 
@@ -159,9 +165,10 @@ const UserProfile = () => {
               {/* Avatar */}
               <div className="relative">
                 <img
-                  src={user.avatarUrl}
+                  src={isValidAvatar(user.avatarUrl) ? user.avatarUrl : profileicon}
                   alt={`${user.username}'s profile`}
                   className="w-48 h-48 rounded-full border-4 border-white shadow-xl object-cover"
+                  onError={e => { e.target.onerror = null; e.target.src = profileicon; }}
                 />
               </div>
               {/* Username and status */}
