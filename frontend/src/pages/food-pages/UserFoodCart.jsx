@@ -119,6 +119,7 @@ const UserFoodCart = () => {
           <table className="w-full mb-4 border">
             <thead>
               <tr className="bg-gray-100">
+                <th className="py-2 px-2 text-left">Code</th> {/* Add this column */}
                 <th className="py-2 px-2 text-left">Food</th>
                 <th className="py-2 px-2 text-left">Portion</th>
                 <th className="py-2 px-2 text-right">Price</th>
@@ -130,9 +131,14 @@ const UserFoodCart = () => {
             <tbody>
               {cart.items.map((item, idx) => (
                 <tr key={item.foodId?._id || item.foodId || idx}>
+                  
+                  <td className="py-2 px-2 font-mono text-xs text-gray-500">
+                    {item.foodId?.foodCode || ""}
+                  </td>
                   <td className="py-2 px-2">
                     {item.foodId?.name || item.name}
                   </td>
+                  
                   <td className="py-2 px-2">
                     {/* Portion as selectable buttons if multiple portions */}
                     {item.foodId?.portions && item.foodId.portions.length > 0 ? (

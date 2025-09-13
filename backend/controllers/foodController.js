@@ -1,5 +1,33 @@
 import Food from '../models/food.js';
 
+// Helper to generate foodCode based on category, incrementing by 1 for each category, starting at 001
+const generateUniqueFoodCode = async (category) => {
+  const prefixes = {
+    Main: "MN",
+    Dessert: "DT",
+    Beverage: "BV",
+    Snack: "SN",
+  };
+  const prefix = prefixes[category] || "FD";
+
+  // Find the highest foodCode for this category
+  const regex = new RegExp(`^${prefix}(\\d{3})$`);
+  const latestFood = await Food.find({ foodCode: { $regex: regex } })
+    .sort({ foodCode: -1 })
+    .limit(1);
+
+  let nextNumber = 1;
+  if (latestFood.length > 0) {
+    // Extract the numeric part and increment
+    const match = latestFood[0].foodCode.match(regex);
+    if (match && match[1]) {
+      nextNumber = parseInt(match[1], 10) + 1;
+    }
+  }
+  const foodCode = `${prefix}${String(nextNumber).padStart(3, "0")}`;
+  return foodCode;
+};
+
 // Create a new food item
 export const createFood = async (req, res) => {
   try {
@@ -19,7 +47,11 @@ export const createFood = async (req, res) => {
       return res.status(400).json({ message: "companyId is required" });
     }
 
+    // Generate unique foodCode based on category
+    const foodCode = await generateUniqueFoodCode(category);
+
     const foodData = {
+      foodCode,
       name,
       description,
       category,
@@ -43,6 +75,7 @@ export const createFood = async (req, res) => {
     res.status(400).json({ message: err.message });
   }
 };
+
 
 // Get all food items (optionally filter by companyId)
 export const getFoods = async (req, res) => {

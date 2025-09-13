@@ -184,6 +184,7 @@ const FoodOrderPlacementModal = ({
         items: [
           {
             foodId: food._id,
+            foodCode: food.foodCode,
             name: food.name,
             portion: portionObj?.name,
             quantity: orderQuantity,
@@ -229,6 +230,7 @@ const FoodOrderPlacementModal = ({
           )}
           <div>
             <div className="font-semibold text-lg">{food.name}</div>
+            <div className="text-gray-500">{food.foodCode}</div>
             <div className="text-gray-500">{food.category}</div>
           </div>
         </div>

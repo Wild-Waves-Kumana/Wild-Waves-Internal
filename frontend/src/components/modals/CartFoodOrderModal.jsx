@@ -165,6 +165,7 @@ const CartFoodOrderModal = ({
       // Prepare items for order
       const items = cart.items.map(item => ({
         foodId: item.foodId?._id || item.foodId,
+        foodCode: item.foodId?.foodCode || item.foodCode,
         name: item.foodId?.name || item.name,
         portion: item.portion,
         quantity: item.quantity,
