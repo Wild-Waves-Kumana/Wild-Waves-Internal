@@ -4,6 +4,7 @@ const userSchema = new mongoose.Schema({
   
   username: { type: String, required: true, unique: true },
   password: { type: String, required: true },
+  avatarUrl: { type: String, default: 'No Avatar' }, // <-- Add this line for avatar URL
   role: { type: String, required: true,  default: 'user' },
   access: { type: Boolean, default: true },
   rooms: [{ type: mongoose.Schema.Types.ObjectId, ref: "Room" }], // <-- Array of Room ObjectIds 
