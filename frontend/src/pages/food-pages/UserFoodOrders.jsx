@@ -32,6 +32,8 @@ const UserFoodOrders = () => {
   const [now, setNow] = useState(Date.now());
   const [cancelModalOpen, setCancelModalOpen] = useState(false);
   const [selectedOrderId, setSelectedOrderId] = useState(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const pageSize = 5;
 
   useEffect(() => {
     const interval = setInterval(() => setNow(Date.now()), 1000);
@@ -139,6 +141,13 @@ const UserFoodOrders = () => {
 
     return result;
   }, [orders, searchTerm, dateOrderedAt, dateExpectTime, statusFilter]);
+
+  // Pagination logic
+  const totalPages = Math.ceil(filteredOrders.length / pageSize);
+  const paginatedOrders = filteredOrders.slice(
+    (currentPage - 1) * pageSize,
+    currentPage * pageSize
+  );
 
   // Dashboard stats
   const totalPending = filteredOrders.filter(order => order.status === "Pending").length;
@@ -264,9 +273,9 @@ const UserFoodOrders = () => {
         <div className="text-gray-500 text-center py-8">No orders found.</div>
       )}
       {!loading && !error && filteredOrders.length > 0 && (
-        <div className="flex flex-col gap-2">
-          {filteredOrders.map(order => {
-            return (
+        <div>
+          <div className="flex flex-col gap-2">
+            {paginatedOrders.map(order => (
               <div
                 key={order._id}
                 className="rounded-lg shadow-md p-4 mb-4 w-full overflow-hidden bg-white"
@@ -348,8 +357,109 @@ const UserFoodOrders = () => {
                   </div>
                 </div>
               </div>
-            );
-          })}
+            ))}
+          </div>
+          {/* Pagination Controls (ReusableTable style) */}
+          {totalPages > 1 && (
+            <div className="flex flex-col sm:flex-row items-center justify-between px-4 py-3 bg-white border-t border-gray-300 rounded-b-lg gap-4 mt-4">
+              {/* Results Info */}
+              <div className="flex items-center text-sm text-gray-700">
+                <span>
+                  Showing {((currentPage - 1) * pageSize) + 1} to {Math.min(currentPage * pageSize, filteredOrders.length)} of {filteredOrders.length} results
+                </span>
+              </div>
+              {/* Navigation Controls */}
+              <div className="flex items-center space-x-1">
+                {/* First Page */}
+                <button
+                  onClick={() => setCurrentPage(1)}
+                  disabled={currentPage === 1}
+                  className="px-2 py-1 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                  title="First page"
+                >
+                  ««
+                </button>
+                {/* Previous Page */}
+                <button
+                  onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                  disabled={currentPage === 1}
+                  className="px-3 py-1 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  Previous
+                </button>
+                {/* Page Numbers */}
+                {(() => {
+                  const delta = 2;
+                  const range = [];
+                  const rangeWithDots = [];
+                  const start = Math.max(1, currentPage - delta);
+                  const end = Math.min(totalPages, currentPage + delta);
+                  for (let i = start; i <= end; i++) range.push(i);
+                  if (start > 1) {
+                    rangeWithDots.push(1);
+                    if (start > 2) rangeWithDots.push('...');
+                  }
+                  rangeWithDots.push(...range);
+                  if (end < totalPages) {
+                    if (end < totalPages - 1) rangeWithDots.push('...');
+                    rangeWithDots.push(totalPages);
+                  }
+                  return rangeWithDots.map((pageNum, index) =>
+                    pageNum === '...' ? (
+                      <span key={index} className="px-2 py-1 text-gray-500">...</span>
+                    ) : (
+                      <button
+                        key={pageNum}
+                        onClick={() => setCurrentPage(pageNum)}
+                        className={`px-3 py-1 border rounded-md text-sm font-medium ${
+                          currentPage === pageNum
+                            ? 'bg-blue-600 text-white border-blue-600'
+                            : 'border-gray-300 text-gray-700 bg-white hover:bg-gray-50'
+                        }`}
+                      >
+                        {pageNum}
+                      </button>
+                    )
+                  );
+                })()}
+                {/* Next Page */}
+                <button
+                  onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                  disabled={currentPage === totalPages}
+                  className="px-3 py-1 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  Next
+                </button>
+                {/* Last Page */}
+                <button
+                  onClick={() => setCurrentPage(totalPages)}
+                  disabled={currentPage === totalPages}
+                  className="px-2 py-1 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                  title="Last page"
+                >
+                  »»
+                </button>
+              </div>
+              {/* Quick Jump */}
+              <div className="flex items-center gap-2 text-sm">
+                <span className="text-gray-600">Go to page:</span>
+                <input
+                  type="number"
+                  min="1"
+                  max={totalPages}
+                  value={currentPage}
+                  onChange={(e) => {
+                    const page = parseInt(e.target.value);
+                    if (page >= 1 && page <= totalPages) {
+                      setCurrentPage(page);
+                    }
+                  }}
+                  className="w-16 px-2 py-1 border border-gray-300 rounded-md text-center focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                />
+                <span className="text-gray-600">of {totalPages}</span>
+              </div>
+            </div>
+          )}
         </div>
       )}
 
