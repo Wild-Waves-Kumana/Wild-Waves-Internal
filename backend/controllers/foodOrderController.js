@@ -119,7 +119,7 @@ export const updateFoodOrderStatus = async (req, res) => {
     }
 
     // Only allow valid status values
-    const validStatuses = ["Pending", "Preparing", "Delivered", "Cancelled"];
+    const validStatuses = ["Pending", "Preparing", "Delivered", "Cancelled", "Cancelled by User"];
     if (!validStatuses.includes(status)) {
       return res.status(400).json({ message: "Invalid status value." });
     }
