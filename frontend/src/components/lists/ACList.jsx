@@ -24,7 +24,7 @@ const ACList = ({ userId: propUserId, selectedRoomId, roomIds, role: propRole })
   const fetchACs = useCallback(async () => {
     try {
       if (roomIds && Array.isArray(roomIds) && roomIds.length > 0) {
-        const acRes = await axios.get("api/equipment/air-conditioners");
+        const acRes = await axios.get("http://localhost:5000/api/equipment/air-conditioners");
         const filtered = acRes.data.filter(ac => ac.roomId && roomIds.includes(ac.roomId._id));
         setAcs(filtered);
         setLoading(false);
@@ -43,7 +43,7 @@ const ACList = ({ userId: propUserId, selectedRoomId, roomIds, role: propRole })
         userId = propUserId;
       }
 
-      const userRes = await axios.get(`api/users/${userId}`);
+      const userRes = await axios.get(`http://localhost:5000/api/users/${userId}`);
       const user = userRes.data;
       if (!user.rooms || user.rooms.length === 0) {
         setAcs([]);
@@ -51,7 +51,7 @@ const ACList = ({ userId: propUserId, selectedRoomId, roomIds, role: propRole })
         return;
       }
 
-      const allRoomsRes = await axios.get('api/rooms/all');
+      const allRoomsRes = await axios.get('http://localhost:5000/api/rooms/all');
       const userRooms = allRoomsRes.data.filter(room => user.rooms.includes(room._id));
       const acIds = userRooms.flatMap(room => room.airConditioners || []);
 
@@ -61,7 +61,7 @@ const ACList = ({ userId: propUserId, selectedRoomId, roomIds, role: propRole })
         return;
       }
 
-      const acRes = await axios.get("api/equipment/air-conditioners");
+      const acRes = await axios.get("http://localhost:5000/api/equipment/air-conditioners");
       const filtered = acRes.data.filter(ac => acIds.includes(ac._id));
       setAcs(filtered);
     } catch (err) {
@@ -102,7 +102,7 @@ const ACList = ({ userId: propUserId, selectedRoomId, roomIds, role: propRole })
     e.preventDefault();
     try {
       await axios.put(
-        `api/equipment/air-conditioners/${selectedAC._id}`,
+        `http://localhost:5000/api/equipment/air-conditioners/${selectedAC._id}`,
         editForm
       );
       setShowEditModal(false);

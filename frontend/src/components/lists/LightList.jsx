@@ -23,7 +23,7 @@ const LightList = ({ userId: propUserId, selectedRoomId, roomIds, role: propRole
   const fetchLights = useCallback(async () => {
     try {
       if (roomIds && Array.isArray(roomIds) && roomIds.length > 0) {
-        const lightRes = await axios.get('api/equipment/lights');
+        const lightRes = await axios.get('http://localhost:5000/api/equipment/lights');
         const filtered = lightRes.data.filter(light => light.roomId && roomIds.includes(light.roomId._id));
         setLights(filtered);
         setLoading(false);
@@ -43,7 +43,7 @@ const LightList = ({ userId: propUserId, selectedRoomId, roomIds, role: propRole
       }
 
       // Fetch user to get rooms
-      const userRes = await axios.get(`api/users/${userId}`);
+      const userRes = await axios.get(`http://localhost:5000/api/users/${userId}`);
       const user = userRes.data;
       if (!user.rooms || user.rooms.length === 0) {
         setLights([]);
@@ -52,7 +52,7 @@ const LightList = ({ userId: propUserId, selectedRoomId, roomIds, role: propRole
       }
 
       // Fetch all rooms and filter by user's room ids
-      const allRoomsRes = await axios.get('api/rooms/all');
+      const allRoomsRes = await axios.get('http://localhost:5000/api/rooms/all');
       const userRooms = allRoomsRes.data.filter(room => user.rooms.includes(room._id));
 
       // Collect all light ObjectIds from user's rooms
@@ -65,7 +65,7 @@ const LightList = ({ userId: propUserId, selectedRoomId, roomIds, role: propRole
       }
 
       // Fetch all lights and filter by lightIds
-      const lightRes = await axios.get('api/equipment/lights');
+      const lightRes = await axios.get('http://localhost:5000/api/equipment/lights');
       const filtered = lightRes.data.filter(light => lightIds.includes(light._id));
 
       setLights(filtered);
@@ -124,7 +124,7 @@ const LightList = ({ userId: propUserId, selectedRoomId, roomIds, role: propRole
         access: Boolean(editForm.access),
       };
       await axios.put(
-        `api/equipment/lights/${selectedLight._id}`,
+        `http://localhost:5000/api/equipment/lights/${selectedLight._id}`,
         payload
       );
       setShowEditModal(false);

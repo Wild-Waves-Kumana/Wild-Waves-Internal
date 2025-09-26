@@ -33,7 +33,7 @@ const UserFaceRegistration = () => {
     const fetchUser = async () => {
       if (!userId) return;
       try {
-        const res = await fetch(`api/users/${userId}`);
+        const res = await fetch(`http://localhost:5000/api/users/${userId}`);
         if (res.ok) {
           const user = await res.json();
           if (user.faceRegistration) {
@@ -138,7 +138,7 @@ const UserFaceRegistration = () => {
 
         // Update user collection: set faceRegistration to true
         try {
-          await fetch(`api/users/${userId}`, {
+          await fetch(`http://localhost:5000/api/users/${userId}`, {
             method: "PUT",
             headers: {
               "Content-Type": "application/json",
@@ -175,7 +175,7 @@ const UserFaceRegistration = () => {
         setFaceRegistered(false);
         // Optionally update user collection: set faceRegistration to false
         try {
-          await fetch(`api/users/${userId}`, {
+          await fetch(`http://localhost:5000/api/users/${userId}`, {
             method: "PUT",
             headers: {
               "Content-Type": "application/json",

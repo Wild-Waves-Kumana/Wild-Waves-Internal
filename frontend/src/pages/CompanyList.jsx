@@ -6,7 +6,7 @@ const CompanyList = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    axios.get('api/company/all')
+    axios.get('http://localhost:5000/api/company/all')
       .then(res => {
         setCompanies(res.data);
         setLoading(false);

@@ -25,7 +25,7 @@ const AdminCreation = () => {
 
   useEffect(() => {
     // Fetch companies for dropdown
-    axios.get('api/company/all')
+    axios.get('http://localhost:5000/api/company/all')
       .then(res => setCompanies(res.data))
       .catch(() => setCompanies([]));
   }, []);
@@ -62,7 +62,7 @@ const AdminCreation = () => {
     }
 
     try {
-      const res = await axios.post('api/auth/adminregister', {
+      const res = await axios.post('http://localhost:5000/api/auth/adminregister', {
         username: formData.username,
         email: formData.email,
         password: formData.password,

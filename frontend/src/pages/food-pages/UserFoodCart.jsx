@@ -28,7 +28,7 @@ const UserFoodCart = () => {
       }
       try {
         const res = await axios.get(
-          `api/food-cart/items/${userId}`
+          `http://localhost:5000/api/food-cart/items/${userId}`
         );
         setCart(res.data);
       } catch (err) {
@@ -57,7 +57,7 @@ const UserFoodCart = () => {
       return;
     }
     try {
-      await axios.put("api/food-cart/edit-cart", {
+      await axios.put("http://localhost:5000/api/food-cart/edit-cart", {
         userId,
         foodId: item.foodId?._id || item.foodId,
         oldPortion: item.portion,
@@ -89,7 +89,7 @@ const UserFoodCart = () => {
       return;
     }
     try {
-      await axios.put("api/food-cart/edit-cart", {
+      await axios.put("http://localhost:5000/api/food-cart/edit-cart", {
         userId,
         foodId: item.foodId?._id || item.foodId,
         oldPortion: item.portion,

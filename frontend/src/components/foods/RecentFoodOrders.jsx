@@ -41,7 +41,7 @@ const RecentFoodOrder = () => {
 
       // Fetch companyId from admin collection
       axios
-        .get(`api/admin/${adminId}`)
+        .get(`http://localhost:5000/api/admin/${adminId}`)
         .then((res) => {
           setCompanyId(res.data.companyId);
         })
@@ -56,7 +56,7 @@ const RecentFoodOrder = () => {
     if (!companyId) return;
     setLoading(true);
     axios
-      .get(`api/food-orders/company/${companyId._id}`)
+      .get(`http://localhost:5000/api/food-orders/company/${companyId._id}`)
       .then((res) => {
         // Filter: exclude "Cancelled by User" and only show orders with expectTime >= today
         const today = new Date();
@@ -81,7 +81,7 @@ const RecentFoodOrder = () => {
       await Promise.all(
         uniqueIds.map(async (userId) => {
           try {
-            const res = await axios.get(`api/users/${userId}`);
+            const res = await axios.get(`http://localhost:5000/api/users/${userId}`);
             newUsernames[userId] = res.data.username || "-";
           } catch {
             newUsernames[userId] = "-";
@@ -102,7 +102,7 @@ const RecentFoodOrder = () => {
       await Promise.all(
         uniqueIds.map(async (villaId) => {
           try {
-            const res = await axios.get(`api/villas/${villaId}`);
+            const res = await axios.get(`http://localhost:5000/api/villas/${villaId}`);
             newVillaNames[villaId] = res.data.villaName || "-";
           } catch {
             newVillaNames[villaId] = "-";
@@ -129,13 +129,13 @@ const RecentFoodOrder = () => {
     setUpdatingStatus((prev) => ({ ...prev, [orderId]: true }));
     try {
       await axios.put(
-        `api/food-orders/update-status/${orderId}`,
+        `http://localhost:5000/api/food-orders/update-status/${orderId}`,
         { status: newStatus }
       );
       // Refresh orders after update
       if (companyId) {
         const res = await axios.get(
-          `api/food-orders/company/${companyId._id}`
+          `http://localhost:5000/api/food-orders/company/${companyId._id}`
         );
         // Filter again after update
         const today = new Date();

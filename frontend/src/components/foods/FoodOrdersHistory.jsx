@@ -21,7 +21,7 @@ const FoodOrdersHistory = () => {
 
       // Fetch companyId from admin collection
       axios
-        .get(`api/admin/${adminId}`)
+        .get(`http://localhost:5000/api/admin/${adminId}`)
         .then((res) => {
           setCompanyId(res.data.companyId);
         })
@@ -36,7 +36,7 @@ const FoodOrdersHistory = () => {
     if (!companyId) return;
     setLoading(true);
     axios
-      .get(`api/food-orders/company/${companyId._id}`)
+      .get(`http://localhost:5000/api/food-orders/company/${companyId._id}`)
       .then((res) => {
         // Show all orders for the company
         setOrders(res.data || []);
@@ -54,7 +54,7 @@ const FoodOrdersHistory = () => {
       await Promise.all(
         uniqueIds.map(async (userId) => {
           try {
-            const res = await axios.get(`api/users/${userId}`);
+            const res = await axios.get(`http://localhost:5000/api/users/${userId}`);
             newUsernames[userId] = res.data.username || "-";
           } catch {
             newUsernames[userId] = "-";
@@ -75,7 +75,7 @@ const FoodOrdersHistory = () => {
       await Promise.all(
         uniqueIds.map(async (villaId) => {
           try {
-            const res = await axios.get(`api/villas/${villaId}`);
+            const res = await axios.get(`http://localhost:5000/api/villas/${villaId}`);
             newVillaNames[villaId] = res.data.villaName || "-";
           } catch {
             newVillaNames[villaId] = "-";

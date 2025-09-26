@@ -31,7 +31,7 @@ const UserFoodProfile = () => {
 
   const fetchUserVilla = async (userId) => {
     try {
-      const res = await axios.get(`api/users/${userId}`);
+      const res = await axios.get(`http://localhost:5000/api/users/${userId}`);
       setVillaId(res.data.villaId?._id || res.data.villaId);
     } catch (err) {
       console.error("Error fetching user villa:", err);
@@ -42,7 +42,7 @@ const UserFoodProfile = () => {
     const fetchFoodAndOrderCount = async () => {
       try {
         // Fetch food details
-        const res = await axios.get(`api/foods/${foodId}`);
+        const res = await axios.get(`http://localhost:5000/api/foods/${foodId}`);
         setFood(res.data);
         setCurrentImgIdx(0);
 
@@ -50,7 +50,7 @@ const UserFoodProfile = () => {
         const companyId = res.data.companyId?._id || res.data.companyId;
         if (companyId) {
           const ordersRes = await axios.get(
-            `api/food-orders/company/${companyId}`
+            `http://localhost:5000/api/food-orders/company/${companyId}`
           );
           let count = 0;
           (ordersRes.data || []).forEach((order) => {

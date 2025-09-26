@@ -67,7 +67,7 @@ export default function AddFoodtoCartModal({
       };
 
       await axios.post(
-        "api/food-cart/add",
+        "http://localhost:5000/api/food-cart/add",
         cartPayload
       );
 

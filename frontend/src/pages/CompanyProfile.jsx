@@ -25,13 +25,13 @@ const CompanyProfile = () => {
 
     const fetchAdmin = async () => {
       try {
-        const res = await axios.get(`api/admin/${adminIdLocal}`);
+        const res = await axios.get(`http://localhost:5000/api/admin/${adminIdLocal}`);
         setAdmin(res.data);
 
         // Fetch other admins in the same company
         const companyId = res.data.companyId?._id || res.data.companyId;
         if (companyId) {
-          const adminsRes = await axios.get("api/admin/all");
+          const adminsRes = await axios.get("http://localhost:5000/api/admin/all");
           const filteredAdmins = adminsRes.data.filter(
             (a) =>
               (a.companyId === companyId || a.companyId?._id === companyId) &&

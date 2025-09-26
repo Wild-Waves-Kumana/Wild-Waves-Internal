@@ -92,7 +92,7 @@ cd frontend
 npm install
 
 # Frontend env file
-echo "VITE_API_BASE_URL=api" > .env
+echo "VITE_API_BASE_URL=http://localhost:5000/api" > .env
 
 npm run dev                # opens Vite dev server on http://localhost:5173
 ```
