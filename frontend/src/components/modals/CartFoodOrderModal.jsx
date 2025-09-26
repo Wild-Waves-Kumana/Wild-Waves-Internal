@@ -61,7 +61,7 @@ const CartFoodOrderModal = ({
       if (!userId) return;
       try {
         const res = await axios.get(
-          `http://localhost:5000/api/users/${userId}`
+          `/api/users/${userId}`
         );
         setVillaId(res.data.villaId || null);
       } catch {
@@ -182,12 +182,12 @@ const CartFoodOrderModal = ({
       };
 
       await axios.post(
-        "http://localhost:5000/api/food-orders/create",
+        "/api/food-orders/create",
         orderPayload
       );
 
       // Instantly update cartStatus to false
-      await axios.put("http://localhost:5000/api/food-cart/set-status", {
+      await axios.put("/api/food-cart/set-status", {
         userId,
         cartStatus: false,
       });
