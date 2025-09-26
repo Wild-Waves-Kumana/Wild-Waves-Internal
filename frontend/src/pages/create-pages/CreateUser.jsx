@@ -3,6 +3,7 @@ import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import { jwtDecode } from 'jwt-decode';
 import Modal from '../../components/common/Modal';
+import RandomAvatar from '../../components/common/RandomAvatar';
 
 const UserCreation = () => {
   const [formData, setFormData] = useState({
@@ -22,6 +23,7 @@ const UserCreation = () => {
   const [selectedRooms, setSelectedRooms] = useState([]);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [avatarUrl, setAvatarUrl] = useState(""); // Cloudinary avatar URL
   const token = localStorage.getItem('token');
   const navigate = useNavigate();
 
@@ -184,10 +186,16 @@ const UserCreation = () => {
     setShowConfirmModal(true);
   };
 
+  // Handle avatar selection from RandomAvatar (Cloudinary URL)
+  const handleAvatarSelect = (url) => {
+    setAvatarUrl(url);
+  };
+
   // Actual submit after confirmation
   const handleConfirm = async () => {
     setShowConfirmModal(false);
     try {
+      // Register user with Cloudinary avatar URL
       const res = await axios.post('http://localhost:5000/api/auth/register', {
         username,
         password: formData.password,
@@ -195,13 +203,13 @@ const UserCreation = () => {
         adminId: adminId,
         checkinDate: formData.checkinDate,
         checkoutDate: formData.checkoutDate,
-        villaId: formData.villaId,      // <-- pass villa object ID here
+        villaId: formData.villaId,
         rooms: selectedRooms,
+        avatarUrl, // <-- Pass Cloudinary avatar URL here
       });
 
       setMessage(res.data.message);
-      setShowSuccessModal(true); // Show success modal
-      // REMOVE navigation from here!
+      setShowSuccessModal(true);
     } catch (err) {
       setMessage(err.response?.data?.message || 'Something went wrong');
       regenerateUsername();
@@ -213,7 +221,6 @@ const UserCreation = () => {
   return (
     <div className="flex min-h-screen bg-gray-100 justify-center">
       <div className="bg-white rounded-lg shadow-lg flex w-full max-w-2xl overflow-hidden">
-        {/* User Creation */}
         <div className="w-full p-8">
           <form onSubmit={handleSignup} className="space-y-4">
             <h2 className="text-2xl font-semibold text-center">Sign Up</h2>
@@ -238,6 +245,12 @@ const UserCreation = () => {
                   ↻
                 </button>
               </div>
+            </div>
+
+            {/* Avatar selection */}
+            <div>
+              <label className="block font-medium mb-1">Select Avatar</label>
+              <RandomAvatar onSelect={handleAvatarSelect} />
             </div>
 
             {/* Villa Selection as buttons */}
@@ -351,6 +364,9 @@ const UserCreation = () => {
               required
               className="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring"
             />
+
+            
+
             <button
               type="submit"
               className="w-full bg-blue-600 text-white py-2 rounded-md hover:bg-blue-700"
@@ -387,6 +403,16 @@ const UserCreation = () => {
           </div>
           <div>
             <span className="font-semibold">Check-out Date:</span> {formData.checkoutDate}
+          </div>
+          <div>
+            <span className="font-semibold">Avatar:</span>
+            {avatarUrl && (
+              <img
+                src={avatarUrl}
+                alt="Selected Avatar"
+                className="inline-block w-12 h-12 rounded-full ml-2"
+              />
+            )}
           </div>
         </div>
         <div className="flex justify-end gap-2 mt-6">
@@ -431,6 +457,16 @@ const UserCreation = () => {
           </div>
           <div>
             <span className="font-semibold">Check-out Date:</span> {formData.checkoutDate}
+          </div>
+          <div>
+            <span className="font-semibold">Avatar:</span>
+            {avatarUrl && (
+              <img
+                src={avatarUrl}
+                alt="Selected Avatar"
+                className="inline-block w-12 h-12 rounded-full ml-2"
+              />
+            )}
           </div>
         </div>
         <div className="flex justify-end gap-2 mt-6">

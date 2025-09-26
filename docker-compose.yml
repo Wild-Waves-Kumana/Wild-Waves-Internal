@@ -1,0 +1,19 @@
+name: wildwaves-internal
+services:
+  backend:
+    build: ./backend
+    image: 'wildwaves-internal-be:1.3.0'
+    ports:
+      - '5000:5000'
+    environment:
+      - NODE_ENV=production
+    restart: always
+
+  frontend:
+    build: ./frontend
+    image: 'wildwaves-internal-fe:1.3.0'
+    ports:
+      - '3000:80'   # Host:Container (so you access frontend at http://localhost:3000)
+    depends_on:
+      - backend
+    restart: always
