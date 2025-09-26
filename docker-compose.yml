@@ -13,8 +13,7 @@ services:
     build: ./frontend
     image: 'wildwaves-internal-fe:2.0.0'
     ports:
-      - '80:80'     # Serve HTTP
-      - '443:443'   # Serve HTTPS
+      - '3000:80'   # Host:Container (so you access frontend at http://localhost:3000)
     depends_on:
       - backend
     restart: always
