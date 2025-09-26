@@ -49,17 +49,17 @@ const CompanyFoods = () => {
         setIsSuperAdmin(true);
         // Fetch all companies for filter
         const companiesRes = await axios.get(
-          "http://localhost:5000/api/company/all"
+          "api/company/all"
         );
         setCompanies(companiesRes.data);
 
         // Fetch all foods
-        const foodsRes = await axios.get(`http://localhost:5000/api/foods/all`);
+        const foodsRes = await axios.get(`api/foods/all`);
         setFoods(foodsRes.data);
 
         // Fetch all food orders for all companies
         const ordersRes = await axios.get(
-          `http://localhost:5000/api/food-orders/all`
+          `api/food-orders/all`
         );
         const counts = {};
         (ordersRes.data || []).forEach((order) => {
@@ -73,16 +73,16 @@ const CompanyFoods = () => {
         });
         setFoodOrderCounts(counts);
       } else {
-        const adminRes = await axios.get(`http://localhost:5000/api/admin/${adminId}`);
+        const adminRes = await axios.get(`api/admin/${adminId}`);
         const companyId = adminRes.data.companyId?._id || adminRes.data.companyId;
         const foodsRes = await axios.get(
-          `http://localhost:5000/api/foods/all?companyId=${companyId}`
+          `api/foods/all?companyId=${companyId}`
         );
         setFoods(foodsRes.data);
 
         // Fetch food orders for company
         const ordersRes = await axios.get(
-          `http://localhost:5000/api/food-orders/company/${companyId}`
+          `api/food-orders/company/${companyId}`
         );
         const counts = {};
         (ordersRes.data || []).forEach((order) => {

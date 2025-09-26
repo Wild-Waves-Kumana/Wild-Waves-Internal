@@ -47,11 +47,11 @@ const UserCreation = () => {
         const adminId = decoded.id;
 
         // Fetch admin details to get companyId
-        const adminRes = await axios.get(`http://localhost:5000/api/admin/${adminId}`);
+        const adminRes = await axios.get(`api/admin/${adminId}`);
         const companyId = adminRes.data.companyId?._id || adminRes.data.companyId;
 
         // Fetch all villas
-        const villasRes = await axios.get("http://localhost:5000/api/villas/all");
+        const villasRes = await axios.get("api/villas/all");
         // Filter villas by companyId
         const filteredVillas = villasRes.data.filter(
           (v) =>
@@ -71,7 +71,7 @@ const UserCreation = () => {
   useEffect(() => {
     const fetchRooms = async () => {
       try {
-        const res = await axios.get("http://localhost:5000/api/rooms/all");
+        const res = await axios.get("api/rooms/all");
         setRooms(res.data);
       } catch (err) {
         console.error("Failed to fetch rooms", err);
@@ -109,7 +109,7 @@ const UserCreation = () => {
     while (!unique) {
       newUsername = generateUsername();
       try {
-        const checkRes = await axios.get(`http://localhost:5000/api/auth/check-username/${newUsername}`);
+        const checkRes = await axios.get(`api/auth/check-username/${newUsername}`);
         if (checkRes.data.available) {
           unique = true;
         }
@@ -196,7 +196,7 @@ const UserCreation = () => {
     setShowConfirmModal(false);
     try {
       // Register user with Cloudinary avatar URL
-      const res = await axios.post('http://localhost:5000/api/auth/register', {
+      const res = await axios.post('api/auth/register', {
         username,
         password: formData.password,
         role: formData.role,

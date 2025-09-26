@@ -51,7 +51,7 @@ const RandomAvatar = ({ onSelect }) => {
     setSelected(url);
     setUploading(true);
     try {
-      const res = await axios.post("http://localhost:5000/api/avatar/upload", { avatarUrl: url });
+      const res = await axios.post("api/avatar/upload", { avatarUrl: url });
       if (onSelect) onSelect(res.data.url); // Pass Cloudinary URL to parent
     } catch (err) {
       if (onSelect) onSelect("");

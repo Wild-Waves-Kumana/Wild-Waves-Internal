@@ -61,7 +61,7 @@ const UserFoodMenu = () => {
       }
       const decoded = jwtDecode(token);
       const userId = decoded.id;
-      const userRes = await axios.get(`http://localhost:5000/api/users/${userId}`);
+      const userRes = await axios.get(`api/users/${userId}`);
       const userCompanyId = userRes.data.companyId?._id || userRes.data.companyId;
       if (!userCompanyId) {
         setError("No company associated with your account");
@@ -69,12 +69,12 @@ const UserFoodMenu = () => {
       }
       // Fetch foods
       const foodsRes = await axios.get(
-        `http://localhost:5000/api/foods/all?companyId=${userCompanyId}`
+        `api/foods/all?companyId=${userCompanyId}`
       );
       setFoods(foodsRes.data || []);
       // Fetch food orders for company
       const ordersRes = await axios.get(
-        `http://localhost:5000/api/food-orders/company/${userCompanyId}`
+        `api/food-orders/company/${userCompanyId}`
       );
       // Count foodId occurrences in orders
       const counts = {};

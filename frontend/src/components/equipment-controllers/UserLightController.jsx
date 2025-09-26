@@ -18,7 +18,7 @@ const UserLightController = ({ selectedRoom, onLightUpdate }) => {
       try {
         // selectedRoom.lights is an array of Light ObjectIds
         // Fetch all lights and filter by selectedRoom.lights and access === true
-        const lightRes = await axios.get('http://localhost:5000/api/equipment/lights');
+        const lightRes = await axios.get('api/equipment/lights');
         const roomLights = lightRes.data.filter(light =>
           selectedRoom.lights &&
           selectedRoom.lights.includes(light._id) &&
@@ -45,7 +45,7 @@ const UserLightController = ({ selectedRoom, onLightUpdate }) => {
     
     try {
       await axios.put(
-        `http://localhost:5000/api/equipment/lights/${light._id}`,
+        `api/equipment/lights/${light._id}`,
         { [field]: value }
       );
       if (onLightUpdate) onLightUpdate();

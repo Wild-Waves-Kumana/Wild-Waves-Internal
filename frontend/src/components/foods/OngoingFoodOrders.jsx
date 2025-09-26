@@ -55,7 +55,7 @@ const OngoingFoodOrders = () => {
       const adminId = decoded.adminId || decoded._id || decoded.id;
       if (!adminId) return;
       axios
-        .get(`http://localhost:5000/api/admin/${adminId}`)
+        .get(`api/admin/${adminId}`)
         .then((res) => setCompanyId(res.data.companyId))
         .catch(() => setCompanyId(""));
     } catch {
@@ -68,7 +68,7 @@ const OngoingFoodOrders = () => {
     if (!companyId) return;
     setLoading(true);
     axios
-      .get(`http://localhost:5000/api/food-orders/company/${companyId._id}`)
+      .get(`api/food-orders/company/${companyId._id}`)
       .then((res) => {
         // Only Pending and Preparing
         const filtered = (res.data || []).filter(
@@ -100,7 +100,7 @@ const OngoingFoodOrders = () => {
       await Promise.all(
         userIds.map(async (userId) => {
           try {
-            const res = await axios.get(`http://localhost:5000/api/users/${userId}`);
+            const res = await axios.get(`api/users/${userId}`);
             newUsernames[userId] = res.data.username || "-";
           } catch {
             newUsernames[userId] = "-";
@@ -121,7 +121,7 @@ const OngoingFoodOrders = () => {
       await Promise.all(
         villaIds.map(async (villaId) => {
           try {
-            const res = await axios.get(`http://localhost:5000/api/villas/${villaId}`);
+            const res = await axios.get(`api/villas/${villaId}`);
             newVillaNames[villaId] = res.data.villaName || "-";
           } catch {
             newVillaNames[villaId] = "-";
@@ -148,13 +148,13 @@ const OngoingFoodOrders = () => {
     setUpdatingStatus((prev) => ({ ...prev, [orderId]: true }));
     try {
       await axios.put(
-        `http://localhost:5000/api/food-orders/update-status/${orderId}`,
+        `api/food-orders/update-status/${orderId}`,
         { status: newStatus }
       );
       // Refresh orders after update
       if (companyId) {
         const res = await axios.get(
-          `http://localhost:5000/api/food-orders/company/${companyId._id}`
+          `api/food-orders/company/${companyId._id}`
         );
         const filtered = (res.data || []).filter(
           (order) =>

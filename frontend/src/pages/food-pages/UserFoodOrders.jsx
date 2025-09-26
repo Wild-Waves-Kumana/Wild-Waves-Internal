@@ -64,7 +64,7 @@ const UserFoodOrders = () => {
       }
       try {
         const res = await axios.get(
-          `http://localhost:5000/api/food-orders/user/${userId}`
+          `api/food-orders/user/${userId}`
         );
         setOrders(res.data || []);
       } catch (err) {
@@ -165,7 +165,7 @@ const UserFoodOrders = () => {
     if (!selectedOrderId) return;
     try {
       await axios.put(
-        `http://localhost:5000/api/food-orders/update-status/${selectedOrderId}`, // <-- use orderId here
+        `api/food-orders/update-status/${selectedOrderId}`, // <-- use orderId here
         { status: "Cancelled by User" }
       );
       setOrders((prev) =>

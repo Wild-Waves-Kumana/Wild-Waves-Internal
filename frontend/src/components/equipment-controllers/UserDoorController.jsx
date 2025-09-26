@@ -18,7 +18,7 @@ const UserDoorController = ({ selectedRoom, onDoorUpdate }) => {
       try {
         // selectedRoom.doors is an array of Door ObjectIds
         // Fetch all doors and filter by selectedRoom.doors and access === true
-        const doorRes = await axios.get('http://localhost:5000/api/equipment/doors');
+        const doorRes = await axios.get('api/equipment/doors');
         const roomDoors = doorRes.data.filter(door =>
           selectedRoom.doors &&
           selectedRoom.doors.includes(door._id) &&
@@ -44,7 +44,7 @@ const UserDoorController = ({ selectedRoom, onDoorUpdate }) => {
     );
     try {
       await axios.put(
-        `http://localhost:5000/api/equipment/doors/${door._id}`,
+        `api/equipment/doors/${door._id}`,
         { [field]: value }
       );
       if (onDoorUpdate) onDoorUpdate();

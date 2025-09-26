@@ -36,7 +36,7 @@ const UserACController = ({ selectedRoom, onACUpdate }) => {
         return;
       }
       try {
-        const { data } = await axios.get('http://localhost:5000/api/equipment/air-conditioners');
+        const { data } = await axios.get('api/equipment/air-conditioners');
         const roomACs = data.filter(
           ac =>
             selectedRoom.airConditioners?.includes(ac._id) &&
@@ -58,7 +58,7 @@ const UserACController = ({ selectedRoom, onACUpdate }) => {
     setAcs(prev => prev.map((item, i) => (i === idx ? updated : item)));
     try {
       await axios.put(
-        `http://localhost:5000/api/equipment/air-conditioners/${ac._id}`,
+        `api/equipment/air-conditioners/${ac._id}`,
         { [field]: value }
       );
       onACUpdate && onACUpdate();

@@ -32,7 +32,7 @@ const VillaCreation = () => {
     setLoading(true);
     setMessage('');
     try {
-      const res = await axios.post('http://localhost:5000/api/villas/create', {
+      const res = await axios.post('api/villas/create', {
         villaId,
         villaName,
         adminId,
@@ -62,7 +62,7 @@ const VillaCreation = () => {
     try {
       for (const room of rooms) {
         if (room.roomName.trim()) {
-          await axios.post('http://localhost:5000/api/rooms/create', {
+          await axios.post('api/rooms/create', {
             roomName: room.roomName,
             villaId: createdVillaId, // Pass the villa _id as villaId
           });

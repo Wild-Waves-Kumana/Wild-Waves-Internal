@@ -22,14 +22,14 @@ const UserList = () => {
         const adminId = decoded.id;
 
         // Fetch admin details to get companyId
-        const adminRes = await axios.get(`http://localhost:5000/api/admin/${adminId}`);
+        const adminRes = await axios.get(`api/admin/${adminId}`);
         const companyId = adminRes.data.companyId?._id || adminRes.data.companyId;
 
         // Fetch all users, companies, and villas
         const [usersRes, companiesRes, villasRes] = await Promise.all([
-          axios.get('http://localhost:5000/api/users'),
-          axios.get('http://localhost:5000/api/company/all'),
-          axios.get('http://localhost:5000/api/villas/all')
+          axios.get('api/users'),
+          axios.get('api/company/all'),
+          axios.get('api/villas/all')
         ]);
         setCompanies(companiesRes.data);
         setVillas(villasRes.data);

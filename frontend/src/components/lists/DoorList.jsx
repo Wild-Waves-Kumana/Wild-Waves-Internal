@@ -23,7 +23,7 @@ const DoorList = ({ userId: propUserId, selectedRoomId, roomIds, role: propRole 
   const fetchDoors = useCallback(async () => {
     try {
       if (roomIds && Array.isArray(roomIds) && roomIds.length > 0) {
-        const doorRes = await axios.get('http://localhost:5000/api/equipment/doors');
+        const doorRes = await axios.get('api/equipment/doors');
         const filtered = doorRes.data.filter(door => door.roomId && roomIds.includes(door.roomId._id));
         setDoors(filtered);
         setLoading(false);
@@ -43,7 +43,7 @@ const DoorList = ({ userId: propUserId, selectedRoomId, roomIds, role: propRole 
       }
 
       // Fetch user to get rooms
-      const userRes = await axios.get(`http://localhost:5000/api/users/${userId}`);
+      const userRes = await axios.get(`api/users/${userId}`);
       const user = userRes.data;
       if (!user.rooms || user.rooms.length === 0) {
         setDoors([]);
@@ -52,7 +52,7 @@ const DoorList = ({ userId: propUserId, selectedRoomId, roomIds, role: propRole 
       }
 
       // Fetch all rooms and filter by user's room ids
-      const allRoomsRes = await axios.get('http://localhost:5000/api/rooms/all');
+      const allRoomsRes = await axios.get('api/rooms/all');
       const userRooms = allRoomsRes.data.filter(room => user.rooms.includes(room._id));
 
       // Collect all door ObjectIds from user's rooms
@@ -65,7 +65,7 @@ const DoorList = ({ userId: propUserId, selectedRoomId, roomIds, role: propRole 
       }
 
       // Fetch all doors and filter by doorIds
-      const doorRes = await axios.get('http://localhost:5000/api/equipment/doors');
+      const doorRes = await axios.get('api/equipment/doors');
       const filtered = doorRes.data.filter(door => doorIds.includes(door._id));
 
       setDoors(filtered);
@@ -130,7 +130,7 @@ const DoorList = ({ userId: propUserId, selectedRoomId, roomIds, role: propRole 
         lockStatus: Boolean(editForm.lockStatus),
       };
       await axios.put(
-        `http://localhost:5000/api/equipment/doors/${selectedDoor._id}`,
+        `api/equipment/doors/${selectedDoor._id}`,
         payload
       );
       setShowEditModal(false);
