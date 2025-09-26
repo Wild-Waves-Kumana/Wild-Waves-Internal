@@ -41,7 +41,7 @@ const RecentFoodOrder = () => {
 
       // Fetch companyId from admin collection
       axios
-        .get(`http://localhost:5000/api/admin/${adminId}`)
+        .get(`/api/admin/${adminId}`)
         .then((res) => {
           setCompanyId(res.data.companyId);
         })
@@ -56,7 +56,7 @@ const RecentFoodOrder = () => {
     if (!companyId) return;
     setLoading(true);
     axios
-      .get(`http://localhost:5000/api/food-orders/company/${companyId._id}`)
+      .get(`/api/food-orders/company/${companyId._id}`)
       .then((res) => {
         // Filter: exclude "Cancelled by User" and only show orders with expectTime >= today
         const today = new Date();
@@ -81,7 +81,7 @@ const RecentFoodOrder = () => {
       await Promise.all(
         uniqueIds.map(async (userId) => {
           try {
-            const res = await axios.get(`http://localhost:5000/api/users/${userId}`);
+            const res = await axios.get(`/api/users/${userId}`);
             newUsernames[userId] = res.data.username || "-";
           } catch {
             newUsernames[userId] = "-";
@@ -102,7 +102,7 @@ const RecentFoodOrder = () => {
       await Promise.all(
         uniqueIds.map(async (villaId) => {
           try {
-            const res = await axios.get(`http://localhost:5000/api/villas/${villaId}`);
+            const res = await axios.get(`/api/villas/${villaId}`);
             newVillaNames[villaId] = res.data.villaName || "-";
           } catch {
             newVillaNames[villaId] = "-";
@@ -129,13 +129,13 @@ const RecentFoodOrder = () => {
     setUpdatingStatus((prev) => ({ ...prev, [orderId]: true }));
     try {
       await axios.put(
-        `http://localhost:5000/api/food-orders/update-status/${orderId}`,
+        `/api/food-orders/update-status/${orderId}`,
         { status: newStatus }
       );
       // Refresh orders after update
       if (companyId) {
         const res = await axios.get(
-          `http://localhost:5000/api/food-orders/company/${companyId._id}`
+          `/api/food-orders/company/${companyId._id}`
         );
         // Filter again after update
         const today = new Date();

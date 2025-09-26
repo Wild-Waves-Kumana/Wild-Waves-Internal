@@ -48,7 +48,7 @@ const CreateFoods = () => {
       if (decoded.companyId) {
         setCompanyId(decoded.companyId._id || decoded.companyId);
       } else if (decoded.id) {
-        fetch(`http://localhost:5000/api/admin/${decoded.id}`)
+        fetch(`/api/admin/${decoded.id}`)
           .then((res) => res.json())
           .then((admin) => {
             setCompanyId(admin.companyId?._id || admin.companyId);
@@ -216,7 +216,7 @@ const CreateFoods = () => {
       } else {
         payload.price = undefined;
       }
-      const res = await fetch("http://localhost:5000/api/foods/create", {
+      const res = await fetch("/api/foods/create", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
