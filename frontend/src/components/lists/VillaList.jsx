@@ -23,7 +23,7 @@ const VillaList = ({ companyId: propCompanyId }) => {
           const role = decoded.role;
 
           // Fetch all villas
-          const villasRes = await axios.get("http://localhost:5000/api/villas/all");
+          const villasRes = await axios.get("/api/villas/all");
 
           if (role === "superadmin") {
             setVillas(villasRes.data); // Super admin sees all villas
@@ -31,13 +31,13 @@ const VillaList = ({ companyId: propCompanyId }) => {
             return;
           } else {
             // Fetch admin to get companyId
-            const adminRes = await axios.get(`http://localhost:5000/api/admin/${adminId}`);
+            const adminRes = await axios.get(`/api/admin/${adminId}`);
             companyId = adminRes.data.companyId?._id || adminRes.data.companyId;
           }
         }
 
         // Fetch all villas
-        const villasRes = await axios.get("http://localhost:5000/api/villas/all");
+        const villasRes = await axios.get("/api/villas/all");
         // Filter villas by companyId
         const filteredVillas = villasRes.data.filter(
           (v) =>
@@ -59,7 +59,7 @@ const VillaList = ({ companyId: propCompanyId }) => {
     // Fetch all rooms once
     const fetchRooms = async () => {
       try {
-        const res = await axios.get("http://localhost:5000/api/rooms/all");
+        const res = await axios.get("/api/rooms/all");
         setRooms(res.data);
       } catch {
         setRooms([]);

@@ -31,11 +31,11 @@ const DashboardController = () => {
     const fetchUserRooms = async () => {
       setLoading(true);
       try {
-        const userRes = await axios.get(`http://localhost:5000/api/users/${userId}`);
+        const userRes = await axios.get(`/api/users/${userId}`);
         const user = userRes.data;
         
         // Fetch all rooms and filter by user's room ids
-        const allRoomsRes = await axios.get('http://localhost:5000/api/rooms/all');
+        const allRoomsRes = await axios.get('/api/rooms/all');
         const userRooms = allRoomsRes.data.filter(room => user.rooms && user.rooms.includes(room._id));
         setRooms(userRooms);
 

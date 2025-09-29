@@ -18,7 +18,7 @@ const CompanyFoodProfile = () => {
     const fetchFoodAndOrderCount = async () => {
       try {
         // Fetch food details
-        const res = await axios.get(`http://localhost:5000/api/foods/${foodId}`);
+        const res = await axios.get(`/api/foods/${foodId}`);
         setFood(res.data);
         setCurrentImgIdx(0);
 
@@ -28,7 +28,7 @@ const CompanyFoodProfile = () => {
         // Fetch food orders for company and count this food's orders
         if (companyId) {
           const ordersRes = await axios.get(
-            `http://localhost:5000/api/food-orders/company/${companyId}`
+            `/api/food-orders/company/${companyId}`
           );
           let count = 0;
           (ordersRes.data || []).forEach((order) => {
@@ -54,7 +54,7 @@ const CompanyFoodProfile = () => {
   const handleEdit = () => setEditModalOpen(true);
 
   const handleEditSave = async (updatedFood) => {
-    await axios.put(`http://localhost:5000/api/foods/${foodId}`, updatedFood);
+    await axios.put(`/api/foods/${foodId}`, updatedFood);
     setFood({ ...food, ...updatedFood });
     setEditModalOpen(false);
   };
@@ -66,7 +66,7 @@ const CompanyFoodProfile = () => {
       )
     ) {
       try {
-        await axios.delete(`http://localhost:5000/api/foods/${foodId}`);
+        await axios.delete(`/api/foods/${foodId}`);
         navigate("/foods");
       } catch (err) {
         console.error("Error deleting food:", err);
@@ -87,7 +87,7 @@ const CompanyFoodProfile = () => {
     const newAvailability = e.target.value === "Available";
     setAvailabilityLoading(true);
     try {
-      await axios.put(`http://localhost:5000/api/foods/${foodId}`, {
+      await axios.put(`/api/foods/${foodId}`, {
         ...food,
         isAvailable: newAvailability,
       });
