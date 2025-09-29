@@ -38,3 +38,5 @@ jobs:
             git pull origin dev-v2
             npm install --omit=dev
             pm2 restart all || pm2 start server.js
+            echo "SSH connection successful!"
+            whoami
