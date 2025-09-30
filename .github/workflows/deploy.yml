@@ -1,9 +1,9 @@
-name: Deploy to EC2
+name: Deploy Docker to EC2
 
 on:
   push:
     branches:
-      - chathura-dev-v2.0  # trigger when this branch is pushed
+      - chathura-dev-v2.0
 
 jobs:
   deploy:
@@ -13,16 +13,7 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v3
-        with:
-          node-version: 18
-
-      - name: Install dependencies (Backend Only)
-        run: npm install
-        working-directory: ./backend
-
-      # ✅ Test SSH Connection
+      # Test SSH connection
       - name: Test SSH Connection
         uses: appleboy/ssh-action@v0.1.9
         with:
@@ -33,10 +24,9 @@ jobs:
           port: 22
           script: |
             echo "Connected to $(hostname) as $(whoami)"
-            uptime
 
-      # 🚀 Deploy step
-      - name: Deploy via SSH
+      # Docker Deployment
+      - name: Deploy via Docker on EC2
         uses: appleboy/ssh-action@v0.1.9
         with:
           host: ${{ secrets.EC2_HOST }}
@@ -47,6 +37,7 @@ jobs:
           script: |
             cd ${{ secrets.EC2_PATH }}/backend
             git pull origin chathura-dev-v2.0
-            npm install --omit=dev
-            pm2 restart all || pm2 start server.js --name backend
-            echo "Deployment completed!"
+            docker-compose down
+            docker-compose build
+            docker-compose up -d
+            echo "Docker deployment completed!"
