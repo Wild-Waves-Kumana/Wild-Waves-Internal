@@ -3,7 +3,7 @@ name: Deploy to EC2
 on:
   push:
     branches:
-      - dev-v2  # deploy when dev-v2 branch is pushed
+      - chathura-dev-v2.0  # deploy when dev-v2 branch is pushed
 
 jobs:
   deploy:
@@ -34,7 +34,7 @@ jobs:
           port: 22
           script: |
             cd ${{ secrets.EC2_PATH }}/backend
-            git pull origin dev-v2
+            git pull origin chathuradev-v2
             npm install --omit=dev
             pm2 restart all || pm2 start server.js --name backend
             echo "SSH connection successful!"
