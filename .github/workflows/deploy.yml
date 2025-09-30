@@ -3,7 +3,7 @@ name: Deploy to EC2
 on:
   push:
     branches:
-      - chathura-dev-v2.0  # deploy when dev-v2 branch is pushed
+      - chathura-dev-v2.0  # deploy when chathura-dev-v2.0 branch is pushed
 
 jobs:
   deploy:
@@ -22,8 +22,6 @@ jobs:
         run: npm install
         working-directory: ./backend  # adjust if backend is in a different folder
 
-      # 🚫 Removed "Build project" step (no build script in backend)
-
       - name: Deploy via SSH
         uses: appleboy/ssh-action@v0.1.9
         with:
@@ -34,7 +32,7 @@ jobs:
           port: 22
           script: |
             cd ${{ secrets.EC2_PATH }}/backend
-            git pull origin chathuradev-v2
+            git pull origin chathura-dev-v2
             npm install --omit=dev
             pm2 restart all || pm2 start server.js --name backend
             echo "SSH connection successful!"
