@@ -1,4 +1,5 @@
-name: wildwaves-internal
+version: "3.8"  # Specify Compose version
+
 services:
   backend:
     build: ./backend
@@ -13,7 +14,7 @@ services:
     build: ./frontend
     image: 'wildwaves-internal-fe:2.0.0'
     ports:
-      - '3000:80'   # Host:Container (so you access frontend at http://localhost:3000)
+      - '3000:80'   # Host:Container
     depends_on:
       - backend
     restart: always
