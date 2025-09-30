@@ -32,7 +32,9 @@ jobs:
           port: 22
           script: |
             cd ${{ secrets.EC2_PATH }}/backend
-            git pull origin chathura-dev-v2
+            git fetch origin
+            git checkout chathura-dev-v2.0
+            git pull origin chathura-dev-v2.0
             npm install --omit=dev
             pm2 restart all || pm2 start server.js --name backend
             echo "SSH connection successful!"
