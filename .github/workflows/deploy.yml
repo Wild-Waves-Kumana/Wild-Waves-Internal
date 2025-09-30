@@ -3,7 +3,7 @@ name: Deploy Docker to EC2
 on:
   push:
     branches:
-      - chathura-dev-v2.0
+      - main
 
 jobs:
   deploy:
@@ -36,7 +36,7 @@ jobs:
           port: 22
           script: |
             cd ${{ secrets.EC2_PATH }}/backend
-            git pull origin chathura-dev-v2.0
+            git pull origin main
             docker-compose down
             docker-compose build
             docker-compose up -d
