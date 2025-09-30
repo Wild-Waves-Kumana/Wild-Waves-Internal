@@ -18,13 +18,11 @@ jobs:
         with:
           node-version: 18
 
-      - name: Install dependencies
+      - name: Install dependencies (Backend Only)
         run: npm install
-        working-directory: ./backend  # if your backend is in a subfolder
+        working-directory: ./backend  # adjust if backend is in a different folder
 
-      - name: Build project
-        run: npm run build
-        working-directory: ./backend
+      # 🚫 Removed "Build project" step (no build script in backend)
 
       - name: Deploy via SSH
         uses: appleboy/ssh-action@v0.1.9
@@ -34,7 +32,9 @@ jobs:
           key: ${{ secrets.EC2_SSH_KEY }}
           port: 22
           script: |
-            cd ${{ secrets.EC2_PATH }}
+            cd ${{ secrets.EC2_PATH }}/backend  # navigate to backend on server
             git pull origin dev-v2
             npm install --omit=dev
-            pm2 restart all || pm2 start server.js
+            pm2 restart all || pm2 start server.js --name backend
+            echo "SSH connection successful!"
+            whoami
