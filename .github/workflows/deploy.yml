@@ -24,17 +24,18 @@ jobs:
 
       # 🚫 Removed "Build project" step (no build script in backend)
 
-      - name: Deploy via SSH
-        uses: appleboy/ssh-action@v0.1.9
-        with:
-          host: ${{ secrets.EC2_HOST }}
-          username: ${{ secrets.EC2_USER }}
-          key: ${{ secrets.EC2_SSH_KEY }}
-          port: 22
-          script: |
-            cd ${{ secrets.EC2_PATH }}/backend  # navigate to backend on server
-            git pull origin dev-v2
-            npm install --omit=dev
-            pm2 restart all || pm2 start server.js --name backend
-            echo "SSH connection successful!"
-            whoami
+      - - name: Deploy via SSH
+          uses: appleboy/ssh-action@v0.1.9
+          with:
+            host: ${{ secrets.EC2_HOST }}
+            username: ${{ secrets.EC2_USER }}
+            key: ${{ secrets.EC2_SSH_KEY }}
+            passphrase: ${{ secrets.EC2_PASSPHRASE }}
+            port: 22
+            script: |
+              cd ${{ secrets.EC2_PATH }}/backend
+              git pull origin dev-v2
+              npm install --omit=dev
+              pm2 restart all || pm2 start server.js --name backend
+              echo "SSH connection successful!"
+              whoami
