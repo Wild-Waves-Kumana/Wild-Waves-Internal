@@ -13,7 +13,7 @@ import {jwtDecode} from 'jwt-decode';
 import Modal from "./common/Modal";
 import Logo from "../assets/logo.png";
 
-const Sidebar = () => {
+const Sidebar = ({ open, setOpen }) => {
   const [showLogoutModal, setShowLogoutModal] = useState(false);
   const navigate = useNavigate();
   const token = localStorage.getItem('token');
@@ -50,195 +50,214 @@ const Sidebar = () => {
   };
 
   return (
-    <aside className="w-64 bg-slate-200 min-h-screen p-6 flex flex-col">
-      <img src={Logo} alt="Wild Waves Kumana" className="w-40 mb-4 select-none" />
-      {/* <h1 className="text-xl pb-4 font-medium text-gray-600 mb-4"> {username} </h1> */}
-      <nav className="flex-1">
-        <ul className="space-y-6">
-          <li>
-            <NavLink
-              to={userRole === 'user' ? "/userdashboard": userRole === 'admin' ? "/admindashboard" : userRole === 'superadmin' ? "/superadmindashboard" : "/unauthorized"}
-              className={({ isActive }) =>
-                isActive
-                  ? " text-blue-600 flex items-center gap-4 dark:text-blue-400"
-                  : "text-gray-600 flex items-center gap-2 dark:text-slate-400"
-              }
-            >
-              <FaHome /> Dashboard
-            </NavLink>
-          </li>
-           {userRole === 'user' && (
-            <>
-              <li>
-                <NavLink
-                  to={`/user-profile/${userId}`}
-                  className={({ isActive }) =>
-                    isActive
-                      ? " text-blue-600 flex items-center gap-4 dark:text-blue-400"
-                      : "text-gray-600 flex items-center gap-2 dark:text-slate-400"
-                  }
-                >
-                  <FaUser /> Profile
-                </NavLink>
-              </li>
-              <li>
-                <NavLink
-                  to="/equipment"
-                  className={({ isActive }) =>
-                    isActive
-                      ? " text-blue-600 flex items-center gap-4 dark:text-blue-400"
-                      : "text-gray-600 flex items-center gap-2 dark:text-slate-400"
-                  }
-                >
-                  <FaUserFriends /> Equipments
-                </NavLink>
-              </li>
-              </>
-          )}
-          {userRole !== 'user' && (
-            <>
-
+    <>
+      {/* Overlay for all devices when sidebar is open */}
+      <div
+        className={`fixed inset-0  bg-opacity-40 z-30 transition-opacity duration-300 ${open ? 'opacity-100 visible' : 'opacity-0 invisible'}`}
+        onClick={() => setOpen(false)}
+        aria-hidden={!open}
+      />
+      <aside
+        className={`fixed top-0 left-0 z-40 h-full w-64 bg-slate-200 p-6 flex flex-col transition-transform duration-300
+          ${open ? 'translate-x-0' : '-translate-x-full'}`}
+      >
+        {/* Close button always visible */}
+        <button
+          className="absolute top-4 right-4 text-gray-600"
+          onClick={() => setOpen(false)}
+        >
+          ✕
+        </button>
+        <img src={Logo} alt="Wild Waves Kumana" className="w-40 mb-4 select-none" />
+        {/* <h1 className="text-xl pb-4 font-medium text-gray-600 mb-4"> {username} </h1> */}
+        <nav className="flex-1">
+          <ul className="space-y-6">
             <li>
-                <NavLink
-                  to="/company-profile"
-                  className={({ isActive }) =>
-                    isActive
-                      ? " text-blue-600 flex items-center gap-4 dark:text-blue-400"
-                      : "text-gray-600 flex items-center gap-2 dark:text-slate-400"
-                  }
-                >
-                  <FaUser /> Profile
-                </NavLink>
-              </li>
-              <li>
-                <NavLink
-                  to="/users"
-                  className={({ isActive }) =>
-                    isActive
-                      ? " text-blue-600 flex items-center gap-4 dark:text-blue-400"
-                      : "text-gray-600 flex items-center gap-2 dark:text-slate-400"
-                  }
-                >
-                  <FaUserFriends /> Users
-                </NavLink>
-              </li>
-              
+              <NavLink
+                to={userRole === 'user' ? "/userdashboard": userRole === 'admin' ? "/admindashboard" : userRole === 'superadmin' ? "/superadmindashboard" : "/unauthorized"}
+                className={({ isActive }) =>
+                  isActive
+                    ? " text-blue-600 flex items-center gap-4 dark:text-blue-400"
+                    : "text-gray-600 flex items-center gap-2 dark:text-slate-400"
+                }
+              >
+                <FaHome /> Dashboard
+              </NavLink>
+            </li>
+             {userRole === 'user' && (
+              <>
+                <li>
+                  <NavLink
+                    to={`/user-profile/${userId}`}
+                    className={({ isActive }) =>
+                      isActive
+                        ? " text-blue-600 flex items-center gap-4 dark:text-blue-400"
+                        : "text-gray-600 flex items-center gap-2 dark:text-slate-400"
+                    }
+                  >
+                    <FaUser /> Profile
+                  </NavLink>
+                </li>
+                <li>
+                  <NavLink
+                    to="/equipment"
+                    className={({ isActive }) =>
+                      isActive
+                        ? " text-blue-600 flex items-center gap-4 dark:text-blue-400"
+                        : "text-gray-600 flex items-center gap-2 dark:text-slate-400"
+                    }
+                  >
+                    <FaUserFriends /> Equipments
+                  </NavLink>
+                </li>
+                </>
+            )}
+            {userRole !== 'user' && (
+              <>
 
-              {/* <li>
-                <NavLink
-                  to="/doors"
-                  className={({ isActive }) =>
-                    isActive
-                      ? " text-blue-600 flex items-center gap-4 dark:text-blue-400"
-                      : "text-gray-600 flex items-center gap-2 dark:text-slate-400"
-                  }
-                >
-                  <FaDoorOpen /> Doors
-                </NavLink>
-              </li> */}
-            </>
-          )}
-          <li>
-                <NavLink
-                  to={userRole === 'user' ? "/food-menu" : userRole === 'admin' ? "/company-foods" : userRole === 'superadmin' ? "/company-foods" : "/unauthorized"}
-                  className={({ isActive }) =>
-                    isActive
-                      ? " text-blue-600 flex items-center gap-4 dark:text-blue-400"
-                      : "text-gray-600 flex items-center gap-2 dark:text-slate-400"
-                  }
-                >
-                  <FaUserFriends /> Foods
-                </NavLink>
-              </li>
 
-              {userRole !== 'user' && (
-            <>
               <li>
-                <NavLink
-                  to="/company-food-orders"
-                  className={({ isActive }) =>
-                    isActive
-                      ? " text-blue-600 flex items-center gap-4 dark:text-blue-400"
-                      : "text-gray-600 flex items-center gap-2 dark:text-slate-400"
-                  }
-                >
-                  <FaUserFriends /> Food Orders
-                </NavLink>
-              </li>
-            </>
-          )}
+                  <NavLink
+                    to="/company-profile"
+                    className={({ isActive }) =>
+                      isActive
+                        ? " text-blue-600 flex items-center gap-4 dark:text-blue-400"
+                        : "text-gray-600 flex items-center gap-2 dark:text-slate-400"
+                    }
+                  >
+                    <FaUser /> Profile
+                  </NavLink>
+                </li>
+                <li>
+                  <NavLink
+                    to="/users"
+                    className={({ isActive }) =>
+                      isActive
+                        ? " text-blue-600 flex items-center gap-4 dark:text-blue-400"
+                        : "text-gray-600 flex items-center gap-2 dark:text-slate-400"
+                    }
+                  >
+                    <FaUserFriends /> Users
+                  </NavLink>
+                </li>
+                
 
-          {userRole === 'superadmin' && (
-            <>
-              <li>
-                <NavLink
-                  to="/company-list"
-                  className={({ isActive }) =>
-                    isActive
-                      ? " text-blue-600 flex items-center gap-4 dark:text-blue-400"
-                  : "text-gray-600 flex items-center gap-2 dark:text-slate-400"
-                  }
-                >
-                  <FaUserFriends /> Companies
-                </NavLink>
-              </li>
-              <li>
-                <NavLink
-                  to="/admin-users"
-                  className={({ isActive }) =>
-                    isActive
-                      ? " text-blue-600 flex items-center gap-4 dark:text-blue-400"
-                  : "text-gray-600 flex items-center gap-2 dark:text-slate-400"
-                  }
-                >
-                  <FaUser /> Admins
-                </NavLink>
-              </li>
-            </>
-          )}
-          <li>
-                <NavLink
-                  to="/settings"
-                  className={({ isActive }) =>
-                    isActive
-                      ? " text-blue-600 flex items-center gap-4 dark:text-blue-400"
-                      : "text-gray-600 flex items-center gap-2 dark:text-slate-400"
-                  }
-                >
-                  <FaCog /> Settings
-                </NavLink>
-              </li>
-          <li>
-            <button
-              onClick={confirmLogout}
-              className="text-gray-600 flex items-center gap-2 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400"
-            >
-              <FaSignOutAlt /> Logout
-            </button>
-          </li>
-        </ul>
-      </nav>
+                {/* <li>
+                  <NavLink
+                    to="/doors"
+                    className={({ isActive }) =>
+                      isActive
+                        ? " text-blue-600 flex items-center gap-4 dark:text-blue-400"
+                        : "text-gray-600 flex items-center gap-2 dark:text-slate-400"
+                    }
+                  >
+                    <FaDoorOpen /> Doors
+                  </NavLink>
+                </li> */}
+              </>
+            )}
+            <li>
+                  <NavLink
+                    to={userRole === 'user' ? "/food-menu" : userRole === 'admin' ? "/company-foods" : userRole === 'superadmin' ? "/company-foods" : "/unauthorized"}
+                    className={({ isActive }) =>
+                      isActive
+                        ? " text-blue-600 flex items-center gap-4 dark:text-blue-400"
+                        : "text-gray-600 flex items-center gap-2 dark:text-slate-400"
+                    }
+                  >
+                    <FaUserFriends /> Foods
+                  </NavLink>
+                </li>
 
-      {/* Logout Confirmation Modal */}
-      <Modal isVisible={showLogoutModal} onClose={cancelLogout} width="w-full max-w-xs">
-          <h2 className="text-xl font-bold mb-4">Confirm Logout</h2>
-          <p className="mb-4">Are you sure you want to logout?</p>
-          <div className="flex justify-center space-x-4">
-            <button
-              onClick={cancelLogout}
-              className="px-4 py-2 bg-gray-300 text-slate-800 dark:bg-slate-600 dark:text-slate-200 rounded-lg hover:bg-gray-400"
-            >
-              Cancel
-            </button>
-            <button
-              onClick={handleLogout}
-              className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600"
-            >
-              Logout
-            </button>
-          </div>
-      </Modal>
-    </aside>
+                {userRole !== 'user' && (
+              <>
+                <li>
+                  <NavLink
+                    to="/company-food-orders"
+                    className={({ isActive }) =>
+                      isActive
+                        ? " text-blue-600 flex items-center gap-4 dark:text-blue-400"
+                        : "text-gray-600 flex items-center gap-2 dark:text-slate-400"
+                    }
+                  >
+                    <FaUserFriends /> Food Orders
+                  </NavLink>
+                </li>
+              </>
+            )}
+
+            {userRole === 'superadmin' && (
+              <>
+                <li>
+                  <NavLink
+                    to="/company-list"
+                    className={({ isActive }) =>
+                      isActive
+                        ? " text-blue-600 flex items-center gap-4 dark:text-blue-400"
+                    : "text-gray-600 flex items-center gap-2 dark:text-slate-400"
+                    }
+                  >
+                    <FaUserFriends /> Companies
+                  </NavLink>
+                </li>
+                <li>
+                  <NavLink
+                    to="/admin-users"
+                    className={({ isActive }) =>
+                      isActive
+                        ? " text-blue-600 flex items-center gap-4 dark:text-blue-400"
+                    : "text-gray-600 flex items-center gap-2 dark:text-slate-400"
+                    }
+                  >
+                    <FaUser /> Admins
+                  </NavLink>
+                </li>
+              </>
+            )}
+            <li>
+                  <NavLink
+                    to="/settings"
+                    className={({ isActive }) =>
+                      isActive
+                        ? " text-blue-600 flex items-center gap-4 dark:text-blue-400"
+                        : "text-gray-600 flex items-center gap-2 dark:text-slate-400"
+                    }
+                  >
+                    <FaCog /> Settings
+                  </NavLink>
+                </li>
+            <li>
+              <button
+                onClick={confirmLogout}
+                className="text-gray-600 flex items-center gap-2 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400"
+              >
+                <FaSignOutAlt /> Logout
+              </button>
+            </li>
+          </ul>
+        </nav>
+
+        {/* Logout Confirmation Modal */}
+        <Modal isVisible={showLogoutModal} onClose={cancelLogout} width="w-full max-w-xs">
+            <h2 className="text-xl font-bold mb-4">Confirm Logout</h2>
+            <p className="mb-4">Are you sure you want to logout?</p>
+            <div className="flex justify-center space-x-4">
+              <button
+                onClick={cancelLogout}
+                className="px-4 py-2 bg-gray-300 text-slate-800 dark:bg-slate-600 dark:text-slate-200 rounded-lg hover:bg-gray-400"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleLogout}
+                className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600"
+              >
+                Logout
+              </button>
+            </div>
+        </Modal>
+      </aside>
+    </>
   );
 };
 
