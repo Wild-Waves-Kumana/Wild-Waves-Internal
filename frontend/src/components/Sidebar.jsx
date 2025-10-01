@@ -13,7 +13,7 @@ import {jwtDecode} from 'jwt-decode';
 import Modal from "./common/Modal";
 import Logo from "../assets/logo.png";
 
-const Sidebar = ({ open, setOpen }) => {
+const Sidebar = ({ open, setOpen, confirmLogout }) => {
   const [showLogoutModal, setShowLogoutModal] = useState(false);
   const navigate = useNavigate();
   const token = localStorage.getItem('token');
@@ -39,10 +39,6 @@ const Sidebar = ({ open, setOpen }) => {
   const handleLogout = () => {
     logout();
     navigate('/');
-  };
-
-  const confirmLogout = () => {
-    setShowLogoutModal(true);
   };
 
   const cancelLogout = () => {
