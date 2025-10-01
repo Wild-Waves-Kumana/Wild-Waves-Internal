@@ -22,14 +22,20 @@ const Layout = ({ children }) => {
   const confirmLogout = () => setShowLogoutModal(true);
   const cancelLogout = () => setShowLogoutModal(false);
 
+  // Responsive sidebar push: only on md and up
+  const sidebarPushStyle = {
+    marginLeft:
+      sidebarOpen && window.innerWidth >= 768 // md breakpoint
+        ? SIDEBAR_WIDTH
+        : 0,
+  };
+
   return (
-    <div className="relative min-h-screen">
+    <div className="relative min-h-screen overflow-x-hidden">
       <Sidebar open={sidebarOpen} setOpen={setSidebarOpen} confirmLogout={confirmLogout} />
       <div
         className="transition-all duration-300"
-        style={{
-          marginLeft: sidebarOpen ? SIDEBAR_WIDTH : 0,
-        }}
+        style={sidebarPushStyle}
       >
         <Navbar setSidebarOpen={setSidebarOpen} />
         <main className="p-6 bg-gray-100">{children}</main>
