@@ -5,6 +5,8 @@ import LogoutModal from './modals/LogoutModal';
 import { UserContext } from '../context/UserContext';
 import { useNavigate } from 'react-router-dom';
 
+const SIDEBAR_WIDTH = 256; // 64 * 4 (Tailwind w-64 = 16rem = 256px)
+
 const Layout = ({ children }) => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [showLogoutModal, setShowLogoutModal] = useState(false);
@@ -21,17 +23,17 @@ const Layout = ({ children }) => {
   const cancelLogout = () => setShowLogoutModal(false);
 
   return (
-    <div className="flex min-h-screen">
-      <Sidebar
-        open={sidebarOpen}
-        setOpen={setSidebarOpen}
-        confirmLogout={confirmLogout}
-      />
-      <div className="flex flex-col flex-1">
+    <div className="relative min-h-screen">
+      <Sidebar open={sidebarOpen} setOpen={setSidebarOpen} confirmLogout={confirmLogout} />
+      <div
+        className="transition-all duration-300"
+        style={{
+          marginLeft: sidebarOpen ? SIDEBAR_WIDTH : 0,
+        }}
+      >
         <Navbar setSidebarOpen={setSidebarOpen} />
-        <main className="flex-1 p-6 bg-gray-100">{children}</main>
+        <main className="p-6 bg-gray-100">{children}</main>
       </div>
-      {/* Global Logout Modal */}
       <LogoutModal
         isVisible={showLogoutModal}
         onClose={cancelLogout}

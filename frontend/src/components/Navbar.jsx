@@ -70,8 +70,7 @@ const Navbar = ({ setSidebarOpen }) => {
         </button>
 
         {/* Logo Section */}
-        <div className="flex items-center gap-3">
-          
+        <div className="flex items-center gap-3 flex-1">
           <div className="flex flex-col">
             <h1 className="text-2xl font-bold text-white tracking-tight">
               Wild Waves
