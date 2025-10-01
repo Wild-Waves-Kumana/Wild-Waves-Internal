@@ -49,7 +49,7 @@ const Sidebar = ({ open, setOpen, confirmLogout }) => {
     <>
       {/* Overlay for all devices when sidebar is open */}
       <div
-        className={`fixed inset-0  bg-opacity-40 z-30 transition-opacity duration-300 ${open ? 'opacity-100 visible' : 'opacity-0 invisible'}`}
+        className={`fixed inset-0  bg-opacity-40  transition-opacity duration-300 ${open ? 'opacity-100 visible' : 'opacity-0 invisible'}`}
         onClick={() => setOpen(false)}
         aria-hidden={!open}
       />
