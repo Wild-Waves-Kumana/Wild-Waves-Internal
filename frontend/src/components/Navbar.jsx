@@ -1,89 +1,140 @@
-import React from "react";
+import React, { useEffect, useState, useMemo } from "react";
+import axios from "axios";
 import { jwtDecode } from "jwt-decode";
-import { User, Shield, Waves, ShoppingCart } from "lucide-react"; // <-- add ShoppingCart
-import { useNavigate } from "react-router-dom";
+import { User, Shield, ShoppingCart, Menu } from "lucide-react";
+import { useNavigate, NavLink } from "react-router-dom";
 
-const Navbar = () => {
+const ROLE_CONFIG = {
+  superadmin: {
+    color: "text-red-100 bg-red-500/20",
+    icon: <Shield size={16} />,
+    background: "bg-gradient-to-r from-indigo-500 via-blue-500 to-cyan-400",
+    dashboard: "/superadmindashboard",
+    label: "Super Admin",
+  },
+  admin: {
+    color: "text-orange-100 bg-orange-500/20",
+    icon: <Shield size={16} />,
+    background: "bg-gradient-to-r from-cyan-400 via-sky-600 to-blue-700",
+    dashboard: "/admindashboard",
+  },
+  user: {
+    color: "text-green-100 bg-green-500/20",
+    icon: <User size={16} />,
+    background: "bg-gradient-to-r from-blue-400 via-cyan-600 to-emerald-500",
+    dashboard: "/userdashboard",
+  },
+  default: {
+    color: "text-gray-100 bg-gray-500/20",
+    icon: <User size={16} />,
+    background: "bg-gradient-to-r from-blue-400 via-indigo-800 to-cyan-700",
+    dashboard: "/unauthorized",
+  },
+};
+
+const Navbar = ({ setSidebarOpen }) => {
   const token = localStorage.getItem("token");
-  let username = "";
-  let role = "";
   const navigate = useNavigate();
 
-  if (token) {
+  // Decode token
+  const { username, role, userId } = useMemo(() => {
+    if (!token) return { username: "", role: "", userId: "" };
     try {
       const decoded = jwtDecode(token);
-      username = decoded.username;
-      role = decoded.role;
+      return {
+        username: decoded.username || "",
+        role: decoded.role || "",
+        userId: decoded._id || decoded.id || "",
+      };
     } catch {
-      username = "";
-      role = "";
+      return { username: "", role: "", userId: "" };
     }
-  }
+  }, [token]);
 
-  // Get role color, icon, and background gradient
-  const getRoleConfig = (userRole) => {
-    switch (userRole.toLowerCase()) {
-      case 'superadmin':
-        return { 
-          color: 'text-red-100 bg-red-500/20', 
-          icon: <Shield size={16} />,
-          background: 'bg-gradient-to-r from-indigo-500 via-blue-500 to-cyan-400'
-        };
-      case 'admin':
-        return { 
-          color: 'text-orange-100 bg-orange-500/20', 
-          icon: <Shield size={16} />,
-          background: 'bg-gradient-to-r from-cyan-400 via-sky-600 to-blue-700'
-        };
-      case 'user':
-        return { 
-          color: 'text-green-100 bg-green-500/20', 
-          icon: <User size={16} />,
-          background: 'bg-gradient-to-r from-blue-400 via-cyan-600 to-emerald-500'
-        };
-      default:
-        return { 
-          color: 'text-gray-100 bg-gray-500/20', 
-          icon: <User size={16} />,
-          background: 'bg-gradient-to-r from-blue-400 via-indigo-800 to-cyan-700'
-        };
-    }
-  };
+  // State for company info
+  const [companyId, setCompanyId] = useState("");
+  const [companyName, setCompanyName] = useState("");
 
-  const roleConfig = getRoleConfig(role);
+  // Get companyId from user/admin
+  useEffect(() => {
+    if (!userId) return;
+    const endpoint =
+      role === "admin" || role === "superadmin"
+        ? `/api/admin/${userId}`
+        : `/api/users/${userId}`;
+    axios
+      .get(endpoint)
+      .then((res) => {
+        const companyObj = res.data.companyId;
+        setCompanyId(
+          companyObj && typeof companyObj === "object"
+            ? companyObj._id
+            : companyObj || ""
+        );
+      })
+      .catch(() => setCompanyId(""));
+  }, [userId, role]);
+
+  // Get companyName from companyId
+  useEffect(() => {
+    if (!companyId || role === "superadmin") return;
+    axios
+      .get(`/api/company/${companyId}`)
+      .then((res) => setCompanyName(res.data.companyName || ""))
+      .catch(() => setCompanyName(""));
+  }, [companyId, role]);
+
+  // Get config for current role
+  const roleKey = role?.toLowerCase() || "default";
+  const roleConfig = ROLE_CONFIG[roleKey] || ROLE_CONFIG.default;
+  const dashboardRoute = roleConfig.dashboard;
 
   return (
     <nav className={`relative ${roleConfig.background} shadow-lg`}>
       {/* Background Pattern */}
-      <div className="absolute inset-0 opacity-10">
+      <div className="absolute inset-0 opacity-10 pointer-events-none">
         <div className="absolute inset-0 bg-gradient-to-r from-white/20 to-transparent"></div>
       </div>
-      
+
       <div className="relative flex items-center justify-between px-6 py-4">
+        {/* Hamburger for sidebar */}
+        <button
+          className="p-2 mr-2"
+          onClick={() => setSidebarOpen((open) => !open)}
+          aria-label="Open sidebar"
+        >
+          <Menu size={28} className="text-white" />
+        </button>
+
         {/* Logo Section */}
-        <div className="flex items-center gap-3">
-          
+        <div className="flex items-center gap-3 flex-1">
           <div className="flex flex-col">
-            <h1 className="text-2xl font-bold text-white tracking-tight">
-              Wild Waves
-            </h1>
-            <p className="text-blue-100 text-xs font-medium">Smart Home Control</p>
+            <NavLink to={dashboardRoute}>
+              <h1 className="text-2xl font-bold text-white tracking-tight cursor-pointer hover:underline">
+                {role === "superadmin"
+                  ? roleConfig.label
+                  : companyName || "Wild Waves"}
+              </h1>
+            </NavLink>
+            <p className="text-blue-100 text-xs font-medium">
+              Smart Home Control
+            </p>
           </div>
         </div>
 
         {/* User Info Section */}
         <div className="flex items-center gap-4">
           {role && (
-            <div className={`flex items-center gap-2 px-3 py-2 rounded-full border ${roleConfig.color} border-white/20 backdrop-blur-sm`}>
+            <div
+              className={`flex items-center gap-2 px-3 py-2 rounded-full border ${roleConfig.color} border-white/20 backdrop-blur-sm`}
+            >
               {roleConfig.icon}
-              <span className="text-sm font-medium capitalize">
-                {role}
-              </span>
+              <span className="text-sm font-medium capitalize">{role}</span>
             </div>
           )}
 
           {/* Cart Button for user role */}
-          {role && role.toLowerCase() === "user" && (
+          {roleKey === "user" && (
             <button
               className="flex items-center gap-2 px-3 py-2 rounded-full bg-white/20 hover:bg-white/30 border border-white/20 text-white transition"
               title="View Cart"
@@ -103,14 +154,10 @@ const Navbar = () => {
                 <span className="text-white text-sm font-medium">
                   {username}
                 </span>
-                <span className="text-blue-100 text-xs">
-                  Welcome back
-                </span>
+                <span className="text-blue-100 text-xs">Welcome back</span>
               </div>
             </div>
           )}
-
-         
         </div>
       </div>
 
