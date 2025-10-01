@@ -1,9 +1,9 @@
 import React from "react";
 import { jwtDecode } from "jwt-decode";
-import { User, Shield, Waves, ShoppingCart } from "lucide-react"; // <-- add ShoppingCart
+import { User, Shield, Waves, ShoppingCart, Menu } from "lucide-react"; // <-- add Menu icon
 import { useNavigate } from "react-router-dom";
 
-const Navbar = () => {
+const Navbar = ({ setSidebarOpen }) => {
   const token = localStorage.getItem("token");
   let username = "";
   let role = "";
@@ -22,7 +22,7 @@ const Navbar = () => {
 
   // Get role color, icon, and background gradient
   const getRoleConfig = (userRole) => {
-    switch (userRole.toLowerCase()) {
+    switch (userRole?.toLowerCase()) {
       case 'superadmin':
         return { 
           color: 'text-red-100 bg-red-500/20', 
@@ -60,6 +60,15 @@ const Navbar = () => {
       </div>
       
       <div className="relative flex items-center justify-between px-6 py-4">
+        {/* Hamburger for sidebar (always visible) */}
+        <button
+          className="p-2 mr-2"
+          onClick={() => setSidebarOpen(open => !open)}
+          aria-label="Open sidebar"
+        >
+          <Menu size={28} className="text-white" />
+        </button>
+
         {/* Logo Section */}
         <div className="flex items-center gap-3">
           
@@ -109,8 +118,6 @@ const Navbar = () => {
               </div>
             </div>
           )}
-
-         
         </div>
       </div>
 
