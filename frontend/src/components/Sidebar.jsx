@@ -1,11 +1,15 @@
 import React from "react";
 import {
   FaCog,
-  FaDoorOpen,
   FaHome,
   FaSignOutAlt,
   FaUser,
-  FaUserFriends,
+  FaUsers,
+  FaTools,
+  FaUtensils,
+  FaShoppingCart,
+  FaBuilding,
+  FaUserShield,
 } from "react-icons/fa";
 import { NavLink} from "react-router-dom";
 import { UserContext } from '../context/UserContext';
@@ -29,11 +33,6 @@ const Sidebar = ({ open, setOpen, confirmLogout }) => {
       userId = null;
     }
   }
-
- 
-
- 
-  
 
   return (
     <>
@@ -124,7 +123,7 @@ const Sidebar = ({ open, setOpen, confirmLogout }) => {
                         }`
                       }
                     >
-                      <FaUserFriends className="text-lg" /> 
+                      <FaTools className="text-lg" /> 
                       <span className="font-medium">Equipments</span>
                     </NavLink>
                   </li>
@@ -144,7 +143,7 @@ const Sidebar = ({ open, setOpen, confirmLogout }) => {
                         }`
                       }
                     >
-                      <FaUser className="text-lg" /> 
+                      <FaBuilding className="text-lg" /> 
                       <span className="font-medium">Profile</span>
                     </NavLink>
                   </li>
@@ -159,7 +158,7 @@ const Sidebar = ({ open, setOpen, confirmLogout }) => {
                         }`
                       }
                     >
-                      <FaUserFriends className="text-lg" /> 
+                      <FaUsers className="text-lg" /> 
                       <span className="font-medium">Users</span>
                     </NavLink>
                   </li>
@@ -177,7 +176,7 @@ const Sidebar = ({ open, setOpen, confirmLogout }) => {
                     }`
                   }
                 >
-                  <FaUserFriends className="text-lg" /> 
+                  <FaUtensils className="text-lg" /> 
                   <span className="font-medium">Foods</span>
                 </NavLink>
               </li>
@@ -194,7 +193,7 @@ const Sidebar = ({ open, setOpen, confirmLogout }) => {
                       }`
                     }
                   >
-                    <FaUserFriends className="text-lg" /> 
+                    <FaShoppingCart className="text-lg" /> 
                     <span className="font-medium">Food Orders</span>
                   </NavLink>
                 </li>
@@ -213,7 +212,7 @@ const Sidebar = ({ open, setOpen, confirmLogout }) => {
                         }`
                       }
                     >
-                      <FaUserFriends className="text-lg" /> 
+                      <FaBuilding className="text-lg" /> 
                       <span className="font-medium">Companies</span>
                     </NavLink>
                   </li>
@@ -228,7 +227,7 @@ const Sidebar = ({ open, setOpen, confirmLogout }) => {
                         }`
                       }
                     >
-                      <FaUser className="text-lg" /> 
+                      <FaUserShield className="text-lg" /> 
                       <span className="font-medium">Admins</span>
                     </NavLink>
                   </li>
