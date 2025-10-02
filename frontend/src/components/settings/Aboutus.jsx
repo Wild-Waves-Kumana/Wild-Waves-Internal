@@ -9,7 +9,7 @@ const Aboutus = () => (
       [&::-webkit-scrollbar-track]:bg-gray-100
       [&::-webkit-scrollbar-thumb]:rounded-full
       [&::-webkit-scrollbar-thumb]:bg-gray-300"
-    style={{ height: "calc(100vh - 200px)" }}
+    //style={{ height: "calc(100vh - 200px)" }}
   >
     <h2 className="text-2xl font-bold text-blue-700 mb-4">About Us</h2>
     
@@ -26,7 +26,7 @@ const Aboutus = () => (
       Our vision is to deliver a secure, user-friendly, and efficient smart home system that simplifies management for everyone. By integrating modern technologies, we aim to help users enhance security, streamline daily operations, and transition to a more digital lifestyle.
     </p>
     <h3 className="text-lg font-semibold text-gray-800 mb-3">Meet the Developers</h3>
-    <div className="mt-8 text-gray-700">
+    <div className="mt-6 text-gray-700">
       For more information, support, or partnership inquiries, please contact us at{" "}
       <a href="mailto:support@wildwaves.com" className="text-blue-600 underline">
         support@wildwaves.com
