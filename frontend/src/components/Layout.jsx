@@ -38,7 +38,7 @@ const Layout = ({ children }) => {
         style={sidebarPushStyle}
       >
         <Navbar setSidebarOpen={setSidebarOpen} />
-        <main className="p-6 bg-gray-100">{children}</main>
+        <main className="p-6 bg-gray-100 ">{children}</main>
       </div>
       <LogoutModal
         isVisible={showLogoutModal}
