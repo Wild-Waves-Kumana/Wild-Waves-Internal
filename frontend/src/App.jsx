@@ -30,6 +30,7 @@ import UserFoodProfile from './pages/food-pages/UserFoodProfile';
 import UserFoodCart from './pages/food-pages/UserFoodCart';
 import UserFoodOrders from './pages/food-pages/UserFoodOrders'; 
 import CompanyFoodOrders from './pages/food-pages/CompanyFoodOrders'; 
+import Settings from './pages/Settings';
 
 function App() {
   const { isLoggedIn, login, role } = useContext(UserContext);
@@ -311,6 +312,17 @@ function App() {
           <ProtectedRoute allowedRoles={['admin', 'superadmin']}>
             <Layout>
               <Users/>
+            </Layout>
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/settings"
+        element={
+          <ProtectedRoute allowedRoles={['user', 'admin', 'superadmin']}>
+            <Layout>
+              <Settings />
             </Layout>
           </ProtectedRoute>
         }

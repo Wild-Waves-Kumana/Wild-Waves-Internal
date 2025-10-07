@@ -8,8 +8,8 @@ const AdminDashboard = () => {
   const { username } = useContext(UserContext);
 
   return (
-    <div className="min-h-screen w-full ">
-      <div className="max-w-6xl mx-auto px-4 py-12">
+    <div className=" w-full ">
+      <div className="max-w-6xl mx-auto px-4 ">
         <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-10">
           <div>
             <h1 className="text-3xl md:text-4xl font-bold text-blue-800 mb-2">Admin Dashboard</h1>
