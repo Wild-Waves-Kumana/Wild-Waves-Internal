@@ -4,6 +4,7 @@ import { jwtDecode } from "jwt-decode";
 import axios from "axios";
 import VillaList from "../components/lists/VillaList";
 import EditAdminModal from "../components/modals/EditAdminModal";
+import Toaster from "../components/common/Toaster";
 
 const CompanyProfile = () => {
   const [admin, setAdmin] = useState(null);
@@ -13,10 +14,25 @@ const CompanyProfile = () => {
   const [editForm, setEditForm] = useState({
     username: "",
     email: "",
-    password: "",
+    oldPassword: "",
+    newPassword: "",
+    confirmPassword: "",
+  });
+  const [passwordError, setPasswordError] = useState("");
+  const [toast, setToast] = useState({
+    show: false,
+    message: "",
+    type: "info",
   });
   const { adminId } = useParams();
 
+  const showToast = (message, type = "info") => {
+    setToast({ show: true, message, type });
+  };
+
+  const hideToast = () => {
+    setToast((prev) => ({ ...prev, show: false }));
+  };
 
   useEffect(() => {
     const token = localStorage.getItem("token");
@@ -60,15 +76,16 @@ const CompanyProfile = () => {
     fetchAdmin();
   }, [adminId]);
 
-  
-
   // Open edit modal and fill form with current admin data
   const handleEditClick = () => {
     setEditForm({
       username: admin.username || "",
       email: admin.email || "",
-      password: "",
+      oldPassword: "",
+      newPassword: "",
+      confirmPassword: "",
     });
+    setPasswordError("");
     setShowEditModal(true);
   };
 
@@ -80,10 +97,44 @@ const CompanyProfile = () => {
     }));
   };
 
+  const isPasswordValid = (password) => {
+    const lengthCheck = password.length >= 8;
+    const numberCheck = /\d/.test(password);
+    const symbolCheck = /[!@#$%^&*(),.?":{}|<>]/.test(password);
+    return lengthCheck && numberCheck && symbolCheck;
+  };
+
   // Submit edit form
   const handleEditSubmit = async (e) => {
     e.preventDefault();
-    console.log("Updating admin with ID:", admin._id); // <-- Add this line
+
+    // Check if password is being changed
+    const isChangingPassword =
+      editForm.oldPassword || editForm.newPassword || editForm.confirmPassword;
+
+    // Password validation logic
+    if (isChangingPassword) {
+      if (
+        !editForm.oldPassword ||
+        !editForm.newPassword ||
+        !editForm.confirmPassword
+      ) {
+        setPasswordError("All password fields are required.");
+        return;
+      }
+      if (editForm.newPassword !== editForm.confirmPassword) {
+        setPasswordError("New passwords do not match.");
+        return;
+      }
+      if (!isPasswordValid(editForm.newPassword)) {
+        setPasswordError(
+          "Password must be at least 8 characters, include a number and a symbol."
+        );
+        return;
+      }
+    }
+    setPasswordError(""); // Clear error if all is good
+
     try {
       await axios.put(`/api/admin/${admin._id}`, editForm);
       setAdmin((prev) => ({
@@ -92,9 +143,18 @@ const CompanyProfile = () => {
         email: editForm.email,
       }));
       setShowEditModal(false);
+
+      // Show success toast
+      if (isChangingPassword) {
+        showToast("Password updated successfully!", "success");
+      } else {
+        showToast("Profile updated successfully!", "success");
+      }
     } catch (err) {
-      console.error(err);
-      alert("Failed to update admin details.");
+      const errorMessage =
+        err.response?.data?.message || "Failed to update admin details.";
+      setPasswordError(errorMessage);
+      showToast(errorMessage, "error");
     }
   };
 
@@ -106,12 +166,18 @@ const CompanyProfile = () => {
       <div className="bg-white shadow rounded p-6 mb-8 flex justify-between items-start">
         <div>
           <h2 className="text-2xl font-bold mb-4">Admin Profile</h2>
-          <div className="mb-2"><strong>Username:</strong> {admin.username}</div>
-          <div className="mb-2"><strong>Email:</strong> {admin.email}</div>
+          <div className="mb-2">
+            <strong>Username:</strong> {admin.username}
+          </div>
+          <div className="mb-2">
+            <strong>Email:</strong> {admin.email}
+          </div>
           <div className="mb-2">
             <strong>Company:</strong>{" "}
             {admin.companyId && typeof admin.companyId === "object"
-              ? `${admin.companyId.companyName} (${admin.companyId.companyId || admin.companyId._id})`
+              ? `${admin.companyId.companyName} (${
+                  admin.companyId.companyId || admin.companyId._id
+                })`
               : admin.companyId || "N/A"}
           </div>
         </div>
@@ -138,16 +204,30 @@ const CompanyProfile = () => {
         editForm={editForm}
         handleEditChange={handleEditChange}
         handleEditSubmit={handleEditSubmit}
+        passwordError={passwordError}
+      />
+
+      {/* Toast Notification */}
+      <Toaster
+        message={toast.message}
+        type={toast.type}
+        isVisible={toast.show}
+        onClose={hideToast}
+        duration={5000}
+        position="top-right"
       />
 
       {/* Other admins in the same company */}
       {otherAdmins.length > 0 && (
         <div className="bg-white shadow rounded p-6 mb-8">
-          <h3 className="text-xl font-semibold mb-2">Other Admins in Your Company</h3>
+          <h3 className="text-xl font-semibold mb-2">
+            Other Admins in Your Company
+          </h3>
           <ul className="list-disc pl-6">
             {otherAdmins.map((a) => (
               <li key={a._id} className="mb-1">
-                <span className="font-medium">{a.username}</span> — <span className="text-blue-700">{a.email}</span>
+                <span className="font-medium">{a.username}</span> —{" "}
+                <span className="text-blue-700">{a.email}</span>
               </li>
             ))}
           </ul>
