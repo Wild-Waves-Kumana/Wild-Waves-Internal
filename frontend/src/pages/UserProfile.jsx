@@ -11,6 +11,7 @@ import ReusableTable from "../components/common/ReusableTable";
 import UserFoodOrdersList from "../components/lists/UserFoodOrdersList";
 import profileicon from '../assets/profile-icon.png';  
 import { Building2, Home, CalendarDays, User, Pencil, Trash2, DoorClosed, DoorOpen } from "lucide-react";
+import Toaster from "../components/common/Toaster";
 
 const UserProfile = () => {
   const { userId } = useParams();
@@ -32,7 +33,19 @@ const UserProfile = () => {
   const [selectedRoomId, setSelectedRoomId] = useState(""); // for room filter
   const [userOrders, setUserOrders] = useState([]);
   const [userOrdersLoading, setUserOrdersLoading] = useState(true);
- 
+  const [toast, setToast] = useState({
+    show: false,
+    message: '',
+    type: 'info'
+  });
+
+  // Toast helpers
+  const showToast = (message, type = 'info') => {
+    setToast({ show: true, message, type });
+  };
+  const hideToast = () => {
+    setToast(prev => ({ ...prev, show: false }));
+  };
 
   // Fetch user, companies, villas, and all rooms
   useEffect(() => {
@@ -41,7 +54,6 @@ const UserProfile = () => {
       try {
         const decoded = jwtDecode(token);
         setRole(decoded.role);
-        //setRole(decoded.role);
       } catch {
         setRole('');
       }
@@ -141,9 +153,10 @@ const UserProfile = () => {
       // Refetch user data
       const res = await axios.get(`/api/users/${userId}`);
       setUser(res.data);
+      showToast("User updated successfully!", "success");
     } catch (err) {
       console.error('Failed to update user:', err);
-      alert("Failed to update user.");
+      showToast("Failed to update user.", "error");
     }
   };
 
@@ -368,6 +381,15 @@ const UserProfile = () => {
 
       </div>
 
+      {/* Toast Notification */}
+      <Toaster
+        message={toast.message}
+        type={toast.type}
+        isVisible={toast.show}
+        onClose={hideToast}
+        duration={5000}
+        position="top-right"
+      />
 
       <EditUserModal
         isVisible={showEditModal}
