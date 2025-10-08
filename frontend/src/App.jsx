@@ -18,7 +18,7 @@ import EquipmentUser from './pages/EquipmentUser';
 import UserProfile from './pages/UserProfile';
 import CompanyProfile from './pages/CompanyProfile';
 import CreateCompany from './pages/create-pages/CreateCompany';
-import CompanyList from './pages/CompanyList';
+import CompanyDashboard from './pages/CompanyDashboard';
 import CreateVilla from './pages/create-pages/CreateVilla';
 import VillaProfile from './pages/VillaProfile';
 import UserFaceRegistration from './pages/UserFaceRegistration';
@@ -30,6 +30,7 @@ import UserFoodProfile from './pages/food-pages/UserFoodProfile';
 import UserFoodCart from './pages/food-pages/UserFoodCart';
 import UserFoodOrders from './pages/food-pages/UserFoodOrders'; 
 import CompanyFoodOrders from './pages/food-pages/CompanyFoodOrders'; 
+import SuperAdminProfile from './pages/SuperAdminProfile';
 import Settings from './pages/Settings';
 
 function App() {
@@ -80,11 +81,11 @@ function App() {
         }
       />
       <Route
-        path="/company-list"
+        path="/company-dashboard"
         element={
           <ProtectedRoute allowedRoles={['superadmin']}>
             <Layout>
-              <CompanyList />
+              <CompanyDashboard />
             </Layout>
             
           </ProtectedRoute>
@@ -254,11 +255,22 @@ function App() {
       />
 
       <Route
-        path="/company-profile"
+        path="/company-profile/:companyId"
         element={
           <ProtectedRoute allowedRoles={['admin', 'superadmin']}>
             <Layout>
               <CompanyProfile />
+            </Layout>
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/superadmin-profile"
+        element={
+          <ProtectedRoute allowedRoles={['superadmin']}>
+            <Layout>
+              <SuperAdminProfile />
             </Layout>
           </ProtectedRoute>
         }
