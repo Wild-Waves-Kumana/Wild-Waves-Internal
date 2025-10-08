@@ -114,7 +114,7 @@ const Sidebar = ({ open, setOpen, confirmLogout }) => {
               </li>
               <li>
                     <NavLink
-                      to={userRole === 'user' ? `/user-profile/${userId}` : userRole === 'admin' ? `/company-profile/${companyId}` : userRole === 'superadmin' ? `/superadmin-profile/` : "/unauthorized"}
+                      to={userRole === 'user' ? `/user-profile/${userId}` : userRole === 'admin' ? `/admin-profile/${companyId}` : userRole === 'superadmin' ? `/superadmin-profile/` : "/unauthorized"}
                       className={({ isActive }) =>
                         `flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 ${
                           isActive
