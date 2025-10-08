@@ -120,7 +120,7 @@ const VillaList = ({ companyId: propCompanyId }) => {
   ], [rooms, openDropdown, navigate]);
 
   return (
-    <div className="mx-auto mt-10 bg-white shadow rounded p-6">
+    <div className="mx-auto mt-6 bg-white shadow rounded p-6">
       <h2 className="text-2xl font-bold mb-4">
         Villas {villas.length > 0 && `(Total: ${villas.length})`}
       </h2>
