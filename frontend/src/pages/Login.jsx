@@ -4,11 +4,18 @@ import axios from "axios";
 import { FaUser, FaLock } from "react-icons/fa";
 import Logo from "../assets/logo.png";
 import VillaImg from "../assets/login.jpg";
+import Toaster from "../components/common/Toaster";
 
 const Login = ({ onLogin }) => {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
+  const [toast, setToast] = useState({ show: false, message: "", type: "error" });
   const navigate = useNavigate();
+
+  const showToast = (message, type = "error") => {
+    setToast({ show: true, message, type });
+  };
+  const hideToast = () => setToast(prev => ({ ...prev, show: false }));
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -17,8 +24,6 @@ const Login = ({ onLogin }) => {
         username,
         password,
       });
-      console.log(res.data);
-
       const { token, user } = res.data;
       const { role } = user;
 
@@ -36,7 +41,7 @@ const Login = ({ onLogin }) => {
         navigate("/unauthorized");
       }
     } catch (err) {
-      alert(err.response?.data?.message || "Login failed");
+      showToast(err.response?.data?.message || "Login failed", "error");
     }
   };
 
@@ -109,6 +114,15 @@ const Login = ({ onLogin }) => {
           className="object-cover w-full h-full select-none"
         />
       </div>
+      {/* Toaster for error messages */}
+      <Toaster
+        message={toast.message}
+        type={toast.type}
+        isVisible={toast.show}
+        onClose={hideToast}
+        duration={4000}
+        position="top-right"
+      />
     </div>
   );
 };
