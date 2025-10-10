@@ -101,16 +101,12 @@ const AdminProfile = () => {
 
     // Check if password is being changed
     const isChangingPassword =
-      editForm.currentPassword || editForm.newPassword || editForm.confirmPassword;
+      editForm.newPassword || editForm.confirmPassword;
 
     // Password validation logic
     if (isChangingPassword) {
-      if (
-        !editForm.currentPassword ||
-        !editForm.newPassword ||
-        !editForm.confirmPassword
-      ) {
-        setPasswordError("All password fields are required.");
+      if (!editForm.newPassword || !editForm.confirmPassword) {
+        setPasswordError("New password and confirmation are required.");
         return;
       }
       if (editForm.newPassword !== editForm.confirmPassword) {
