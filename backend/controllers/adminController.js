@@ -29,7 +29,7 @@ export const getAllAdmins = async (req, res) => {
 // Update admin details (username, email, password)
 export const updateAdmin = async (req, res) => {
   try {
-    const { username, email, oldPassword, newPassword, confirmPassword } = req.body;
+    const { username, email, currentPassword, newPassword, confirmPassword } = req.body;
     const updateFields = {};
     if (username) updateFields.username = username;
     if (email) updateFields.email = email;
@@ -41,18 +41,23 @@ export const updateAdmin = async (req, res) => {
     }
 
     // Handle password change
-    if (oldPassword || newPassword || confirmPassword) {
-      if (!oldPassword || !newPassword || !confirmPassword) {
-        return res.status(400).json({ message: 'All password fields are required.' });
+    if (newPassword || confirmPassword) {
+      // If currentPassword is provided, validate it (normal change)
+      if (currentPassword) {
+        const isMatch = await bcrypt.compare(currentPassword, admin.password);
+        if (!isMatch) {
+          return res.status(400).json({ message: 'Current password is incorrect.' });
+        }
       }
-      // Check old password
-      const isMatch = await bcrypt.compare(oldPassword, admin.password);
-      if (!isMatch) {
-        return res.status(400).json({ message: 'Old password is incorrect.' });
+      // If no currentPassword, it's a reset (allowed)
+      
+      if (!newPassword || !confirmPassword) {
+        return res.status(400).json({ message: 'New password and confirmation are required.' });
       }
       if (newPassword !== confirmPassword) {
         return res.status(400).json({ message: 'New passwords do not match.' });
       }
+      
       // Hash new password
       const salt = await bcrypt.genSalt(10);
       updateFields.password = await bcrypt.hash(newPassword, salt);

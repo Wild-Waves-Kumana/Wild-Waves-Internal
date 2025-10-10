@@ -1,13 +1,13 @@
-import React, { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
-import { jwtDecode } from "jwt-decode";
-import axios from "axios";
-import VillaList from "../components/lists/VillaList";
-import EditAdminModal from "../components/modals/EditAdminModal";
-import Toaster from "../components/common/Toaster";
+import React, { useEffect, useState } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
+import axios from 'axios';
+import VillaList from '../components/lists/VillaList';
+import ReusableTable from '../components/common/ReusableTable';
+import EditAdminModal from '../components/modals/EditAdminModal';
 
 const CompanyProfile = () => {
-  const [admin, setAdmin] = useState(null);
+  const { companyId } = useParams();
+  const [company, setCompany] = useState(null);
   const [loading, setLoading] = useState(true);
   const [otherAdmins, setOtherAdmins] = useState([]);
   const [showEditModal, setShowEditModal] = useState(false);
@@ -19,65 +19,36 @@ const CompanyProfile = () => {
     confirmPassword: "",
   });
   const [passwordError, setPasswordError] = useState("");
-  const [toast, setToast] = useState({
-    show: false,
-    message: "",
-    type: "info",
-  });
-  const { adminId } = useParams();
-
-  const showToast = (message, type = "info") => {
-    setToast({ show: true, message, type });
-  };
-
-  const hideToast = () => {
-    setToast((prev) => ({ ...prev, show: false }));
-  };
+  const [editingAdminId, setEditingAdminId] = useState(null);
+  const navigate = useNavigate();
 
   useEffect(() => {
-    const token = localStorage.getItem("token");
-    if (!token) return;
-
-    let adminIdLocal = null;
-    try {
-      const decoded = jwtDecode(token);
-      adminIdLocal = decoded.id;
-    } catch {
-      setLoading(false);
-      return;
-    }
-
-    const fetchAdmin = async () => {
-      try {
-        const res = await axios.get(`/api/admin/${adminIdLocal}`);
-        setAdmin(res.data);
-
-        // Fetch other admins in the same company
-        const companyId = res.data.companyId?._id || res.data.companyId;
-        if (companyId) {
-          const adminsRes = await axios.get("/api/admin/all");
-          const filteredAdmins = adminsRes.data.filter(
-            (a) =>
-              (a.companyId === companyId || a.companyId?._id === companyId) &&
-              a._id !== adminIdLocal
-          );
-          setOtherAdmins(filteredAdmins);
-        } else {
-          setOtherAdmins([]);
-        }
-      } catch {
-        setAdmin(null);
-        setOtherAdmins([]);
-      } finally {
+    if (!companyId) return;
+    setLoading(true);
+    axios.get(`/api/company/${companyId}`)
+      .then(res => {
+        setCompany(res.data);
+        // Fetch admins for this company
+        return axios.get('/api/admin/all');
+      })
+      .then(adminsRes => {
+        const filteredAdmins = adminsRes.data.filter(
+          (a) =>
+            a.companyId === companyId ||
+            (a.companyId && a.companyId._id === companyId)
+        );
+        setOtherAdmins(filteredAdmins);
         setLoading(false);
-      }
-    };
+      })
+      .catch(() => {
+        setCompany(null);
+        setOtherAdmins([]);
+        setLoading(false);
+      });
+  }, [companyId]);
 
-    fetchAdmin();
-  }, [adminId]);
-
-  // Open edit modal and fill form with current admin data
-  const handleEditClick = () => {
+  // Open edit modal and fill form with selected admin data
+  const handleEditClick = (admin) => {
     setEditForm({
       username: admin.username || "",
       email: admin.email || "",
@@ -85,6 +56,7 @@ const CompanyProfile = () => {
       newPassword: "",
       confirmPassword: "",
     });
+    setEditingAdminId(admin._id);
     setPasswordError("");
     setShowEditModal(true);
   };
@@ -136,66 +108,103 @@ const CompanyProfile = () => {
     setPasswordError(""); // Clear error if all is good
 
     try {
-      await axios.put(`/api/admin/${admin._id}`, editForm);
-      setAdmin((prev) => ({
-        ...prev,
-        username: editForm.username,
-        email: editForm.email,
-      }));
+      await axios.put(`/api/admin/${editingAdminId}`, editForm);
+      // Update the admin in the list
+      setOtherAdmins((prev) =>
+        prev.map((a) =>
+          a._id === editingAdminId
+            ? { ...a, username: editForm.username, email: editForm.email }
+            : a
+        )
+      );
       setShowEditModal(false);
-
-      // Show success toast
-      if (isChangingPassword) {
-        showToast("Password updated successfully!", "success");
-      } else {
-        showToast("Profile updated successfully!", "success");
-      }
     } catch (err) {
       const errorMessage =
         err.response?.data?.message || "Failed to update admin details.";
       setPasswordError(errorMessage);
-      showToast(errorMessage, "error");
     }
   };
 
   if (loading) return <div>Loading...</div>;
-  if (!admin) return <div>Admin not found.</div>;
+  if (!company) return <div>Company not found.</div>;
 
-  return (
-    <div className="mx-auto">
-      <div className="bg-white shadow rounded p-6 mb-8 flex justify-between items-start">
-        <div>
-          <h2 className="text-2xl font-bold mb-4">Admin Profile</h2>
-          <div className="mb-2">
-            <strong>Username:</strong> {admin.username}
-          </div>
-          <div className="mb-2">
-            <strong>Email:</strong> {admin.email}
-          </div>
-          <div className="mb-2">
-            <strong>Company:</strong>{" "}
-            {admin.companyId && typeof admin.companyId === "object"
-              ? `${admin.companyId.companyName} (${
-                  admin.companyId.companyId || admin.companyId._id
-                })`
-              : admin.companyId || "N/A"}
-          </div>
-        </div>
-        <div className="flex flex-col gap-2 ml-6">
+  // Admins table columns
+  const adminColumns = [
+    {
+      key: 'username',
+      header: 'Admin Name',
+      render: (value, row) => (
+        <button
+          className="font-medium text-blue-600 hover:underline"
+          onClick={() => navigate(`/admin-profile/${row._id}`)}
+          style={{ background: "none", border: "none", padding: 0, cursor: "pointer" }}
+        >
+          {value}
+        </button>
+      ),
+    },
+    {
+      key: 'email',
+      header: 'Email',
+    },
+    {
+      key: 'actions',
+      header: 'Actions',
+      render: (value, row) => (
+        <div className="flex gap-2">
           <button
-            className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 transition"
-            onClick={handleEditClick}
+            className="px-3 py-1 bg-blue-500 text-white rounded hover:bg-blue-600 text-sm"
+            onClick={() => handleEditClick(row)}
           >
             Edit
           </button>
           <button
-            className="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600 transition"
-            onClick={() => alert("Delete functionality coming soon!")}
+            className="px-3 py-1 bg-red-500 text-white rounded hover:bg-red-600 text-sm"
+            onClick={() => alert(`Delete admin ${row.username}`)}
           >
             Delete
           </button>
         </div>
+      ),
+    },
+  ];
+
+  return (
+    <div>
+      <div className="mx-auto bg-white shadow rounded p-6">
+        <h1 className="text-3xl font-bold mb-4">{company.companyName}</h1>
+        <div className="mb-2">
+          <strong>Company Name:</strong> {company.companyName}
+        </div>
+        <div className="mb-2">
+          <strong>Company ID:</strong> {company.companyId}
+        </div>
+        <div className="mb-2">
+          <strong>Admins:</strong> {company.admins ? company.admins.length : 0}
+        </div>
+        <div className="mb-2">
+          <strong>Villas:</strong> {company.villas ? company.villas.length : 0}
+        </div>
+        <div className="mb-2">
+          <strong>Users:</strong> {company.users ? company.users.length : 0}
+        </div>
       </div>
+
+      {/* Admins Table */}
+      {otherAdmins.length > 0 && (
+        <div className="bg-white shadow rounded p-6 mb-8 mt-6">
+          <h3 className="text-xl font-semibold mb-2">
+            Admins in Your Company
+          </h3>
+          <ReusableTable
+            columns={adminColumns}
+            data={otherAdmins}
+            pagination={true}
+            pageSize={5}
+            emptyMessage="No other admins found."
+          />
+        </div>
+      )}
 
       {/* Edit Admin Modal */}
       <EditAdminModal
@@ -205,37 +214,13 @@ const CompanyProfile = () => {
         handleEditChange={handleEditChange}
         handleEditSubmit={handleEditSubmit}
         passwordError={passwordError}
+        
       />
 
-      {/* Toast Notification */}
-      <Toaster
-        message={toast.message}
-        type={toast.type}
-        isVisible={toast.show}
-        onClose={hideToast}
-        duration={5000}
-        position="top-right"
-      />
-
-      {/* Other admins in the same company */}
-      {otherAdmins.length > 0 && (
-        <div className="bg-white shadow rounded p-6 mb-8">
-          <h3 className="text-xl font-semibold mb-2">
-            Other Admins in Your Company
-          </h3>
-          <ul className="list-disc pl-6">
-            {otherAdmins.map((a) => (
-              <li key={a._id} className="mb-1">
-                <span className="font-medium">{a.username}</span> —{" "}
-                <span className="text-blue-700">{a.email}</span>
-              </li>
-            ))}
-          </ul>
-        </div>
-      )}
-
-      {/* Villas for this admin's company */}
-      <VillaList companyId={admin.companyId?._id || admin.companyId} />
+      <div>
+        {/* Display the villa list for this company */}
+        <VillaList companyId={companyId} />
+      </div>
     </div>
   );
 };

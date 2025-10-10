@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import {
   FaCog,
   FaHome,
@@ -18,7 +18,8 @@ import Modal from "./common/Modal";
 import Logo from "../assets/logo.png";
 
 const Sidebar = ({ open, setOpen, confirmLogout }) => {
-  
+  const [companyId, setCompanyId] = useState(null);
+
   const token = localStorage.getItem('token');
   let userRole = null;
   let userId = null;
@@ -33,6 +34,23 @@ const Sidebar = ({ open, setOpen, confirmLogout }) => {
       userId = null;
     }
   }
+
+  useEffect(() => {
+    // Only fetch for admin/superadmin
+    if ((userRole === 'admin' || userRole === 'superadmin') && userId) {
+      fetch(`/api/admin/${userId}`)
+        .then(res => res.json())
+        .then(data => {
+          // companyId can be an object or string
+          if (data.companyId && typeof data.companyId === "object") {
+            setCompanyId(data.companyId._id || data.companyId);
+          } else {
+            setCompanyId(data.companyId);
+          }
+        })
+        .catch(() => setCompanyId(null));
+    }
+  }, [userRole, userId]);
 
   return (
     <>
@@ -94,12 +112,9 @@ const Sidebar = ({ open, setOpen, confirmLogout }) => {
                   <span className="font-medium">Dashboard</span>
                 </NavLink>
               </li>
-
-              {userRole === 'user' && (
-                <>
-                  <li>
+              <li>
                     <NavLink
-                      to={`/user-profile/${userId}`}
+                      to={userRole === 'user' ? `/user-profile/${userId}` : userRole === 'admin' ? `/admin-profile/${userId}` : userRole === 'superadmin' ? `/superadmin-profile/` : "/unauthorized"}
                       className={({ isActive }) =>
                         `flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 ${
                           isActive
@@ -112,6 +127,10 @@ const Sidebar = ({ open, setOpen, confirmLogout }) => {
                       <span className="font-medium">Profile</span>
                     </NavLink>
                   </li>
+
+              {userRole === 'user' && (
+                <>
+                  
                   <li>
                     <NavLink
                       to="/equipment"
@@ -130,23 +149,9 @@ const Sidebar = ({ open, setOpen, confirmLogout }) => {
                 </>
               )}
 
-              {userRole !== 'user' && (
+              {userRole === 'admin' && (
                 <>
-                  <li>
-                    <NavLink
-                      to="/company-profile"
-                      className={({ isActive }) =>
-                        `flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 ${
-                          isActive
-                            ? "bg-white/20 text-white shadow-lg backdrop-blur-sm border border-white/20"
-                            : "text-white/80 hover:text-white hover:bg-white/10 hover:backdrop-blur-sm"
-                        }`
-                      }
-                    >
-                      <FaBuilding className="text-lg" /> 
-                      <span className="font-medium">Profile</span>
-                    </NavLink>
-                  </li>
+                  
                   <li>
                     <NavLink
                       to="/users"
@@ -203,7 +208,7 @@ const Sidebar = ({ open, setOpen, confirmLogout }) => {
                 <>
                   <li>
                     <NavLink
-                      to="/company-list"
+                      to="/company-dashboard"
                       className={({ isActive }) =>
                         `flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 ${
                           isActive
