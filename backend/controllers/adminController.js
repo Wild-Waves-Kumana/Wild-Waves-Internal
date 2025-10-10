@@ -29,7 +29,7 @@ export const getAllAdmins = async (req, res) => {
 // Update admin details (username, email, password)
 export const updateAdmin = async (req, res) => {
   try {
-    const { username, email, oldPassword, newPassword, confirmPassword } = req.body;
+    const { username, email, currentPassword, newPassword, confirmPassword } = req.body;
     const updateFields = {};
     if (username) updateFields.username = username;
     if (email) updateFields.email = email;
@@ -41,14 +41,14 @@ export const updateAdmin = async (req, res) => {
     }
 
     // Handle password change
-    if (oldPassword || newPassword || confirmPassword) {
-      if (!oldPassword || !newPassword || !confirmPassword) {
+    if (currentPassword || newPassword || confirmPassword) {
+      if (!currentPassword || !newPassword || !confirmPassword) {
         return res.status(400).json({ message: 'All password fields are required.' });
       }
-      // Check old password
-      const isMatch = await bcrypt.compare(oldPassword, admin.password);
+      // Check current password
+      const isMatch = await bcrypt.compare(currentPassword, admin.password);
       if (!isMatch) {
-        return res.status(400).json({ message: 'Old password is incorrect.' });
+        return res.status(400).json({ message: 'Current password is incorrect.' });
       }
       if (newPassword !== confirmPassword) {
         return res.status(400).json({ message: 'New passwords do not match.' });

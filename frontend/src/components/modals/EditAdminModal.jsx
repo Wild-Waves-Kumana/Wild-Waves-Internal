@@ -9,12 +9,12 @@ const EditAdminModal = ({
   handleEditSubmit,
   passwordError,
 }) => {
-  // Toggle: true = "I have old password", false = "Reset without old password"
-  const [hasOldPassword, setHasOldPassword] = useState(true);
+  // Toggle: true = "I have current password", false = "Reset without current password"
+  const [hasCurrentPassword, setHasCurrentPassword] = useState(true);
 
   // Reset toggle when modal opens/closes
   React.useEffect(() => {
-    if (isVisible) setHasOldPassword(true);
+    if (isVisible) setHasCurrentPassword(true);
   }, [isVisible]);
 
   return (
@@ -41,33 +41,33 @@ const EditAdminModal = ({
         <div className="border-t pt-3 mt-3">
           <div className="flex items-center mb-2">
             <label className="font-semibold mr-3">Password Reset:</label>
-            <span className="mr-2 text-sm">I have old password</span>
+            <span className="mr-2 text-sm">I have current password</span>
             <label className="inline-flex relative items-center cursor-pointer">
               <input
                 type="checkbox"
-                checked={hasOldPassword}
-                onChange={() => setHasOldPassword((v) => !v)}
+                checked={hasCurrentPassword}
+                onChange={() => setHasCurrentPassword((v) => !v)}
                 className="sr-only peer"
               />
               <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:bg-blue-600 transition-all"></div>
               <div
                 className={`absolute left-1 top-1 bg-white w-4 h-4 rounded-full shadow transition-all ${
-                  hasOldPassword ? "translate-x-5" : ""
+                  hasCurrentPassword ? "translate-x-5" : ""
                 }`}
                 style={{ transition: "transform 0.2s" }}
               ></div>
             </label>
           </div>
 
-          {hasOldPassword ? (
+          {hasCurrentPassword ? (
             <>
               <label className="block font-semibold mb-1">Change Password</label>
               <input
                 type="password"
-                name="oldPassword"
-                value={editForm.oldPassword}
+                name="currentPassword"
+                value={editForm.currentPassword}
                 onChange={handleEditChange}
-                placeholder="Old Password"
+                placeholder="Current Password"
                 className="w-full border px-3 py-2 rounded mb-2"
                 autoComplete="current-password"
               />
@@ -93,7 +93,7 @@ const EditAdminModal = ({
           ) : (
             <>
               <label className="block font-semibold mb-1">
-                Reset Password (no old password)
+                Reset Password (no current password)
               </label>
               <input
                 type="password"

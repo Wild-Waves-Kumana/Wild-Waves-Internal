@@ -13,7 +13,7 @@ const AdminProfile = () => {
   const [editForm, setEditForm] = useState({
     username: "",
     email: "",
-    oldPassword: "",
+    currentPassword: "",
     newPassword: "",
     confirmPassword: "",
   });
@@ -72,7 +72,7 @@ const AdminProfile = () => {
     setEditForm({
       username: admin.username || "",
       email: admin.email || "",
-      oldPassword: "",
+      currentPassword: "",
       newPassword: "",
       confirmPassword: "",
     });
@@ -101,12 +101,12 @@ const AdminProfile = () => {
 
     // Check if password is being changed
     const isChangingPassword =
-      editForm.oldPassword || editForm.newPassword || editForm.confirmPassword;
+      editForm.currentPassword || editForm.newPassword || editForm.confirmPassword;
 
     // Password validation logic
     if (isChangingPassword) {
       if (
-        !editForm.oldPassword ||
+        !editForm.currentPassword ||
         !editForm.newPassword ||
         !editForm.confirmPassword
       ) {
