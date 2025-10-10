@@ -256,7 +256,7 @@ function App() {
       />
 
       <Route
-        path="/admin-profile/:companyId"
+        path="/admin-profile/:adminId"
         element={
           <ProtectedRoute allowedRoles={['admin', 'superadmin']}>
             <Layout>
