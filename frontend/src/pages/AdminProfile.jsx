@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
-import { jwtDecode } from "jwt-decode";
 import axios from "axios";
 import VillaList from "../components/lists/VillaList";
 import EditAdminModal from "../components/modals/EditAdminModal";
@@ -35,21 +34,13 @@ const AdminProfile = () => {
   };
 
   useEffect(() => {
-    const token = localStorage.getItem("token");
-    if (!token) return;
-
-    let adminIdLocal = null;
-    try {
-      const decoded = jwtDecode(token);
-      adminIdLocal = decoded.id;
-    } catch {
-      setLoading(false);
-      return;
-    }
+    if (!adminId) return;
+    setLoading(true);
 
     const fetchAdmin = async () => {
       try {
-        const res = await axios.get(`/api/admin/${adminIdLocal}`);
+        // Fetch the admin by adminId from URL
+        const res = await axios.get(`/api/admin/${adminId}`);
         setAdmin(res.data);
 
         // Fetch other admins in the same company
@@ -59,7 +50,7 @@ const AdminProfile = () => {
           const filteredAdmins = adminsRes.data.filter(
             (a) =>
               (a.companyId === companyId || a.companyId?._id === companyId) &&
-              a._id !== adminIdLocal
+              a._id !== adminId
           );
           setOtherAdmins(filteredAdmins);
         } else {
