@@ -43,6 +43,15 @@ const SuperadminFoodMenu = () => {
     fetchFoods();
   }, []);
 
+  // Add a virtual field for companyName to each food for searching/filtering
+  const foodsWithCompanyName = foods.map((food) => ({
+    ...food,
+    companyName:
+      food.companyId && companyNames[food.companyId]
+        ? companyNames[food.companyId]
+        : "N/A",
+  }));
+
   const columns = [
     {
       key: "foodCode",
@@ -66,7 +75,6 @@ const SuperadminFoodMenu = () => {
       sortable: false,
       filterable: false,
     },
-    
     {
       key: "name",
       header: "Name",
@@ -80,10 +88,8 @@ const SuperadminFoodMenu = () => {
       filterable: true,
     },
     {
-      key: "companyId",
+      key: "companyName",
       header: "Company",
-      render: (value) =>
-        value && companyNames[value] ? companyNames[value] : "N/A",
       sortable: false,
       filterable: true,
     },
@@ -116,11 +122,11 @@ const SuperadminFoodMenu = () => {
   ];
 
   return (
-    <div className=" mx-auto p-6">
+    <div className=" mx-auto ">
       <h1 className="text-2xl font-bold mb-6">All Foods (All Companies)</h1>
       <ReusableTable
         columns={columns}
-        data={foods}
+        data={foodsWithCompanyName}
         loading={loading}
         pagination={true}
         pageSize={10}
