@@ -31,7 +31,7 @@ import UserFoodProfile from './pages/food-pages/UserFoodProfile';
 import UserFoodCart from './pages/food-pages/UserFoodCart';
 import UserFoodOrders from './pages/food-pages/UserFoodOrders'; 
 import CompanyFoodOrders from './pages/food-pages/CompanyFoodOrders'; 
-import SuperAdminProfile from './pages/SuperAdminProfile';
+import SuperAdminProfile from './pages/SAdminProfile';
 import SuperadminFoodOrdersHistory from './pages/food-pages/SAdminFoodOrders';
 import CompanyProfile from './pages/CompanyProfile';
 import Settings from './pages/Settings';
