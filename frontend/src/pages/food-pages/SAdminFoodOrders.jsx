@@ -1,9 +1,7 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
-import ReusableTable from "../../components/common/ReusableTable";
-import SAFoodOrdersCardView from "../../components/foods/SAdminFoodOrdersCardView";
-
-
+import SAdminFoodOrdersTableView from "../../components/foods/SAdminFoodOrdersTableView";
+import SAdminFoodOrdersCardView from "../../components/foods/SAdminFoodOrdersCardView";
 
 const SuperadminFoodOrdersHistory = () => {
   const [orders, setOrders] = useState([]);
@@ -67,110 +65,6 @@ const SuperadminFoodOrdersHistory = () => {
     if (orders.length > 0) fetchAllVillaNames();
   }, [orders]);
 
-  // Table columns
-  const columns = [
-    {
-      key: "orderId",
-      header: "Order ID",
-      sortable: true,
-    },
-    {
-      key: "orderedAt",
-      header: "Ordered At",
-      sortable: true,
-      render: (val) => val ? new Date(val).toLocaleString() : "-",
-    },
-    {
-      key: "expectTime",
-      header: "Expect Time",
-      sortable: true,
-      render: (val) => val ? new Date(val).toLocaleString() : "-",
-    },
-    {
-      key: "userId",
-      header: "User",
-      sortable: true,
-      render: (val) =>
-        val && usernames[val] ? (
-          <a
-            href={`/user-profile/${val}`}
-            className="text-blue-600 hover:text-blue-800"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            {usernames[val]}
-          </a>
-        ) : (
-          "-"
-        ),
-    },
-    {
-      key: "villaId",
-      header: "Villa",
-      sortable: true,
-      render: (val) =>
-        val && villaNames[val] ? (
-          <a
-            href={`/villa-profile/${val}`}
-            className="text-blue-600 hover:text-blue-800"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            {villaNames[val]}
-          </a>
-        ) : (
-          "-"
-        ),
-    },
-    {
-      key: "status",
-      header: "Status",
-      sortable: true,
-      render: (val) => {
-        let style = "";
-        if (val === "Delivered") {
-          style = "bg-green-500 text-white";
-        } else if (val === "Cancelled") {
-          style = "bg-red-500 text-white";
-        } else if (val === "Cancelled by User") {
-          style = "bg-yellow-500 text-white";
-        } else if (val === "Pending") {
-          style = "bg-blue-500 text-white";
-        } else if (val === "Preparing") {
-          style = "bg-indigo-500 text-white";
-        }
-        return (
-          <span className={`px-3 py-1 rounded font-semibold text-xs shadow ${style}`}>
-            {val}
-          </span>
-        );
-      },
-    },
-    {
-      key: "totalPrice",
-      header: "Total Price",
-      sortable: true,
-      render: (val) => `${val} LKR`,
-    },
-    {
-      key: "items",
-      header: "Items",
-      render: (items) =>
-        <ul className="list-disc ml-4">
-          {items.map((item, idx) => (
-            <li key={idx}>
-              <span className="font-mono">{item.foodCode}</span> - {item.foodId?.name || item.name} ({item.quantity} x {item.price} LKR)
-            </li>
-          ))}
-        </ul>,
-    },
-    {
-      key: "specialRequest",
-      header: "Special Request",
-      render: (val) => val || "-",
-    },
-  ];
-
   // Sort orders by orderId descending by default
   const sortedOrders = [...orders].sort((a, b) => {
     if (a.orderId < b.orderId) return 1;
@@ -211,48 +105,44 @@ const SuperadminFoodOrdersHistory = () => {
         </div>
       </div>
 
-      {/* View Mode Toggle Buttons */}
-      <div className="flex gap-2 mb-4">
-        <button
+      
+        <div className="flex items-center justify-between mb-6">
+          <h2 className="text-2xl font-bold">Food Orders</h2>
+
+          <div className="flex items-center gap-2">
+            <button
           onClick={() => setViewMode("table")}
-          className={`px-4 py-2 rounded font-semibold transition-all ${
+          className={`px-6 py-2 rounded-full font-semibold shadow transition-all duration-150 ${
             viewMode === "table"
               ? "bg-blue-500 text-white shadow"
               : "bg-gray-200 text-gray-700 hover:bg-gray-300"
           }`}
-        >
+            >
           Table View
-        </button>
-        <button
+            </button>
+            <button
           onClick={() => setViewMode("card")}
-          className={`px-4 py-2 rounded font-semibold transition-all ${
+          className={`px-6 py-2 rounded-full font-semibold shadow transition-all duration-150 ${
             viewMode === "card"
               ? "bg-blue-500 text-white shadow"
               : "bg-gray-200 text-gray-700 hover:bg-gray-300"
           }`}
-        >
+            >
           Card View
-        </button>
-      </div>
+            </button>
+          </div>
+        </div>
 
       {/* Conditional Rendering based on view mode */}
       {viewMode === "table" ? (
-        <ReusableTable
-          columns={columns}
-          data={sortedOrders}
-          dateSearch={true}
-          dateSearchKey="orderedAt"
-          searchable={true}
-          sortable={true}
-          pagination={true}
-          pageSize={10}
-          striped={true}
-          hover={true}
+        <SAdminFoodOrdersTableView
+          orders={sortedOrders}
           loading={loading}
-          emptyMessage="No history orders found."
+          usernames={usernames}
+          villaNames={villaNames}
         />
       ) : (
-        <SAFoodOrdersCardView
+        <SAdminFoodOrdersCardView
           orders={sortedOrders}
           loading={loading}
           usernames={usernames}
@@ -262,8 +152,6 @@ const SuperadminFoodOrdersHistory = () => {
           setOrders={setOrders}
         />
       )}
-
-     
     </div>
   );
 };
