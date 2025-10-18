@@ -1,12 +1,17 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 import ReusableTable from "../../components/common/ReusableTable";
+import SAFoodOrdersCardView from "../../components/foods/SAFoodOrdersCardView";
+
+
 
 const SuperadminFoodOrdersHistory = () => {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [usernames, setUsernames] = useState({});
   const [villaNames, setVillaNames] = useState({});
+  const [viewMode, setViewMode] = useState("table"); // "table" or "card"
+  const [updatingStatus, setUpdatingStatus] = useState({});
 
   // Fetch all orders for superadmin
   useEffect(() => {
@@ -205,20 +210,60 @@ const SuperadminFoodOrdersHistory = () => {
           <div className="text-sm text-blue-800">Total Amount</div>
         </div>
       </div>
-      <ReusableTable
-        columns={columns}
-        data={sortedOrders}
-        dateSearch={true}
-        dateSearchKey="orderedAt"
-        searchable={true}
-        sortable={true}
-        pagination={true}
-        pageSize={10}
-        striped={true}
-        hover={true}
-        loading={loading}
-        emptyMessage="No history orders found."
-      />
+
+      {/* View Mode Toggle Buttons */}
+      <div className="flex gap-2 mb-4">
+        <button
+          onClick={() => setViewMode("table")}
+          className={`px-4 py-2 rounded font-semibold transition-all ${
+            viewMode === "table"
+              ? "bg-blue-500 text-white shadow"
+              : "bg-gray-200 text-gray-700 hover:bg-gray-300"
+          }`}
+        >
+          Table View
+        </button>
+        <button
+          onClick={() => setViewMode("card")}
+          className={`px-4 py-2 rounded font-semibold transition-all ${
+            viewMode === "card"
+              ? "bg-blue-500 text-white shadow"
+              : "bg-gray-200 text-gray-700 hover:bg-gray-300"
+          }`}
+        >
+          Card View
+        </button>
+      </div>
+
+      {/* Conditional Rendering based on view mode */}
+      {viewMode === "table" ? (
+        <ReusableTable
+          columns={columns}
+          data={sortedOrders}
+          dateSearch={true}
+          dateSearchKey="orderedAt"
+          searchable={true}
+          sortable={true}
+          pagination={true}
+          pageSize={10}
+          striped={true}
+          hover={true}
+          loading={loading}
+          emptyMessage="No history orders found."
+        />
+      ) : (
+        <SAFoodOrdersCardView
+          orders={sortedOrders}
+          loading={loading}
+          usernames={usernames}
+          villaNames={villaNames}
+          updatingStatus={updatingStatus}
+          setUpdatingStatus={setUpdatingStatus}
+          setOrders={setOrders}
+        />
+      )}
+
+     
     </div>
   );
 };
