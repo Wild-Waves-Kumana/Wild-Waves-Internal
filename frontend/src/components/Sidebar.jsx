@@ -172,7 +172,7 @@ const Sidebar = ({ open, setOpen, confirmLogout }) => {
 
               <li>
                 <NavLink
-                  to={userRole === 'user' ? "/food-menu" : userRole === 'admin' ? "/company-foods" : userRole === 'superadmin' ? "/company-foods" : "/unauthorized"}
+                  to={userRole === 'user' ? "/food-menu" : userRole === 'admin' ? "/company-foods" : userRole === 'superadmin' ? "/superadmin-food-menu" : "/unauthorized"}
                   className={({ isActive }) =>
                     `flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 ${
                       isActive

@@ -26,6 +26,7 @@ import FoodCreate from './pages/create-pages/CreateFoods';
 import CompanyFoods from './pages/food-pages/CompanyFoods';
 import CompanyFoodProfile from './pages/food-pages/CompanyFoodProfile';
 import FoodMenu from './pages/food-pages/UserFoodMenu';
+import SuperadminFoodMenu from './pages/food-pages/SuperadminFoodMenu';
 import UserFoodProfile from './pages/food-pages/UserFoodProfile';
 import UserFoodCart from './pages/food-pages/UserFoodCart';
 import UserFoodOrders from './pages/food-pages/UserFoodOrders'; 
@@ -223,6 +224,17 @@ function App() {
           <ProtectedRoute allowedRoles={['admin', 'superadmin']}>
             <Layout>
               <CompanyFoods />
+            </Layout>
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/superadmin-food-menu"
+        element={
+          <ProtectedRoute allowedRoles={['superadmin']}>
+            <Layout>
+              <SuperadminFoodMenu />
             </Layout>
           </ProtectedRoute>
         }
