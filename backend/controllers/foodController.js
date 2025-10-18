@@ -76,7 +76,6 @@ export const createFood = async (req, res) => {
   }
 };
 
-
 // Get all food items (optionally filter by companyId)
 export const getFoods = async (req, res) => {
   try {
@@ -87,6 +86,16 @@ export const getFoods = async (req, res) => {
       query.companyId = companyId;
     }
     const foods = await Food.find(query);
+    res.json(foods);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
+
+// Get all foods (no filtering, for superadmin) - DO NOT populate from anything
+export const getAllFoods = async (req, res) => {
+  try {
+    const foods = await Food.find({});
     res.json(foods);
   } catch (err) {
     res.status(500).json({ message: err.message });

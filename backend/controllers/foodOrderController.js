@@ -140,3 +140,14 @@ export const updateFoodOrderStatus = async (req, res) => {
     res.status(500).json({ message: "Failed to update order status." });
   }
 };
+
+// Get all food orders (no filtering, for superadmin)
+export const getAllFoodOrders = async (req, res) => {
+  try {
+    const orders = await FoodOrder.find({});
+    res.status(200).json(orders);
+  } catch (error) {
+    console.error("Error fetching all food orders:", error);
+    res.status(500).json({ message: "Failed to fetch all food orders." });
+  }
+};
