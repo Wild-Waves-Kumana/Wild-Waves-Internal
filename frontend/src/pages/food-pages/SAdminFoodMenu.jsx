@@ -113,7 +113,7 @@ const SuperadminFoodMenu = () => {
           className="px-3 py-1 bg-blue-500 text-white rounded hover:bg-blue-600 text-sm"
           onClick={() => navigate(`/company-food-profile/${row._id}`)}
         >
-          View Profile
+          Details
         </button>
       ),
       sortable: false,
@@ -130,7 +130,7 @@ const SuperadminFoodMenu = () => {
         loading={loading}
         pagination={true}
         pageSize={10}
-        filterable={true}
+        filterable={false}
         searchable={true}
         emptyMessage="No foods found."
       />
