@@ -119,16 +119,16 @@ const UserFaceRegistration = () => {
         formData.append("images", file);
       });
 
-      const response = await fetch(
-        "https://face-recognition-app-vnr6.onrender.com/register_face",
-        {
-          method: "POST",
-          headers: {
-            nic: username,
-          },
-          body: formData,
-        }
-      );
+    // Use relative path so Vite dev server proxy forwards to backend
+    const headers = {};
+    if (token) headers.Authorization = `Bearer ${token}`;
+
+    const response = await fetch(`/api/face/register`, {
+      method: "POST",
+      headers,
+      body: formData,
+    });
+
 
       if (response.ok) {
         setSuccess("Face registration submitted successfully!");
