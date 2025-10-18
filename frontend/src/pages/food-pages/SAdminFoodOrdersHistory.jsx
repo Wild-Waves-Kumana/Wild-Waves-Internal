@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 import ReusableTable from "../../components/common/ReusableTable";
-import SAFoodOrdersCardView from "../../components/foods/SAFoodOrdersCardView";
+import SAFoodOrdersCardView from "../../components/foods/SAdminFoodOrdersCardView";
 
 
 
