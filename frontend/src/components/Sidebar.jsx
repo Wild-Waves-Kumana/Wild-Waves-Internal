@@ -16,6 +16,7 @@ import { UserContext } from '../context/UserContext';
 import {jwtDecode} from 'jwt-decode';
 import Modal from "./common/Modal";
 import Logo from "../assets/logo.png";
+import user from "../../../backend/models/user";
 
 const Sidebar = ({ open, setOpen, confirmLogout }) => {
   const [companyId, setCompanyId] = useState(null);
@@ -189,7 +190,7 @@ const Sidebar = ({ open, setOpen, confirmLogout }) => {
               {userRole !== 'user' && (
                 <li>
                   <NavLink
-                    to="/company-food-orders"
+                    to={userRole === 'admin' ? "/company-food-orders" : userRole === 'superadmin' ? "/superadmin-food-orders-history" : "/unauthorized"}
                     className={({ isActive }) =>
                       `flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 ${
                         isActive

@@ -32,6 +32,7 @@ import UserFoodCart from './pages/food-pages/UserFoodCart';
 import UserFoodOrders from './pages/food-pages/UserFoodOrders'; 
 import CompanyFoodOrders from './pages/food-pages/CompanyFoodOrders'; 
 import SuperAdminProfile from './pages/SuperAdminProfile';
+import SuperadminFoodOrdersHistory from './pages/food-pages/SuperadminFoodOrdersHistory';
 import CompanyProfile from './pages/CompanyProfile';
 import Settings from './pages/Settings';
 
@@ -252,8 +253,16 @@ function App() {
         }
       />
 
-      
-    
+    <Route
+      path="/superadmin-food-orders-history"
+      element={
+        <ProtectedRoute allowedRoles={['superadmin']}>
+          <Layout>
+            <SuperadminFoodOrdersHistory />
+          </Layout>
+        </ProtectedRoute>
+      }
+    />
 
       <Route
         path="/user-profile/:userId"
