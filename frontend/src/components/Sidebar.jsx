@@ -218,24 +218,10 @@ const Sidebar = ({ open, setOpen, confirmLogout }) => {
                       }
                     >
                       <FaBuilding className="text-lg" /> 
-                      <span className="font-medium">Companies</span>
+                      <span className="font-medium">Companies & Admins</span>
                     </NavLink>
                   </li>
-                  <li>
-                    <NavLink
-                      to="/admin-users"
-                      className={({ isActive }) =>
-                        `flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 ${
-                          isActive
-                            ? "bg-white/20 text-white shadow-lg backdrop-blur-sm border border-white/20"
-                            : "text-white/80 hover:text-white hover:bg-white/10 hover:backdrop-blur-sm"
-                        }`
-                      }
-                    >
-                      <FaUserShield className="text-lg" /> 
-                      <span className="font-medium">Admins</span>
-                    </NavLink>
-                  </li>
+                  
                 </>
               )}
 
