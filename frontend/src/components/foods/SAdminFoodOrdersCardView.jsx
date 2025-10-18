@@ -45,6 +45,8 @@ const SAFoodOrdersCardView = ({
   const [pageSize, setPageSize] = useState(10);
   const [dateFilter, setDateFilter] = useState("");
 
+  
+
   // Handler to update order status - Show confirmation for ALL status changes in card mode
   const handleStatusUpdate = async (orderId, newStatus) => {
     setConfirmModal({ isVisible: true, orderId, newStatus });
