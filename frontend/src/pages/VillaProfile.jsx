@@ -40,9 +40,10 @@ const VillaProfile = () => {
   if (!villa) return <div>Villa not found.</div>;
 
   return (
-    <div className="container mx-auto px-4">
-    <div className="mt-10 bg-white shadow rounded p-6 ">
+    <div className="p-2">
       <h2 className="text-2xl font-bold mb-4">Villa Profile</h2>
+    <div className=" bg-white shadow rounded p-6 ">
+      
       <div className="mb-4">
         <strong>Villa Name:</strong> {villa.villaName}
       </div>

@@ -26,11 +26,13 @@ import FoodCreate from './pages/create-pages/CreateFoods';
 import CompanyFoods from './pages/food-pages/CompanyFoods';
 import CompanyFoodProfile from './pages/food-pages/CompanyFoodProfile';
 import FoodMenu from './pages/food-pages/UserFoodMenu';
+import SuperadminFoodMenu from './pages/food-pages/SAdminFoodMenu';
 import UserFoodProfile from './pages/food-pages/UserFoodProfile';
 import UserFoodCart from './pages/food-pages/UserFoodCart';
 import UserFoodOrders from './pages/food-pages/UserFoodOrders'; 
 import CompanyFoodOrders from './pages/food-pages/CompanyFoodOrders'; 
-import SuperAdminProfile from './pages/SuperAdminProfile';
+import SuperAdminProfile from './pages/SAdminProfile';
+import SuperadminFoodOrdersHistory from './pages/food-pages/SAdminFoodOrders';
 import CompanyProfile from './pages/CompanyProfile';
 import Settings from './pages/Settings';
 
@@ -229,6 +231,17 @@ function App() {
       />
 
       <Route
+        path="/superadmin-food-menu"
+        element={
+          <ProtectedRoute allowedRoles={['superadmin']}>
+            <Layout>
+              <SuperadminFoodMenu />
+            </Layout>
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
         path="/company-food-profile/:foodId"
         element={
           <ProtectedRoute allowedRoles={['user', 'admin', 'superadmin']}>
@@ -240,8 +253,16 @@ function App() {
         }
       />
 
-      
-    
+    <Route
+      path="/superadmin-food-orders-history"
+      element={
+        <ProtectedRoute allowedRoles={['superadmin']}>
+          <Layout>
+            <SuperadminFoodOrdersHistory />
+          </Layout>
+        </ProtectedRoute>
+      }
+    />
 
       <Route
         path="/user-profile/:userId"

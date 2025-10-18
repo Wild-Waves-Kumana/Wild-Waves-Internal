@@ -16,6 +16,7 @@ import { UserContext } from '../context/UserContext';
 import {jwtDecode} from 'jwt-decode';
 import Modal from "./common/Modal";
 import Logo from "../assets/logo.png";
+import user from "../../../backend/models/user";
 
 const Sidebar = ({ open, setOpen, confirmLogout }) => {
   const [companyId, setCompanyId] = useState(null);
@@ -172,7 +173,7 @@ const Sidebar = ({ open, setOpen, confirmLogout }) => {
 
               <li>
                 <NavLink
-                  to={userRole === 'user' ? "/food-menu" : userRole === 'admin' ? "/company-foods" : userRole === 'superadmin' ? "/company-foods" : "/unauthorized"}
+                  to={userRole === 'user' ? "/food-menu" : userRole === 'admin' ? "/company-foods" : userRole === 'superadmin' ? "/superadmin-food-menu" : "/unauthorized"}
                   className={({ isActive }) =>
                     `flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 ${
                       isActive
@@ -189,7 +190,7 @@ const Sidebar = ({ open, setOpen, confirmLogout }) => {
               {userRole !== 'user' && (
                 <li>
                   <NavLink
-                    to="/company-food-orders"
+                    to={userRole === 'admin' ? "/company-food-orders" : userRole === 'superadmin' ? "/superadmin-food-orders-history" : "/unauthorized"}
                     className={({ isActive }) =>
                       `flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 ${
                         isActive
@@ -218,24 +219,10 @@ const Sidebar = ({ open, setOpen, confirmLogout }) => {
                       }
                     >
                       <FaBuilding className="text-lg" /> 
-                      <span className="font-medium">Companies</span>
+                      <span className="font-medium">Companies & Admins</span>
                     </NavLink>
                   </li>
-                  <li>
-                    <NavLink
-                      to="/admin-users"
-                      className={({ isActive }) =>
-                        `flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 ${
-                          isActive
-                            ? "bg-white/20 text-white shadow-lg backdrop-blur-sm border border-white/20"
-                            : "text-white/80 hover:text-white hover:bg-white/10 hover:backdrop-blur-sm"
-                        }`
-                      }
-                    >
-                      <FaUserShield className="text-lg" /> 
-                      <span className="font-medium">Admins</span>
-                    </NavLink>
-                  </li>
+                  
                 </>
               )}
 
