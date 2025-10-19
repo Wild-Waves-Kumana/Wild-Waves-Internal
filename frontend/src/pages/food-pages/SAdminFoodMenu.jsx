@@ -1,16 +1,42 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useMemo } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
-import ReusableTable from "../../components/common/ReusableTable";
+import { Clock, Search } from "lucide-react";
 
-const SuperadminFoodMenu = () => {
+const CATEGORIES = ["All", "Main", "Dessert", "Beverage", "Snack"];
+const AVAILABLE_ON_OPTIONS = [
+  "All",
+  "Breakfast",
+  "Lunch",
+  "Dinner",
+  "Teatime",
+  "Anytime",
+];
+const AVAILABILITY_OPTIONS = [
+  { value: "All", label: "All Items" },
+  { value: "Available", label: "Available" },
+  { value: "Not Available", label: "Out of Stock" },
+];
+const pageSize = 12;
+
+const SAdminFoodMenu = () => {
   const [foods, setFoods] = useState([]);
   const [loading, setLoading] = useState(true);
   const [companyNames, setCompanyNames] = useState({});
+  const [companies, setCompanies] = useState([]);
+  const [companyFilter, setCompanyFilter] = useState("All");
+  const [filters, setFilters] = useState({
+    category: "All",
+    availableOn: "All",
+    availability: "All",
+    search: "",
+  });
+  const [foodOrderCounts, setFoodOrderCounts] = useState({});
+  const [currentPage, setCurrentPage] = useState(1);
   const navigate = useNavigate();
 
   useEffect(() => {
-    const fetchFoods = async () => {
+    const fetchFoodsAndData = async () => {
       setLoading(true);
       try {
         // Fetch all foods
@@ -23,27 +49,48 @@ const SuperadminFoodMenu = () => {
         ].filter(Boolean);
 
         const companyNameMap = {};
+        const companiesData = [];
         await Promise.all(
           uniqueCompanyIds.map(async (id) => {
             try {
               const companyRes = await axios.get(`/api/company/${id}`);
               companyNameMap[id] = companyRes.data.companyName;
+              companiesData.push({
+                _id: id,
+                companyName: companyRes.data.companyName,
+              });
             } catch {
               companyNameMap[id] = "N/A";
             }
           })
         );
         setCompanyNames(companyNameMap);
+        setCompanies(companiesData);
+
+        // Fetch all food orders to get order counts
+        const ordersRes = await axios.get(`/api/food-orders/all`);
+        const counts = {};
+        (ordersRes.data || []).forEach((order) => {
+          (order.items || []).forEach((item) => {
+            if (item.foodId) {
+              const id =
+                typeof item.foodId === "object" ? item.foodId._id : item.foodId;
+              counts[id] = (counts[id] || 0) + item.quantity;
+            }
+          });
+        });
+        setFoodOrderCounts(counts);
       } catch (err) {
         console.error(err);
         setFoods([]);
+        setFoodOrderCounts({});
       }
       setLoading(false);
     };
-    fetchFoods();
+    fetchFoodsAndData();
   }, []);
 
-  // Add a virtual field for companyName to each food for searching/filtering
+  // Add a virtual field for companyName to each food
   const foodsWithCompanyName = foods.map((food) => ({
     ...food,
     companyName:
@@ -52,90 +99,420 @@ const SuperadminFoodMenu = () => {
         : "N/A",
   }));
 
-  const columns = [
-    {
-      key: "foodCode",
-      header: "Food Code",
-      sortable: true,
-      filterable: true,
-    },
-    {
-      key: "images",
-      header: "Image",
-      render: (value, row) =>
-        value && value.length > 0 ? (
-          <img
-            src={value[0]}
-            alt={row.name}
-            className="w-16 h-16 object-cover rounded shadow"
-          />
-        ) : (
-          <span className="text-gray-400">No Image</span>
-        ),
-      sortable: false,
-      filterable: false,
-    },
-    {
-      key: "name",
-      header: "Name",
-      sortable: true,
-      filterable: true,
-    },
-    {
-      key: "category",
-      header: "Category",
-      sortable: true,
-      filterable: true,
-    },
-    {
-      key: "companyName",
-      header: "Company",
-      sortable: false,
-      filterable: true,
-    },
-    {
-      key: "price",
-      header: "Price",
-      render: (value, row) =>
-        row.portions && row.portions.length > 0
-          ? `From Rs. ${Math.min(...row.portions.map((p) => p.price))}`
-          : value !== undefined && value !== null
-          ? `Rs. ${value}`
-          : "N/A",
-      sortable: true,
-      filterable: false,
-    },
-    {
-      key: "actions",
-      header: "Action",
-      render: (value, row) => (
-        <button
-          className="px-3 py-1 bg-blue-500 text-white rounded hover:bg-blue-600 text-sm"
-          onClick={() => navigate(`/company-food-profile/${row._id}`)}
-        >
-          Details
-        </button>
-      ),
-      sortable: false,
-      filterable: false,
-    },
-  ];
+  // Filtering logic
+  const filteredFoods = useMemo(() => {
+    let filtered = [...foodsWithCompanyName];
+
+    if (companyFilter !== "All") {
+      filtered = filtered.filter((food) => food.companyId === companyFilter);
+    }
+
+    if (filters.category !== "All") {
+      filtered = filtered.filter((food) => food.category === filters.category);
+    }
+
+    if (filters.availableOn !== "All") {
+      filtered = filtered.filter(
+        (food) =>
+          Array.isArray(food.availableOn) &&
+          food.availableOn.includes(filters.availableOn)
+      );
+    }
+
+    if (filters.availability !== "All") {
+      filtered = filtered.filter(
+        (food) =>
+          (filters.availability === "Available" && food.isAvailable) ||
+          (filters.availability === "Not Available" && !food.isAvailable)
+      );
+    }
+
+    if (filters.search.trim() !== "") {
+      const searchLower = filters.search.trim().toLowerCase();
+      filtered = filtered.filter(
+        (food) =>
+          food.name.toLowerCase().includes(searchLower) ||
+          (food.description && food.description.toLowerCase().includes(searchLower)) ||
+          (food.foodCode && food.foodCode.toLowerCase().includes(searchLower)) ||
+          food.companyName.toLowerCase().includes(searchLower)
+      );
+    }
+
+    // Sort: available items first, then by order count descending
+    filtered.sort((a, b) => {
+      if (a.isAvailable !== b.isAvailable) return a.isAvailable ? -1 : 1;
+      const aCount = foodOrderCounts[a._id] || 0;
+      const bCount = foodOrderCounts[b._id] || 0;
+      return bCount - aCount;
+    });
+
+    return filtered;
+  }, [
+    foodsWithCompanyName,
+    companyFilter,
+    filters.category,
+    filters.availableOn,
+    filters.availability,
+    filters.search,
+    foodOrderCounts,
+  ]);
+
+  // Pagination logic
+  const totalPages = Math.ceil(filteredFoods.length / pageSize);
+  const paginatedFoods = useMemo(() => {
+    const start = (currentPage - 1) * pageSize;
+    return filteredFoods.slice(start, start + pageSize);
+  }, [filteredFoods, currentPage]);
+
+  // Filter change handler
+  const handleFilterChange = (key, value) => {
+    setFilters(prev => ({ ...prev, [key]: value }));
+    setCurrentPage(1);
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading foods...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <div className=" mx-auto ">
+    <div className="mx-auto">
       <h1 className="text-2xl font-bold mb-6">All Foods (All Companies)</h1>
-      <ReusableTable
-        columns={columns}
-        data={foodsWithCompanyName}
-        loading={loading}
-        pagination={true}
-        pageSize={10}
-        filterable={false}
-        searchable={true}
-        emptyMessage="No foods found."
-      />
+      
+      {/* Filters */}
+      <div>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 mb-4">
+          {/* Company Filter */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Company
+            </label>
+            <select
+              value={companyFilter}
+              onChange={e => setCompanyFilter(e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors duration-200"
+            >
+              <option value="All">All Companies</option>
+              {companies.map((company) => (
+                <option key={company._id} value={company._id}>
+                  {company.companyName}
+                </option>
+              ))}
+            </select>
+          </div>
+          {/* Category Filter */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Category
+            </label>
+            <select
+              value={filters.category}
+              onChange={e => handleFilterChange("category", e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors duration-200"
+            >
+              {CATEGORIES.map((cat) => (
+                <option key={cat} value={cat}>{cat}</option>
+              ))}
+            </select>
+          </div>
+          {/* Available On Filter */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Available On
+            </label>
+            <select
+              value={filters.availableOn}
+              onChange={e => handleFilterChange("availableOn", e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors duration-200"
+            >
+              {AVAILABLE_ON_OPTIONS.map((opt) => (
+                <option key={opt} value={opt}>{opt}</option>
+              ))}
+            </select>
+          </div>
+          {/* Availability Filter */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Availability
+            </label>
+            <select
+              value={filters.availability}
+              onChange={e => handleFilterChange("availability", e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors duration-200"
+            >
+              {AVAILABILITY_OPTIONS.map((opt) => (
+                <option key={opt.value} value={opt.value}>{opt.label}</option>
+              ))}
+            </select>
+          </div>
+          {/* Search */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Search
+            </label>
+            <div className="relative">
+              <Search size={16} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+              <input
+                type="text"
+                value={filters.search}
+                onChange={e => handleFilterChange("search", e.target.value)}
+                placeholder="Search menu items..."
+                className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors duration-200"
+              />
+            </div>
+          </div>
+        </div>
+        {/* Active filters count */}
+        {(companyFilter !== "All" || filters.category !== "All" || filters.availableOn !== "All" || filters.availability !== "All" || filters.search) && (
+          <div className="flex items-center justify-between pt-4 border-t border-gray-200">
+            <span className="text-sm text-gray-600">
+              {filteredFoods.length} of {foods.length} items shown
+            </span>
+            <button
+              onClick={() => {
+                setCompanyFilter("All");
+                setFilters({ category: "All", availableOn: "All", availability: "All", search: "" });
+                setCurrentPage(1);
+              }}
+              className="text-sm text-blue-600 hover:text-blue-700 font-medium"
+            >
+              Clear all filters
+            </button>
+          </div>
+        )}
+      </div>
+
+      {/* Food Tiles */}
+      {filteredFoods.length === 0 ? (
+        <div className="text-center py-10 text-gray-500">
+          No foods found.
+        </div>
+      ) : (
+        <>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4 mt-6">
+            {paginatedFoods.map((food) => (
+              <div
+                key={food._id}
+                className="bg-white rounded-xl shadow-sm border border-gray-100 hover:shadow-md transition-all duration-300 p-6 flex flex-col h-full hover:border-blue-200 group cursor-pointer"
+                onClick={() => navigate(`/company-food-profile/${food._id}`)}
+                tabIndex={0}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" || e.key === " ") {
+                    navigate(`/company-food-profile/${food._id}`);
+                  }
+                }}
+                role="button"
+                aria-label={`View details for ${food.name}`}
+              >
+                <div className="w-full mb-4 relative overflow-hidden rounded-lg bg-gray-50 flex justify-center items-center">
+                  {food.images && food.images.length > 0 ? (
+                    <img
+                      src={food.images[0]}
+                      alt={food.name}
+                      className="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-300"
+                      loading="lazy"
+                    />
+                  ) : (
+                    <div className="w-full h-48 bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center text-gray-400">
+                      No Image
+                    </div>
+                  )}
+                  <div className="absolute top-2 right-2">
+                    <span
+                      className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium
+                      ${
+                        food.isAvailable
+                          ? "bg-green-100 text-green-800 border border-green-200"
+                          : "bg-red-100 text-red-800 border border-red-200"
+                      }`}
+                    >
+                      <div
+                        className={`w-1.5 h-1.5 rounded-full mr-1 ${
+                          food.isAvailable ? "bg-green-500" : "bg-red-500"
+                        }`}
+                      />
+                      {food.isAvailable ? "Available" : "Out of Stock"}
+                    </span>
+                  </div>
+                </div>
+                <div className="flex-1 flex flex-col">
+                  <div className="mb-1">
+                    <h3 className="text-lg font-semibold text-gray-900 mb-1 line-clamp-1">
+                      {food.name}
+                    </h3>
+                    {food.foodCode && (
+                      <div className="flex items-center text-sm text-gray-500 mb-1">
+                        <span className="font-mono">{food.foodCode}</span>
+                      </div>
+                    )}
+                  </div>
+                  {/* Company Name */}
+                  <div className="mb-2">
+                    <span className="inline-block px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded-full font-medium">
+                      {food.companyName}
+                    </span>
+                  </div>
+                  {/* Fixed height for description */}
+                  <div className="mb-1 min-h-[40px] flex items-start">
+                    {food.description ? (
+                      <p className="text-xs text-gray-600">
+                        {food.description.length > 40
+                          ? `${food.description.substring(0, 40)}...`
+                          : food.description}
+                      </p>
+                    ) : (
+                      <span className="text-xs text-gray-400">No description</span>
+                    )}
+                  </div>
+                  {/* Fixed height for availableOn */}
+                  <div className="mb-1 min-h-[24px] flex items-center">
+                    {food.availableOn && food.availableOn.length > 0 ? (
+                      <>
+                        <Clock size={14} className="text-gray-400 mr-1" />
+                        <span className="text-xs text-gray-600">
+                          {food.availableOn.join(", ")}
+                        </span>
+                      </>
+                    ) : (
+                      <span className="text-xs text-gray-400">-</span>
+                    )}
+                  </div>
+                  {/* Fixed height for price */}
+                  <div className="mb-3 min-h-[28px] flex items-center">
+                    {food.portions && food.portions.length > 0 ? (
+                      <span className="text-lg font-bold text-black-600">
+                        From Rs. {Math.min(...food.portions.map((p) => p.price))}
+                      </span>
+                    ) : food.price ? (
+                      <span className="text-lg font-bold text-black-600">
+                        Rs. {food.price.toFixed(2)}
+                      </span>
+                    ) : (
+                      <span className="text-xs text-gray-400">No price</span>
+                    )}
+                  </div>
+                  {/* Most ordered count */}
+                  <div className="mb-1 min-h-[24px] flex items-center">
+                    <span className="text-xs text-gray-500">
+                      Ordered: {foodOrderCounts[food._id] || 0} times
+                    </span>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+          
+          {/* Pagination Controls */}
+          {totalPages > 1 && (
+            <div className="flex flex-col sm:flex-row items-center justify-between px-4 py-3 bg-white border-t border-gray-300 rounded-b-lg gap-4 mt-8">
+              {/* Results Info */}
+              <div className="flex items-center text-sm text-gray-700">
+                <span>
+                  Showing {((currentPage - 1) * pageSize) + 1} to {Math.min(currentPage * pageSize, filteredFoods.length)} of {filteredFoods.length} results
+                </span>
+              </div>
+              {/* Navigation Controls */}
+              <div className="flex items-center space-x-1">
+                {/* First Page */}
+                <button
+                  onClick={() => setCurrentPage(1)}
+                  disabled={currentPage === 1}
+                  className="px-2 py-1 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                  title="First page"
+                >
+                  ««
+                </button>
+                {/* Previous Page */}
+                <button
+                  onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                  disabled={currentPage === 1}
+                  className="px-3 py-1 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  Previous
+                </button>
+                {/* Page Numbers */}
+                {(() => {
+                  const delta = 2;
+                  const range = [];
+                  const rangeWithDots = [];
+                  const start = Math.max(1, currentPage - delta);
+                  const end = Math.min(totalPages, currentPage + delta);
+                  for (let i = start; i <= end; i++) range.push(i);
+                  if (start > 1) {
+                    rangeWithDots.push(1);
+                    if (start > 2) rangeWithDots.push('...');
+                  }
+                  rangeWithDots.push(...range);
+                  if (end < totalPages) {
+                    if (end < totalPages - 1) rangeWithDots.push('...');
+                    rangeWithDots.push(totalPages);
+                  }
+                  return rangeWithDots.map((pageNum, index) =>
+                    pageNum === '...' ? (
+                      <span key={index} className="px-2 py-1 text-gray-500">...</span>
+                    ) : (
+                      <button
+                        key={pageNum}
+                        onClick={() => setCurrentPage(pageNum)}
+                        className={`px-3 py-1 border rounded-md text-sm font-medium ${
+                          currentPage === pageNum
+                            ? 'bg-blue-600 text-white border-blue-600'
+                            : 'border-gray-300 text-gray-700 bg-white hover:bg-gray-50'
+                        }`}
+                      >
+                        {pageNum}
+                      </button>
+                    )
+                  );
+                })()}
+                {/* Next Page */}
+                <button
+                  onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                  disabled={currentPage === totalPages}
+                  className="px-3 py-1 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  Next
+                </button>
+                {/* Last Page */}
+                <button
+                  onClick={() => setCurrentPage(totalPages)}
+                  disabled={currentPage === totalPages}
+                  className="px-2 py-1 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                  title="Last page"
+                >
+                  »»
+                </button>
+              </div>
+              {/* Quick Jump */}
+              <div className="flex items-center gap-2 text-sm">
+                <span className="text-gray-600">Go to page:</span>
+                <input
+                  type="number"
+                  min="1"
+                  max={totalPages}
+                  value={currentPage}
+                  onChange={(e) => {
+                    const page = parseInt(e.target.value);
+                    if (page >= 1 && page <= totalPages) {
+                      setCurrentPage(page);
+                    }
+                  }}
+                  className="w-16 px-2 py-1 border border-gray-300 rounded-md text-center focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                />
+                <span className="text-gray-600">of {totalPages}</span>
+              </div>
+            </div>
+          )}
+        </>
+      )}
     </div>
   );
 };
 
-export default SuperadminFoodMenu;
+export default SAdminFoodMenu;
