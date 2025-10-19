@@ -17,7 +17,7 @@ const AVAILABILITY_OPTIONS = [
   { value: "Available", label: "Available" },
   { value: "Not Available", label: "Out of Stock" },
 ];
-const pageSize = 12;
+const pageSize = 15;
 
 const SAdminFoodMenu = () => {
   const [foods, setFoods] = useState([]);
@@ -170,6 +170,38 @@ const SAdminFoodMenu = () => {
     setCurrentPage(1);
   };
 
+  // Generate page numbers for navigation (same as ReusableTable)
+  const getPageNumbers = () => {
+    const delta = 2;
+    const range = [];
+    const rangeWithDots = [];
+
+    const start = Math.max(1, currentPage - delta);
+    const end = Math.min(totalPages, currentPage + delta);
+
+    for (let i = start; i <= end; i++) {
+      range.push(i);
+    }
+
+    if (start > 1) {
+      rangeWithDots.push(1);
+      if (start > 2) {
+        rangeWithDots.push('...');
+      }
+    }
+
+    rangeWithDots.push(...range);
+
+    if (end < totalPages) {
+      if (end < totalPages - 1) {
+        rangeWithDots.push('...');
+      }
+      rangeWithDots.push(totalPages);
+    }
+
+    return rangeWithDots;
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -185,108 +217,98 @@ const SAdminFoodMenu = () => {
     <div className="mx-auto">
       <h1 className="text-2xl font-bold mb-6">All Foods (All Companies)</h1>
       
-      {/* Filters */}
-      <div>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 mb-4">
-          {/* Company Filter */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Company
-            </label>
-            <select
-              value={companyFilter}
-              onChange={e => setCompanyFilter(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors duration-200"
-            >
-              <option value="All">All Companies</option>
-              {companies.map((company) => (
-                <option key={company._id} value={company._id}>
-                  {company.companyName}
-                </option>
-              ))}
-            </select>
-          </div>
-          {/* Category Filter */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Category
-            </label>
-            <select
-              value={filters.category}
-              onChange={e => handleFilterChange("category", e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors duration-200"
-            >
-              {CATEGORIES.map((cat) => (
-                <option key={cat} value={cat}>{cat}</option>
-              ))}
-            </select>
-          </div>
-          {/* Available On Filter */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Available On
-            </label>
-            <select
-              value={filters.availableOn}
-              onChange={e => handleFilterChange("availableOn", e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors duration-200"
-            >
-              {AVAILABLE_ON_OPTIONS.map((opt) => (
-                <option key={opt} value={opt}>{opt}</option>
-              ))}
-            </select>
-          </div>
-          {/* Availability Filter */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Availability
-            </label>
-            <select
-              value={filters.availability}
-              onChange={e => handleFilterChange("availability", e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors duration-200"
-            >
-              {AVAILABILITY_OPTIONS.map((opt) => (
-                <option key={opt.value} value={opt.value}>{opt.label}</option>
-              ))}
-            </select>
-          </div>
-          {/* Search */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Search
-            </label>
-            <div className="relative">
-              <Search size={16} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
-              <input
-                type="text"
-                value={filters.search}
-                onChange={e => handleFilterChange("search", e.target.value)}
-                placeholder="Search menu items..."
-                className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors duration-200"
-              />
-            </div>
-          </div>
+      {/* Search and Controls - Same style as ReusableTable */}
+      <div className="flex flex-col sm:flex-row gap-4 mb-4">
+        {/* Search Bar - Same style as ReusableTable */}
+        <div className="relative flex-1">
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+          <input
+            type="text"
+            placeholder="Search menu items..."
+            value={filters.search}
+            onChange={(e) => handleFilterChange("search", e.target.value)}
+            className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+          />
         </div>
-        {/* Active filters count */}
-        {(companyFilter !== "All" || filters.category !== "All" || filters.availableOn !== "All" || filters.availability !== "All" || filters.search) && (
-          <div className="flex items-center justify-between pt-4 border-t border-gray-200">
-            <span className="text-sm text-gray-600">
-              {filteredFoods.length} of {foods.length} items shown
-            </span>
-            <button
-              onClick={() => {
-                setCompanyFilter("All");
-                setFilters({ category: "All", availableOn: "All", availability: "All", search: "" });
-                setCurrentPage(1);
-              }}
-              className="text-sm text-blue-600 hover:text-blue-700 font-medium"
-            >
-              Clear all filters
-            </button>
-          </div>
-        )}
+
+        {/* Company Filter */}
+        <div className="flex items-center gap-2">
+          <label className="text-sm text-gray-600">Company:</label>
+          <select
+            value={companyFilter}
+            onChange={e => setCompanyFilter(e.target.value)}
+            className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors duration-200"
+          >
+            <option value="All">All Companies</option>
+            {companies.map((company) => (
+              <option key={company._id} value={company._id}>
+                {company.companyName}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        {/* Category Filter */}
+        <div className="flex items-center gap-2">
+          <label className="text-sm text-gray-600">Category:</label>
+          <select
+            value={filters.category}
+            onChange={e => handleFilterChange("category", e.target.value)}
+            className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors duration-200"
+          >
+            {CATEGORIES.map((cat) => (
+              <option key={cat} value={cat}>{cat}</option>
+            ))}
+          </select>
+        </div>
+
+        {/* Available On Filter */}
+        <div className="flex items-center gap-2">
+          <label className="text-sm text-gray-600">Available:</label>
+          <select
+            value={filters.availableOn}
+            onChange={e => handleFilterChange("availableOn", e.target.value)}
+            className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors duration-200"
+          >
+            {AVAILABLE_ON_OPTIONS.map((opt) => (
+              <option key={opt} value={opt}>{opt}</option>
+            ))}
+          </select>
+        </div>
+
+        {/* Availability Filter */}
+        <div className="flex items-center gap-2">
+          <label className="text-sm text-gray-600">Status:</label>
+          <select
+            value={filters.availability}
+            onChange={e => handleFilterChange("availability", e.target.value)}
+            className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors duration-200"
+          >
+            {AVAILABILITY_OPTIONS.map((opt) => (
+              <option key={opt.value} value={opt.value}>{opt.label}</option>
+            ))}
+          </select>
+        </div>
       </div>
+
+      {/* Active filters info - Same style as ReusableTable */}
+      {(companyFilter !== "All" || filters.category !== "All" || filters.availableOn !== "All" || filters.availability !== "All" || filters.search) && (
+        <div className="flex items-center justify-between mb-4 pt-4 border-t border-gray-200">
+          <span className="text-sm text-gray-600">
+            {filteredFoods.length} of {foods.length} items shown
+          </span>
+          <button
+            onClick={() => {
+              setCompanyFilter("All");
+              setFilters({ category: "All", availableOn: "All", availability: "All", search: "" });
+              setCurrentPage(1);
+            }}
+            className="text-sm text-blue-600 hover:text-blue-700 font-medium"
+          >
+            Clear all filters
+          </button>
+        </div>
+      )}
 
       {/* Food Tiles */}
       {filteredFoods.length === 0 ? (
@@ -408,7 +430,7 @@ const SAdminFoodMenu = () => {
             ))}
           </div>
           
-          {/* Pagination Controls */}
+          {/* Pagination Controls - Exact same style as ReusableTable */}
           {totalPages > 1 && (
             <div className="flex flex-col sm:flex-row items-center justify-between px-4 py-3 bg-white border-t border-gray-300 rounded-b-lg gap-4 mt-8">
               {/* Results Info */}
@@ -417,6 +439,7 @@ const SAdminFoodMenu = () => {
                   Showing {((currentPage - 1) * pageSize) + 1} to {Math.min(currentPage * pageSize, filteredFoods.length)} of {filteredFoods.length} results
                 </span>
               </div>
+              
               {/* Navigation Controls */}
               <div className="flex items-center space-x-1">
                 {/* First Page */}
@@ -428,6 +451,7 @@ const SAdminFoodMenu = () => {
                 >
                   ««
                 </button>
+                
                 {/* Previous Page */}
                 <button
                   onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
@@ -436,41 +460,28 @@ const SAdminFoodMenu = () => {
                 >
                   Previous
                 </button>
+                
                 {/* Page Numbers */}
-                {(() => {
-                  const delta = 2;
-                  const range = [];
-                  const rangeWithDots = [];
-                  const start = Math.max(1, currentPage - delta);
-                  const end = Math.min(totalPages, currentPage + delta);
-                  for (let i = start; i <= end; i++) range.push(i);
-                  if (start > 1) {
-                    rangeWithDots.push(1);
-                    if (start > 2) rangeWithDots.push('...');
-                  }
-                  rangeWithDots.push(...range);
-                  if (end < totalPages) {
-                    if (end < totalPages - 1) rangeWithDots.push('...');
-                    rangeWithDots.push(totalPages);
-                  }
-                  return rangeWithDots.map((pageNum, index) =>
-                    pageNum === '...' ? (
-                      <span key={index} className="px-2 py-1 text-gray-500">...</span>
-                    ) : (
-                      <button
-                        key={pageNum}
-                        onClick={() => setCurrentPage(pageNum)}
-                        className={`px-3 py-1 border rounded-md text-sm font-medium ${
-                          currentPage === pageNum
-                            ? 'bg-blue-600 text-white border-blue-600'
-                            : 'border-gray-300 text-gray-700 bg-white hover:bg-gray-50'
-                        }`}
-                      >
-                        {pageNum}
-                      </button>
-                    )
-                  );
-                })()}
+                {getPageNumbers().map((pageNum, index) => (
+                  pageNum === '...' ? (
+                    <span key={index} className="px-2 py-1 text-gray-500">...</span>
+                  ) : (
+                    <button
+                      key={pageNum}
+                      onClick={() => setCurrentPage(pageNum)}
+                      className={`
+                        px-3 py-1 border rounded-md text-sm font-medium
+                        ${currentPage === pageNum
+                          ? 'bg-blue-600 text-white border-blue-600'
+                          : 'border-gray-300 text-gray-700 bg-white hover:bg-gray-50'
+                        }
+                      `}
+                    >
+                      {pageNum}
+                    </button>
+                  )
+                ))}
+                
                 {/* Next Page */}
                 <button
                   onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
@@ -479,6 +490,7 @@ const SAdminFoodMenu = () => {
                 >
                   Next
                 </button>
+                
                 {/* Last Page */}
                 <button
                   onClick={() => setCurrentPage(totalPages)}
@@ -489,6 +501,7 @@ const SAdminFoodMenu = () => {
                   »»
                 </button>
               </div>
+              
               {/* Quick Jump */}
               <div className="flex items-center gap-2 text-sm">
                 <span className="text-gray-600">Go to page:</span>
