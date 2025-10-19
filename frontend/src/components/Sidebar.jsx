@@ -1,4 +1,3 @@
-import React, { useEffect, useState } from "react";
 import {
   FaCog,
   FaHome,
@@ -9,18 +8,13 @@ import {
   FaUtensils,
   FaShoppingCart,
   FaBuilding,
-  FaUserShield,
 } from "react-icons/fa";
 import { NavLink} from "react-router-dom";
-import { UserContext } from '../context/UserContext';
 import {jwtDecode} from 'jwt-decode';
-import Modal from "./common/Modal";
 import Logo from "../assets/logo.png";
-import user from "../../../backend/models/user";
 
 const Sidebar = ({ open, setOpen, confirmLogout }) => {
-  const [companyId, setCompanyId] = useState(null);
-
+  
   const token = localStorage.getItem('token');
   let userRole = null;
   let userId = null;
@@ -35,23 +29,6 @@ const Sidebar = ({ open, setOpen, confirmLogout }) => {
       userId = null;
     }
   }
-
-  useEffect(() => {
-    // Only fetch for admin/superadmin
-    if ((userRole === 'admin' || userRole === 'superadmin') && userId) {
-      fetch(`/api/admin/${userId}`)
-        .then(res => res.json())
-        .then(data => {
-          // companyId can be an object or string
-          if (data.companyId && typeof data.companyId === "object") {
-            setCompanyId(data.companyId._id || data.companyId);
-          } else {
-            setCompanyId(data.companyId);
-          }
-        })
-        .catch(() => setCompanyId(null));
-    }
-  }, [userRole, userId]);
 
   return (
     <>
