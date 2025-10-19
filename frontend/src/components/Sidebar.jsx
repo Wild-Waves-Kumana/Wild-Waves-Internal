@@ -16,7 +16,6 @@ import { UserContext } from '../context/UserContext';
 import {jwtDecode} from 'jwt-decode';
 import Modal from "./common/Modal";
 import Logo from "../assets/logo.png";
-import user from "../../../backend/models/user";
 
 const Sidebar = ({ open, setOpen, confirmLogout }) => {
   const [companyId, setCompanyId] = useState(null);
