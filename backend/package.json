@@ -22,7 +22,8 @@
     "mongoose": "^8.15.0",
     "multer": "^2.0.2",
     "multer-storage-cloudinary": "^4.0.0",
-    "node-fetch": "^3.3.2"
+    "node-fetch": "^3.3.2",
+    "@aws-sdk/s3-request-presigner": "^3.528.0"
   },
 
   "optionalDependencies": {

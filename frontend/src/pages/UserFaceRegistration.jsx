@@ -164,12 +164,17 @@ const UserFaceRegistration = () => {
     setSuccess("");
     setDeleting(true);
     try {
-      const response = await fetch(
-        `https://face-recognition-app-vnr6.onrender.com/delete_user/${username}`,
-        {
-          method: "DELETE",
-        }
-      );
+      // Prefer userId (from token). Fall back to username if not available.
+      const targetId = userId || username;
+      if (!targetId) throw new Error('Missing user identifier');
+
+      const headers = {};
+      if (token) headers.Authorization = `Bearer ${token}`;
+
+      const response = await fetch(`/api/face/delete/${encodeURIComponent(targetId)}`, {
+        method: 'DELETE',
+        headers,
+      });
       if (response.ok) {
         setSuccess("Face data deleted successfully.");
         setFaceRegistered(false);
