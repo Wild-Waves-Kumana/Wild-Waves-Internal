@@ -9,6 +9,8 @@ const EquipmentCreation = () => {
   const [villas, setVillas] = useState([]);
   const [selectedVillaRooms, setSelectedVillaRooms] = useState([]);
   const [rooms, setRooms] = useState([]);
+  const [generatedItemCode, setGeneratedItemCode] = useState("");
+  const [loading, setLoading] = useState(false);
   
   const [message, setMessage] = useState("");
   const token = localStorage.getItem('token');
@@ -16,10 +18,9 @@ const EquipmentCreation = () => {
   const [formData, setFormData] = useState({
     category: "Doors",
     itemName: "",
-    itemCode: "",
     villaId: "",
     roomId: "",
-    access: "Enabled",
+    access: true,
   });
 
   // Fetch villas for the admin's company
@@ -65,6 +66,30 @@ const EquipmentCreation = () => {
     fetchRooms();
   }, []);
 
+  // Generate next item code when category changes
+  useEffect(() => {
+    const generateNextItemCode = async () => {
+      setLoading(true);
+      try {
+        const response = await axios.get(`/api/equipment/next-item-code/${formData.category}`);
+        setGeneratedItemCode(response.data.nextItemCode);
+      } catch (err) {
+        console.error("Failed to generate item code:", err);
+        // Fallback to placeholder with hyphen format
+        const prefixes = {
+          "Doors": "D",
+          "Lights": "L", 
+          "Air Conditioner": "A",
+        };
+        const prefix = prefixes[formData.category] || "E";
+        setGeneratedItemCode(`${prefix}-0001`);
+      } finally {
+        setLoading(false);
+      }
+    };
+    generateNextItemCode();
+  }, [formData.category]);
+
   // form change handler
   const handleChange = (e) => {
     setFormData((prev) => ({
@@ -86,9 +111,9 @@ const EquipmentCreation = () => {
   // submit handler
   const handleSubmit = async (e) => {
     e.preventDefault();
-    const { category, itemName, itemCode, villaId, access } = formData;
+    const { category, itemName, villaId, access } = formData;
 
-    if (!itemName || !itemCode || !villaId) {
+    if (!itemName || !villaId) {
       setMessage("Please fill in all required fields.");
       return;
     }
@@ -104,16 +129,22 @@ const EquipmentCreation = () => {
     }
 
     try {
-      await axios.post("/api/equipment/create", {
+      const response = await axios.post("/api/equipment/create", {
         category,
         itemName,
-        itemCode,
         villaId,
         roomId: formData.roomId,
         access,
         adminId,
       });
-      navigate("/AdminDashboard");
+      
+      // Show success message with generated item code
+      setMessage(`Equipment created successfully with Item Code: ${response.data.equipment.itemCode}`);
+      
+      // Navigate after a short delay to show the success message
+      setTimeout(() => {
+        navigate("/AdminDashboard");
+      }, 2000);
     } catch (err) {
       setMessage(err.response?.data?.message || "Failed to create equipment.");
     }
@@ -127,8 +158,45 @@ const EquipmentCreation = () => {
       >
         <h2 className="text-2xl font-semibold text-center">Create Equipment</h2>
         {message && (
-          <p className="text-center text-sm text-red-600">{message}</p>
+          <p className={`text-center text-sm ${
+            message.includes('successfully') ? 'text-green-600' : 'text-red-600'
+          }`}>
+            {message}
+          </p>
         )}
+
+        {/* Category */}
+        <div>
+          <label className="block font-medium mb-1">Category</label>
+          <select
+            name="category"
+            value={formData.category}
+            onChange={handleChange}
+            className="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring"
+          >
+            <option value="Doors">Doors</option>
+            <option value="Air Conditioner">Air Conditioner</option>
+            <option value="Lights">Lights</option>
+          </select>
+        </div>
+
+        {/* Item Code Display */}
+        <div>
+          <label className="block font-medium mb-1">Item Code</label>
+          <div className="w-full px-4 py-2 border rounded-md bg-gray-50 text-gray-600 flex items-center">
+            {loading ? (
+              <div className="flex items-center">
+                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600 mr-2"></div>
+                Generating...
+              </div>
+            ) : (
+              <span className="font-mono text-lg">{generatedItemCode}</span>
+            )}
+          </div>
+          <p className="text-xs text-gray-500 mt-1">
+            Next available item code for {formData.category}
+          </p>
+        </div>
 
         {/* Villa Selection as buttons */}
         <div>
@@ -154,7 +222,7 @@ const EquipmentCreation = () => {
         {/* Room Selection for selected villa as buttons */}
         {formData.villaId && (
           <div>
-            <label className="block font-medium mb-1">Select Room</label>
+            <label className="block font-medium mb-1">Select Room (Optional)</label>
             <div className="flex flex-wrap gap-2 mb-2">
               {selectedVillaRooms.map((room) => (
                 <button
@@ -176,39 +244,19 @@ const EquipmentCreation = () => {
           </div>
         )}
 
-        {/* Category */}
-        <select
-          name="category"
-          value={formData.category}
-          onChange={handleChange}
-          className="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring"
-        >
-          <option value="Doors">Doors</option>
-          <option value="Air Conditioner">Air Conditioner</option>
-          <option value="Lights">Lights</option>
-        </select>
-
         {/* Item Name */}
-        <input
-          type="text"
-          name="itemName"
-          placeholder="Item Name"
-          value={formData.itemName}
-          onChange={handleChange}
-          required
-          className="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring"
-        />
-
-        {/* Item Code */}
-        <input
-          type="text"
-          name="itemCode"
-          placeholder="Item Code"
-          value={formData.itemCode}
-          onChange={handleChange}
-          required
-          className="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring"
-        />
+        <div>
+          <label className="block font-medium mb-1">Item Name</label>
+          <input
+            type="text"
+            name="itemName"
+            placeholder="Enter item name"
+            value={formData.itemName}
+            onChange={handleChange}
+            required
+            className="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring"
+          />
+        </div>
 
         {/* Access as selectable buttons */}
         <div>
@@ -235,12 +283,13 @@ const EquipmentCreation = () => {
             ))}
           </div>
         </div>
+
         {/* Submit */}
         <button
           type="submit"
           className="w-full bg-blue-600 text-white py-2 rounded-md hover:bg-blue-700"
         >
-          Create
+          Create Equipment
         </button>
       </form>
     </div>
