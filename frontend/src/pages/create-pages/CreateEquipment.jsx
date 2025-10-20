@@ -4,6 +4,7 @@ import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import { jwtDecode } from 'jwt-decode';
 import Modal from '../../components/common/Modal';
+import Toaster from '../../components/common/Toaster';
 
 const EquipmentCreation = () => {
   const navigate = useNavigate();
@@ -14,8 +15,12 @@ const EquipmentCreation = () => {
   const [loading, setLoading] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [createdEquipment, setCreatedEquipment] = useState(null);
+  const [roomEquipments, setRoomEquipments] = useState([]);
+  const [loadingEquipments, setLoadingEquipments] = useState(false);
   
   const [message, setMessage] = useState("");
+  const [showToast, setShowToast] = useState(false);
+  const [toastType, setToastType] = useState('info');
   const token = localStorage.getItem('token');
 
   const [formData, setFormData] = useState({
@@ -93,6 +98,47 @@ const EquipmentCreation = () => {
     generateNextItemCode();
   }, [formData.category]);
 
+  // Fetch room equipments when room is selected
+  useEffect(() => {
+    const fetchRoomEquipments = async () => {
+      if (!formData.roomId) {
+        setRoomEquipments([]);
+        return;
+      }
+
+      setLoadingEquipments(true);
+      try {
+        // Fetch equipments from all three collections
+        const [doorsRes, lightsRes, acsRes] = await Promise.all([
+          axios.get('/api/equipment/doors'),
+          axios.get('/api/equipment/lights'),
+          axios.get('/api/equipment/air-conditioners')
+        ]);
+
+        // Filter equipments by selected room
+        const roomDoors = doorsRes.data.filter(door => door.roomId?._id === formData.roomId);
+        const roomLights = lightsRes.data.filter(light => light.roomId?._id === formData.roomId);
+        const roomACs = acsRes.data.filter(ac => ac.roomId?._id === formData.roomId);
+
+        // Combine and add category info
+        const allEquipments = [
+          ...roomDoors.map(item => ({ ...item, category: 'Door' })),
+          ...roomLights.map(item => ({ ...item, category: 'Light' })),
+          ...roomACs.map(item => ({ ...item, category: 'Air Conditioner' }))
+        ];
+
+        setRoomEquipments(allEquipments);
+      } catch (err) {
+        console.error("Failed to fetch room equipments:", err);
+        setRoomEquipments([]);
+      } finally {
+        setLoadingEquipments(false);
+      }
+    };
+
+    fetchRoomEquipments();
+  }, [formData.roomId]);
+
   // form change handler
   const handleChange = (e) => {
     setFormData((prev) => ({
@@ -112,12 +158,13 @@ const EquipmentCreation = () => {
   };
 
   // submit handler
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+  const handleSubmit = async () => {
     const { category, itemName, villaId, access } = formData;
 
     if (!itemName || !villaId) {
       setMessage("Please fill in all required fields.");
+      setToastType('error');
+      setShowToast(true);
       return;
     }
 
@@ -140,13 +187,12 @@ const EquipmentCreation = () => {
         access,
         adminId,
       });
-      
-      // Store created equipment data for modal
       setCreatedEquipment(response.data.equipment);
       setShowSuccessModal(true);
-      
     } catch (err) {
       setMessage(err.response?.data?.message || "Failed to create equipment.");
+      setToastType('error');
+      setShowToast(true);
     }
   };
 
@@ -155,147 +201,268 @@ const EquipmentCreation = () => {
   const selectedRoom = selectedVillaRooms.find(r => r._id === formData.roomId);
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-gray-100">
-      <form
-        onSubmit={handleSubmit}
-        className="bg-white p-8 rounded-lg shadow-md w-full max-w-md space-y-4"
-      >
-        <h2 className="text-2xl font-semibold text-center">Create Equipment</h2>
-        {message && (
-          <p className={`text-center text-sm ${
-            message.includes('successfully') ? 'text-green-600' : 'text-red-600'
-          }`}>
-            {message}
-          </p>
-        )}
+    <div className="min-h-screen bg-gray-100">
+      <div className=" mx-auto">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 ">
+          
+          {/* Left Column - Form */}
+          <div className="bg-white p-8 rounded-lg shadow-md space-y-4">
+            <h2 className="text-2xl font-semibold text-center mb-6">Create Equipment</h2>
+            <Toaster
+              message={message}
+              type={toastType}
+              isVisible={showToast && !!message}
+              onClose={() => setShowToast(false)}
+              duration={4000}
+              position="top-right"
+            />
 
-        {/* Category */}
-        <div>
-          <label className="block font-medium mb-1">Category</label>
-          <select
-            name="category"
-            value={formData.category}
-            onChange={handleChange}
-            className="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring"
-          >
-            <option value="Doors">Doors</option>
-            <option value="Air Conditioner">Air Conditioner</option>
-            <option value="Lights">Lights</option>
-          </select>
-        </div>
-
-        {/* Item Code Display */}
-        <div>
-          <label className="block font-medium mb-1">Item Code</label>
-          <div className="w-full px-4 py-2 border rounded-md bg-gray-50 text-gray-600 flex items-center">
-            {loading ? (
-              <div className="flex items-center">
-                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600 mr-2"></div>
-                Generating...
-              </div>
-            ) : (
-              <span className="font-mono text-lg">{generatedItemCode}</span>
-            )}
-          </div>
-          <p className="text-xs text-gray-500 mt-1">
-            Next available item code for {formData.category}
-          </p>
-        </div>
-
-        {/* Villa Selection as buttons */}
-        <div>
-          <label className="block font-medium mb-1">Select Villa</label>
-          <div className="flex flex-wrap gap-2 mb-2">
-            {villas.map((villa) => (
-              <button
-                key={villa._id}
-                type="button"
-                className={`px-4 py-2 rounded border
-                  ${formData.villaId === villa._id
-                    ? "bg-blue-600 text-white border-blue-600"
-                    : "bg-gray-100 text-gray-700 border-gray-300 hover:bg-blue-100"}
-                `}
-                onClick={() => handleVillaSelect(villa)}
-              >
-                {villa.villaName} ({villa.villaId})
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {/* Room Selection for selected villa as buttons */}
-        {formData.villaId && (
-          <div>
-            <label className="block font-medium mb-1">Select Room (Optional)</label>
-            <div className="flex flex-wrap gap-2 mb-2">
-              {selectedVillaRooms.map((room) => (
-                <button
-                  key={room._id}
-                  type="button"
-                  className={`px-4 py-2 rounded border
-                    ${formData.roomId === room._id
-                      ? "bg-blue-600 text-white border-blue-600"
-                      : "bg-gray-100 text-gray-700 border-gray-300 hover:bg-blue-100"}
-                  `}
-                  onClick={() =>
-                    setFormData((prev) => ({ ...prev, roomId: room._id }))
-                  }
+            {/* Category & Item Code in same row */}
+            <div className="flex flex-col md:flex-row gap-4">
+              {/* Category */}
+              <div className="flex-1">
+                <label className="block font-medium mb-1">Category</label>
+                <select
+                  name="category"
+                  value={formData.category}
+                  onChange={handleChange}
+                  className="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring"
                 >
-                  {room.roomName}
-                </button>
-              ))}
+                  <option value="Doors">Doors</option>
+                  <option value="Air Conditioner">Air Conditioner</option>
+                  <option value="Lights">Lights</option>
+                </select>
+              </div>
+
+              {/* Item Code Display */}
+              <div className="flex-1">
+                <label className="block font-medium mb-1">Item Code</label>
+                <div className="w-full px-4 py-2 border rounded-md bg-gray-50 text-gray-600 flex items-center">
+                  {loading ? (
+                    <div className="flex items-center">
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600 mr-2"></div>
+                      Generating...
+                    </div>
+                  ) : (
+                    <span className="font-mono text-lg">{generatedItemCode}</span>
+                  )}
+                </div>
+                <p className="text-xs text-gray-500 mt-1">
+                  Next available item code for {formData.category}
+                </p>
+              </div>
+            </div>
+
+            {/* Villa Selection as buttons */}
+            <div>
+              <label className="block font-medium mb-1">Select Villa</label>
+              <div className="grid grid-cols-3 gap-2 mb-2 max-h-32 overflow-y-auto">
+                {villas.map((villa) => (
+                  <button
+                    key={villa._id}
+                    type="button"
+                    className={`px-4 py-2 rounded border text-sm
+                      ${formData.villaId === villa._id
+                        ? "bg-blue-600 text-white border-blue-600"
+                        : "bg-gray-100 text-gray-700 border-gray-300 hover:bg-blue-100"}
+                    `}
+                    onClick={() => handleVillaSelect(villa)}
+                  >
+                    {villa.villaName} ({villa.villaId})
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Room Selection for selected villa as buttons */}
+            {formData.villaId && (
+              <div>
+                <label className="block font-medium mb-1">Select Room (Optional)</label>
+                <div className="grid grid-cols-3 gap-2 mb-2 max-h-32 overflow-y-auto">
+                  {selectedVillaRooms.map((room) => (
+                    <button
+                      key={room._id}
+                      type="button"
+                      className={`px-4 py-2 rounded border text-sm
+                        ${formData.roomId === room._id
+                          ? "bg-blue-600 text-white border-blue-600"
+                          : "bg-gray-100 text-gray-700 border-gray-300 hover:bg-blue-100"}
+                      `}
+                      onClick={() =>
+                        setFormData((prev) => ({ ...prev, roomId: room._id }))
+                      }
+                    >
+                      {room.roomName}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Item Name */}
+            <div>
+              <label className="block font-medium mb-1">Item Name</label>
+              <input
+                type="text"
+                name="itemName"
+                placeholder="Enter item name"
+                value={formData.itemName}
+                onChange={handleChange}
+                required
+                className="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring"
+              />
+            </div>
+
+            {/* Access as selectable buttons */}
+            <div>
+              <label className="block font-medium mb-1">Access</label>
+              <div className="flex flex-wrap gap-2 mb-2">
+                {[
+                  { label: "Enable", value: true },
+                  { label: "Disable", value: false }
+                ].map((option) => (
+                  <button
+                    key={option.label}
+                    type="button"
+                    className={`px-4 py-2 rounded border
+                      ${formData.access === option.value
+                        ? "bg-blue-600 text-white border-blue-600"
+                        : "bg-gray-100 text-gray-700 border-gray-300 hover:bg-blue-100"}
+                    `}
+                    onClick={() =>
+                      setFormData((prev) => ({ ...prev, access: option.value }))
+                    }
+                  >
+                    {option.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            
+          </div>
+
+          {/* Right Column - Preview/Information */}
+          <div className="">
+            <div className="flex flex-col md:flex-row gap-4">
+              {/* Category */}
+              <div className="flex-1 bg-white p-8 rounded-lg shadow-md">
+            <h3 className="text-md font-semibold mb-6">Equipment Preview</h3>
+            
+            <div className="space-y-4">
+              <div className="border-l-4 border-blue-500 pl-4">
+                <h4 className="font-medium text-gray-700">Category</h4>
+                <p className="text-lg">{formData.category}</p>
+              </div>
+
+              <div className="border-l-4 border-green-500 pl-4">
+                <h4 className="font-medium text-gray-700">Item Code</h4>
+                <p className="text-lg font-mono">{generatedItemCode || 'Generating...'}</p>
+              </div>
+
+              <div className="border-l-4 border-purple-500 pl-4">
+                <h4 className="font-medium text-gray-700">Item Name</h4>
+                <p className="text-lg">{formData.itemName || 'Not specified'}</p>
+              </div>
+
+              <div className="border-l-4 border-orange-500 pl-4">
+                <h4 className="font-medium text-gray-700">Villa</h4>
+                <p className="text-lg">
+                  {selectedVilla ? `${selectedVilla.villaName} (${selectedVilla.villaId})` : 'Not selected'}
+                </p>
+              </div>
+
+              <div className="border-l-4 border-yellow-500 pl-4">
+                <h4 className="font-medium text-gray-700">Room</h4>
+                <p className="text-lg">{selectedRoom ? selectedRoom.roomName : 'Not assigned'}</p>
+              </div>
+
+              <div className="border-l-4 border-red-500 pl-4">
+                <h4 className="font-medium text-gray-700">Access</h4>
+                <p className="text-lg">
+                  <span className={`px-2 py-1 rounded text-sm ${
+                    formData.access ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                  }`}>
+                    {formData.access ? 'Enabled' : 'Disabled'}
+                  </span>
+                </p>
+              </div>
             </div>
           </div>
-        )}
+          <div className="flex-1 bg-white px-4 py-8 rounded-lg shadow-md">
+            {/* Existing Room Equipments or Instructions */}
+            {formData.roomId ? (
+              <div className="">
+                <h3 className="text-md font-semibold mb-6">Existing Equipment in {selectedRoom?.roomName}</h3>
+                
+                {loadingEquipments ? (
+                  <div className="flex items-center justify-center py-4">
+                    <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
+                    <span className="ml-2 text-gray-600">Loading equipments...</span>
+                  </div>
+                ) : roomEquipments.length > 0 ? (
+                  <div className="space-y-2 max-h-84 overflow-y-auto">
+                    {roomEquipments.map((equipment, index) => (
+                      <div key={`${equipment.category}-${equipment._id}`} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2">
+                            <span className={`px-2 py-1 text-xs rounded font-medium ${
+                              equipment.category === 'Door' ? 'bg-blue-100 text-blue-800' :
+                              equipment.category === 'Light' ? 'bg-yellow-100 text-yellow-800' :
+                              'bg-green-100 text-green-800'
+                            }`}>
+                              {equipment.category}
+                            </span>
+                            <span className="font-mono text-sm text-gray-600">{equipment.itemCode}</span>
+                          </div>
+                          <p className="font-medium text-gray-800">{equipment.itemName}</p>
+                        </div>
+                        <div className="text-right">
+                          <span className={`px-2 py-1 text-xs rounded ${
+                            equipment.access ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                          }`}>
+                            {equipment.access ? 'Enabled' : 'Disabled'}
+                          </span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-8 text-gray-500">
+                    <p>No equipment found in this room</p>
+                    <p className="text-sm mt-1">This will be the first equipment in {selectedRoom?.roomName}</p>
+                  </div>
+                )}
+              </div>
+            ) : (
+              /* Instructions when no room is selected */
+              <div className="p-4 bg-blue-50 rounded-lg">
+                <h4 className="font-medium text-blue-800 mb-2">Instructions</h4>
+                <ul className="text-sm text-blue-700 space-y-1">
+                  <li>• Select a category to generate item code</li>
+                  <li>• Choose a villa to assign the equipment</li>
+                  <li>• Room assignment is optional</li>
+                  <li>• Item name is required</li>
+                  <li>• Access control can be enabled/disabled</li>
+                </ul>
+              </div>
+            )}
+            </div>
+            </div>
 
-        {/* Item Name */}
-        <div>
-          <label className="block font-medium mb-1">Item Name</label>
-          <input
-            type="text"
-            name="itemName"
-            placeholder="Enter item name"
-            value={formData.itemName}
-            onChange={handleChange}
-            required
-            className="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring"
-          />
-        </div>
 
-        {/* Access as selectable buttons */}
-        <div>
-          <label className="block font-medium mb-1">Access</label>
-          <div className="flex flex-wrap gap-2 mb-2">
-            {[
-              { label: "Enable", value: true },
-              { label: "Disable", value: false }
-            ].map((option) => (
-              <button
-                key={option.label}
-                type="button"
-                className={`px-4 py-2 rounded border
-                  ${formData.access === option.value
-                    ? "bg-blue-600 text-white border-blue-600"
-                    : "bg-gray-100 text-gray-700 border-gray-300 hover:bg-blue-100"}
-                `}
-                onClick={() =>
-                  setFormData((prev) => ({ ...prev, access: option.value }))
-                }
-              >
-                {option.label}
-              </button>
-            ))}
+            {/* Submit */}
+            <button
+              onClick={handleSubmit}
+              className="w-full mt-4 bg-blue-600 text-white py-2 rounded-md hover:bg-blue-700"
+            >
+              Create Equipment
+            </button>
           </div>
+          
         </div>
-
-        {/* Submit */}
-        <button
-          type="submit"
-          className="w-full bg-blue-600 text-white py-2 rounded-md hover:bg-blue-700"
-        >
-          Create Equipment
-        </button>
-      </form>
+        
+      </div>
 
       {/* Success Modal */}
       <Modal isVisible={showSuccessModal} onClose={() => setShowSuccessModal(false)} width="max-w-lg">
@@ -312,7 +479,8 @@ const EquipmentCreation = () => {
               <span className="font-semibold">Item Name:</span> {createdEquipment.itemName}
             </div>
             <div>
-              <span className="font-semibold">Villa:</span> {selectedVilla ? `${selectedVilla.villaName} (${selectedVilla.villaId})` : '-'}
+              <span className="font-semibold">Villa:</span> {selectedVilla ? `${selectedVilla.villaName} (${selectedVilla.villaId})` : '-'
+              }
             </div>
             <div>
               <span className="font-semibold">Room:</span> {selectedRoom ? selectedRoom.roomName : 'Not assigned'}
