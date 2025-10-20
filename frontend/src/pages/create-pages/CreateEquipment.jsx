@@ -201,14 +201,14 @@ const EquipmentCreation = () => {
   const selectedRoom = selectedVillaRooms.find(r => r._id === formData.roomId);
 
   return (
-    <div className="min-h-screen bg-gray-100 p-6">
-      <div className="max-w-7xl mx-auto">
+    <div className="min-h-screen bg-gray-100">
+      <div className=" mx-auto">
         {/* Use flex instead of grid for equal height columns */}
         <div className="flex flex-col lg:flex-row gap-8 h-full">
           
           {/* Left Column - Form */}
-          <div className="flex-1 bg-white p-8 rounded-lg shadow-md flex flex-col">
-            <h2 className="text-2xl font-semibold text-center mb-6">Create Equipment</h2>
+          <div className="flex-1 bg-white p-6 rounded-lg shadow-md flex flex-col">
+            <h2 className="text-2xl font-semibold mb-6">Create Equipment</h2>
             <Toaster
               message={message}
               type={toastType}
@@ -221,25 +221,31 @@ const EquipmentCreation = () => {
             <div className="space-y-4 flex-1">
               {/* Category & Item Code in same row */}
               <div className="flex flex-col md:flex-row gap-4">
-                {/* Category */}
-                <div className="flex-1">
+                {/* Category as 3 buttons in a grid */}
+                <div>
                   <label className="block font-medium mb-1">Category</label>
-                  <select
-                    name="category"
-                    value={formData.category}
-                    onChange={handleChange}
-                    className="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring"
-                  >
-                    <option value="Doors">Doors</option>
-                    <option value="Air Conditioner">Air Conditioner</option>
-                    <option value="Lights">Lights</option>
-                  </select>
+                  <div className="grid grid-cols-3 gap-2 mb-2">
+                    {["Doors", "Air Conditioner", "Lights"].map((cat) => (
+                      <button
+                        key={cat}
+                        type="button"
+                        className={`px-4 py-2 rounded border text-sm
+                          ${formData.category === cat
+                            ? "bg-blue-600 text-white border-blue-600"
+                            : "bg-gray-100 text-gray-700 border-gray-300 hover:bg-blue-100"}
+                        `}
+                        onClick={() => setFormData((prev) => ({ ...prev, category: cat }))}
+                      >
+                        {cat}
+                      </button>
+                    ))}
+                  </div>
                 </div>
 
                 {/* Item Code Display */}
                 <div className="flex-1">
                   <label className="block font-medium mb-1">Item Code</label>
-                  <div className="w-full px-4 py-2 border rounded-md bg-gray-50 text-gray-600 flex items-center">
+                  <div className="w-full px-4 py-1 border rounded-md bg-gray-50 text-gray-600 flex items-center">
                     {loading ? (
                       <div className="flex items-center">
                         <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600 mr-2"></div>
@@ -249,7 +255,7 @@ const EquipmentCreation = () => {
                       <span className="font-mono text-lg">{generatedItemCode}</span>
                     )}
                   </div>
-                  <p className="text-xs text-gray-500 mt-1">
+                  <p className="text-[10px] text-gray-500 mt-1">
                     Next available item code for {formData.category}
                   </p>
                 </div>
@@ -279,7 +285,7 @@ const EquipmentCreation = () => {
               {/* Room Selection for selected villa as buttons */}
               {formData.villaId && (
                 <div>
-                  <label className="block font-medium mb-1">Select Room (Optional)</label>
+                  <label className="block font-medium mb-1">Select Room</label>
                   <div className="grid grid-cols-3 gap-2 mb-2 max-h-32 overflow-y-auto">
                     {selectedVillaRooms.map((room) => (
                       <button
@@ -332,7 +338,7 @@ const EquipmentCreation = () => {
                     <button
                       key={option.label}
                       type="button"
-                      className={`px-4 py-2 rounded border
+                      className={`px-4 py-2 rounded border text-sm
                         ${formData.access === option.value
                           ? "bg-blue-600 text-white border-blue-600"
                           : "bg-gray-100 text-gray-700 border-gray-300 hover:bg-blue-100"}
@@ -358,35 +364,35 @@ const EquipmentCreation = () => {
                 
                 <div className="space-y-4">
                   <div className="border-l-4 border-blue-500 pl-4">
-                    <h4 className="font-medium text-gray-700">Category</h4>
-                    <p className="text-lg">{formData.category}</p>
+                    <h4 className="font-sm text-gray-700">Category</h4>
+                    <p className="font-medium">{formData.category}</p>
                   </div>
 
                   <div className="border-l-4 border-green-500 pl-4">
-                    <h4 className="font-medium text-gray-700">Item Code</h4>
-                    <p className="text-lg font-mono">{generatedItemCode || 'Generating...'}</p>
+                    <h4 className="font-sm text-gray-700">Item Code</h4>
+                    <p className="text-medium font-mono">{generatedItemCode || 'Generating...'}</p>
                   </div>
 
                   <div className="border-l-4 border-purple-500 pl-4">
-                    <h4 className="font-medium text-gray-700">Item Name</h4>
-                    <p className="text-lg">{formData.itemName || 'Not specified'}</p>
+                    <h4 className="font-sm text-gray-700">Item Name</h4>
+                    <p className="text-medium">{formData.itemName || 'Not specified'}</p>
                   </div>
 
                   <div className="border-l-4 border-orange-500 pl-4">
-                    <h4 className="font-medium text-gray-700">Villa</h4>
-                    <p className="text-lg">
+                    <h4 className="font-sm text-gray-700">Villa</h4>
+                    <p className="text-medium">
                       {selectedVilla ? `${selectedVilla.villaName} (${selectedVilla.villaId})` : 'Not selected'}
                     </p>
                   </div>
 
                   <div className="border-l-4 border-yellow-500 pl-4">
-                    <h4 className="font-medium text-gray-700">Room</h4>
-                    <p className="text-lg">{selectedRoom ? selectedRoom.roomName : 'Not assigned'}</p>
+                    <h4 className="font-sm text-gray-700">Room</h4>
+                    <p className="text-medium">{selectedRoom ? selectedRoom.roomName : 'Not assigned'}</p>
                   </div>
 
                   <div className="border-l-4 border-red-500 pl-4">
-                    <h4 className="font-medium text-gray-700">Access</h4>
-                    <p className="text-lg">
+                    <h4 className="font-sm text-gray-700">Access</h4>
+                    <p className="text-medium">
                       <span className={`px-2 py-1 rounded text-sm ${
                         formData.access ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
                       }`}>
@@ -410,8 +416,8 @@ const EquipmentCreation = () => {
                           <span className="ml-2 text-gray-600">Loading equipments...</span>
                         </div>
                       ) : roomEquipments.length > 0 ? (
-                        <div className="space-y-2 max-h-64 overflow-y-auto">
-                          {roomEquipments.map((equipment, index) => (
+                        <div className="space-y-2 max-h-96 overflow-y-auto">
+                          {roomEquipments.map((equipment) => (
                             <div key={`${equipment.category}-${equipment._id}`} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
                               <div className="flex-1">
                                 <div className="flex items-center gap-2">
@@ -450,7 +456,7 @@ const EquipmentCreation = () => {
                       <ul className="text-sm text-blue-700 space-y-1">
                         <li>• Select a category to generate item code</li>
                         <li>• Choose a villa to assign the equipment</li>
-                        <li>• Room assignment is optional</li>
+                        <li>• Room assignment is required</li>
                         <li>• Item name is required</li>
                         <li>• Access control can be enabled/disabled</li>
                       </ul>
