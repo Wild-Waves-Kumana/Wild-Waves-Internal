@@ -3,6 +3,7 @@ import React, { useEffect, useState } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import { jwtDecode } from 'jwt-decode';
+import Modal from '../../components/common/Modal';
 
 const EquipmentCreation = () => {
   const navigate = useNavigate();
@@ -11,6 +12,8 @@ const EquipmentCreation = () => {
   const [rooms, setRooms] = useState([]);
   const [generatedItemCode, setGeneratedItemCode] = useState("");
   const [loading, setLoading] = useState(false);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [createdEquipment, setCreatedEquipment] = useState(null);
   
   const [message, setMessage] = useState("");
   const token = localStorage.getItem('token');
@@ -138,17 +141,18 @@ const EquipmentCreation = () => {
         adminId,
       });
       
-      // Show success message with generated item code
-      setMessage(`Equipment created successfully with Item Code: ${response.data.equipment.itemCode}`);
+      // Store created equipment data for modal
+      setCreatedEquipment(response.data.equipment);
+      setShowSuccessModal(true);
       
-      // Navigate after a short delay to show the success message
-      setTimeout(() => {
-        navigate("/AdminDashboard");
-      }, 2000);
     } catch (err) {
       setMessage(err.response?.data?.message || "Failed to create equipment.");
     }
   };
+
+  // Find selected villa and room objects for display
+  const selectedVilla = villas.find(v => v._id === formData.villaId);
+  const selectedRoom = selectedVillaRooms.find(r => r._id === formData.roomId);
 
   return (
     <div className="flex items-center justify-center min-h-screen bg-gray-100">
@@ -292,6 +296,44 @@ const EquipmentCreation = () => {
           Create Equipment
         </button>
       </form>
+
+      {/* Success Modal */}
+      <Modal isVisible={showSuccessModal} onClose={() => setShowSuccessModal(false)} width="max-w-lg">
+        <h2 className="text-xl font-bold mb-4 text-center">Equipment Created Successfully</h2>
+        {createdEquipment && (
+          <div className="space-y-2">
+            <div>
+              <span className="font-semibold">Item Code:</span> {createdEquipment.itemCode}
+            </div>
+            <div>
+              <span className="font-semibold">Category:</span> {formData.category}
+            </div>
+            <div>
+              <span className="font-semibold">Item Name:</span> {createdEquipment.itemName}
+            </div>
+            <div>
+              <span className="font-semibold">Villa:</span> {selectedVilla ? `${selectedVilla.villaName} (${selectedVilla.villaId})` : '-'}
+            </div>
+            <div>
+              <span className="font-semibold">Room:</span> {selectedRoom ? selectedRoom.roomName : 'Not assigned'}
+            </div>
+            <div>
+              <span className="font-semibold">Access:</span> {formData.access ? 'Enabled' : 'Disabled'}
+            </div>
+          </div>
+        )}
+        <div className="flex justify-end gap-2 mt-6">
+          <button
+            className="px-4 py-2 rounded bg-blue-600 text-white hover:bg-blue-700"
+            onClick={() => {
+              setShowSuccessModal(false);
+              navigate('/admindashboard');
+            }}
+          >
+            OK
+          </button>
+        </div>
+      </Modal>
     </div>
   );
 };
