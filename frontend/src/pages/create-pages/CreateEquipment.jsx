@@ -201,12 +201,13 @@ const EquipmentCreation = () => {
   const selectedRoom = selectedVillaRooms.find(r => r._id === formData.roomId);
 
   return (
-    <div className="min-h-screen bg-gray-100">
-      <div className=" mx-auto">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 ">
+    <div className="min-h-screen bg-gray-100 p-6">
+      <div className="max-w-7xl mx-auto">
+        {/* Use flex instead of grid for equal height columns */}
+        <div className="flex flex-col lg:flex-row gap-8 h-full">
           
           {/* Left Column - Form */}
-          <div className="bg-white p-8 rounded-lg shadow-md space-y-4">
+          <div className="flex-1 bg-white p-8 rounded-lg shadow-md flex flex-col">
             <h2 className="text-2xl font-semibold text-center mb-6">Create Equipment</h2>
             <Toaster
               message={message}
@@ -217,251 +218,257 @@ const EquipmentCreation = () => {
               position="top-right"
             />
 
-            {/* Category & Item Code in same row */}
-            <div className="flex flex-col md:flex-row gap-4">
-              {/* Category */}
-              <div className="flex-1">
-                <label className="block font-medium mb-1">Category</label>
-                <select
-                  name="category"
-                  value={formData.category}
-                  onChange={handleChange}
-                  className="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring"
-                >
-                  <option value="Doors">Doors</option>
-                  <option value="Air Conditioner">Air Conditioner</option>
-                  <option value="Lights">Lights</option>
-                </select>
-              </div>
-
-              {/* Item Code Display */}
-              <div className="flex-1">
-                <label className="block font-medium mb-1">Item Code</label>
-                <div className="w-full px-4 py-2 border rounded-md bg-gray-50 text-gray-600 flex items-center">
-                  {loading ? (
-                    <div className="flex items-center">
-                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600 mr-2"></div>
-                      Generating...
-                    </div>
-                  ) : (
-                    <span className="font-mono text-lg">{generatedItemCode}</span>
-                  )}
-                </div>
-                <p className="text-xs text-gray-500 mt-1">
-                  Next available item code for {formData.category}
-                </p>
-              </div>
-            </div>
-
-            {/* Villa Selection as buttons */}
-            <div>
-              <label className="block font-medium mb-1">Select Villa</label>
-              <div className="grid grid-cols-3 gap-2 mb-2 max-h-32 overflow-y-auto">
-                {villas.map((villa) => (
-                  <button
-                    key={villa._id}
-                    type="button"
-                    className={`px-4 py-2 rounded border text-sm
-                      ${formData.villaId === villa._id
-                        ? "bg-blue-600 text-white border-blue-600"
-                        : "bg-gray-100 text-gray-700 border-gray-300 hover:bg-blue-100"}
-                    `}
-                    onClick={() => handleVillaSelect(villa)}
+            <div className="space-y-4 flex-1">
+              {/* Category & Item Code in same row */}
+              <div className="flex flex-col md:flex-row gap-4">
+                {/* Category */}
+                <div className="flex-1">
+                  <label className="block font-medium mb-1">Category</label>
+                  <select
+                    name="category"
+                    value={formData.category}
+                    onChange={handleChange}
+                    className="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring"
                   >
-                    {villa.villaName} ({villa.villaId})
-                  </button>
-                ))}
-              </div>
-            </div>
+                    <option value="Doors">Doors</option>
+                    <option value="Air Conditioner">Air Conditioner</option>
+                    <option value="Lights">Lights</option>
+                  </select>
+                </div>
 
-            {/* Room Selection for selected villa as buttons */}
-            {formData.villaId && (
+                {/* Item Code Display */}
+                <div className="flex-1">
+                  <label className="block font-medium mb-1">Item Code</label>
+                  <div className="w-full px-4 py-2 border rounded-md bg-gray-50 text-gray-600 flex items-center">
+                    {loading ? (
+                      <div className="flex items-center">
+                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600 mr-2"></div>
+                        Generating...
+                      </div>
+                    ) : (
+                      <span className="font-mono text-lg">{generatedItemCode}</span>
+                    )}
+                  </div>
+                  <p className="text-xs text-gray-500 mt-1">
+                    Next available item code for {formData.category}
+                  </p>
+                </div>
+              </div>
+
+              {/* Villa Selection as buttons */}
               <div>
-                <label className="block font-medium mb-1">Select Room (Optional)</label>
+                <label className="block font-medium mb-1">Select Villa</label>
                 <div className="grid grid-cols-3 gap-2 mb-2 max-h-32 overflow-y-auto">
-                  {selectedVillaRooms.map((room) => (
+                  {villas.map((villa) => (
                     <button
-                      key={room._id}
+                      key={villa._id}
                       type="button"
                       className={`px-4 py-2 rounded border text-sm
-                        ${formData.roomId === room._id
+                        ${formData.villaId === villa._id
                           ? "bg-blue-600 text-white border-blue-600"
                           : "bg-gray-100 text-gray-700 border-gray-300 hover:bg-blue-100"}
                       `}
-                      onClick={() =>
-                        setFormData((prev) => ({ ...prev, roomId: room._id }))
-                      }
+                      onClick={() => handleVillaSelect(villa)}
                     >
-                      {room.roomName}
+                      {villa.villaName} ({villa.villaId})
                     </button>
                   ))}
                 </div>
               </div>
-            )}
 
-            {/* Item Name */}
-            <div>
-              <label className="block font-medium mb-1">Item Name</label>
-              <input
-                type="text"
-                name="itemName"
-                placeholder="Enter item name"
-                value={formData.itemName}
-                onChange={handleChange}
-                required
-                className="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring"
-              />
-            </div>
+              {/* Room Selection for selected villa as buttons */}
+              {formData.villaId && (
+                <div>
+                  <label className="block font-medium mb-1">Select Room (Optional)</label>
+                  <div className="grid grid-cols-3 gap-2 mb-2 max-h-32 overflow-y-auto">
+                    {selectedVillaRooms.map((room) => (
+                      <button
+                        key={room._id}
+                        type="button"
+                        className={`px-4 py-2 rounded border text-sm
+                          ${formData.roomId === room._id
+                            ? "bg-blue-600 text-white border-blue-600"
+                            : "bg-gray-100 text-gray-700 border-gray-300 hover:bg-blue-100"}
+                        `}
+                        onClick={() =>
+                          setFormData((prev) => ({ ...prev, roomId: room._id }))
+                        }
+                      >
+                        {room.roomName}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
 
-            {/* Access as selectable buttons */}
-            <div>
-              <label className="block font-medium mb-1">Access</label>
-              <div className="flex flex-wrap gap-2 mb-2">
-                {[
-                  { label: "Enable", value: true },
-                  { label: "Disable", value: false }
-                ].map((option) => (
-                  <button
-                    key={option.label}
-                    type="button"
-                    className={`px-4 py-2 rounded border
-                      ${formData.access === option.value
-                        ? "bg-blue-600 text-white border-blue-600"
-                        : "bg-gray-100 text-gray-700 border-gray-300 hover:bg-blue-100"}
-                    `}
-                    onClick={() =>
-                      setFormData((prev) => ({ ...prev, access: option.value }))
+              {/* Item Name */}
+              <div>
+                <label className="block font-medium mb-1">Item Name</label>
+                <input
+                  type="text"
+                  name="itemName"
+                  placeholder="Enter item name"
+                  value={formData.itemName}
+                  onChange={handleChange}
+                  required
+                  className="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring"
+                />
+              </div>
+
+              {/* Access as selectable buttons */}
+              <div>
+                <label className="block font-medium mb-1">Access</label>
+                <div className="flex flex-wrap gap-2 mb-2">
+                  {[
+                    {
+                      label: "Enable",
+                      value: true
+                    },
+                    {
+                      label: "Disable",
+                      value: false
                     }
-                  >
-                    {option.label}
-                  </button>
-                ))}
+                  ].map((option) => (
+                    <button
+                      key={option.label}
+                      type="button"
+                      className={`px-4 py-2 rounded border
+                        ${formData.access === option.value
+                          ? "bg-blue-600 text-white border-blue-600"
+                          : "bg-gray-100 text-gray-700 border-gray-300 hover:bg-blue-100"}
+                      `}
+                      onClick={() =>
+                        setFormData((prev) => ({ ...prev, access: option.value }))
+                      }
+                    >
+                      {option.label}
+                    </button>
+                  ))}
+                </div>
               </div>
             </div>
-
-            
           </div>
 
           {/* Right Column - Preview/Information */}
-          <div className="">
-            <div className="flex flex-col md:flex-row gap-4">
-              {/* Category */}
+          <div className="flex-1 flex flex-col gap-4">
+            <div className="flex flex-col md:flex-row gap-4 flex-1">
+              {/* Preview */}
               <div className="flex-1 bg-white p-8 rounded-lg shadow-md">
-            <h3 className="text-md font-semibold mb-6">Equipment Preview</h3>
-            
-            <div className="space-y-4">
-              <div className="border-l-4 border-blue-500 pl-4">
-                <h4 className="font-medium text-gray-700">Category</h4>
-                <p className="text-lg">{formData.category}</p>
-              </div>
-
-              <div className="border-l-4 border-green-500 pl-4">
-                <h4 className="font-medium text-gray-700">Item Code</h4>
-                <p className="text-lg font-mono">{generatedItemCode || 'Generating...'}</p>
-              </div>
-
-              <div className="border-l-4 border-purple-500 pl-4">
-                <h4 className="font-medium text-gray-700">Item Name</h4>
-                <p className="text-lg">{formData.itemName || 'Not specified'}</p>
-              </div>
-
-              <div className="border-l-4 border-orange-500 pl-4">
-                <h4 className="font-medium text-gray-700">Villa</h4>
-                <p className="text-lg">
-                  {selectedVilla ? `${selectedVilla.villaName} (${selectedVilla.villaId})` : 'Not selected'}
-                </p>
-              </div>
-
-              <div className="border-l-4 border-yellow-500 pl-4">
-                <h4 className="font-medium text-gray-700">Room</h4>
-                <p className="text-lg">{selectedRoom ? selectedRoom.roomName : 'Not assigned'}</p>
-              </div>
-
-              <div className="border-l-4 border-red-500 pl-4">
-                <h4 className="font-medium text-gray-700">Access</h4>
-                <p className="text-lg">
-                  <span className={`px-2 py-1 rounded text-sm ${
-                    formData.access ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
-                  }`}>
-                    {formData.access ? 'Enabled' : 'Disabled'}
-                  </span>
-                </p>
-              </div>
-            </div>
-          </div>
-          <div className="flex-1 bg-white px-4 py-8 rounded-lg shadow-md">
-            {/* Existing Room Equipments or Instructions */}
-            {formData.roomId ? (
-              <div className="">
-                <h3 className="text-md font-semibold mb-6">Existing Equipment in {selectedRoom?.roomName}</h3>
+                <h3 className="text-md font-semibold mb-6">Equipment Preview</h3>
                 
-                {loadingEquipments ? (
-                  <div className="flex items-center justify-center py-4">
-                    <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
-                    <span className="ml-2 text-gray-600">Loading equipments...</span>
+                <div className="space-y-4">
+                  <div className="border-l-4 border-blue-500 pl-4">
+                    <h4 className="font-medium text-gray-700">Category</h4>
+                    <p className="text-lg">{formData.category}</p>
                   </div>
-                ) : roomEquipments.length > 0 ? (
-                  <div className="space-y-2 max-h-84 overflow-y-auto">
-                    {roomEquipments.map((equipment, index) => (
-                      <div key={`${equipment.category}-${equipment._id}`} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                        <div className="flex-1">
-                          <div className="flex items-center gap-2">
-                            <span className={`px-2 py-1 text-xs rounded font-medium ${
-                              equipment.category === 'Door' ? 'bg-blue-100 text-blue-800' :
-                              equipment.category === 'Light' ? 'bg-yellow-100 text-yellow-800' :
-                              'bg-green-100 text-green-800'
-                            }`}>
-                              {equipment.category}
-                            </span>
-                            <span className="font-mono text-sm text-gray-600">{equipment.itemCode}</span>
-                          </div>
-                          <p className="font-medium text-gray-800">{equipment.itemName}</p>
-                        </div>
-                        <div className="text-right">
-                          <span className={`px-2 py-1 text-xs rounded ${
-                            equipment.access ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
-                          }`}>
-                            {equipment.access ? 'Enabled' : 'Disabled'}
-                          </span>
-                        </div>
-                      </div>
-                    ))}
+
+                  <div className="border-l-4 border-green-500 pl-4">
+                    <h4 className="font-medium text-gray-700">Item Code</h4>
+                    <p className="text-lg font-mono">{generatedItemCode || 'Generating...'}</p>
                   </div>
-                ) : (
-                  <div className="text-center py-8 text-gray-500">
-                    <p>No equipment found in this room</p>
-                    <p className="text-sm mt-1">This will be the first equipment in {selectedRoom?.roomName}</p>
+
+                  <div className="border-l-4 border-purple-500 pl-4">
+                    <h4 className="font-medium text-gray-700">Item Name</h4>
+                    <p className="text-lg">{formData.itemName || 'Not specified'}</p>
                   </div>
-                )}
+
+                  <div className="border-l-4 border-orange-500 pl-4">
+                    <h4 className="font-medium text-gray-700">Villa</h4>
+                    <p className="text-lg">
+                      {selectedVilla ? `${selectedVilla.villaName} (${selectedVilla.villaId})` : 'Not selected'}
+                    </p>
+                  </div>
+
+                  <div className="border-l-4 border-yellow-500 pl-4">
+                    <h4 className="font-medium text-gray-700">Room</h4>
+                    <p className="text-lg">{selectedRoom ? selectedRoom.roomName : 'Not assigned'}</p>
+                  </div>
+
+                  <div className="border-l-4 border-red-500 pl-4">
+                    <h4 className="font-medium text-gray-700">Access</h4>
+                    <p className="text-lg">
+                      <span className={`px-2 py-1 rounded text-sm ${
+                        formData.access ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                      }`}>
+                        {formData.access ? 'Enabled' : 'Disabled'}
+                      </span>
+                    </p>
+                  </div>
+                </div>
               </div>
-            ) : (
-              /* Instructions when no room is selected */
-              <div className="p-4 bg-blue-50 rounded-lg">
-                <h4 className="font-medium text-blue-800 mb-2">Instructions</h4>
-                <ul className="text-sm text-blue-700 space-y-1">
-                  <li>• Select a category to generate item code</li>
-                  <li>• Choose a villa to assign the equipment</li>
-                  <li>• Room assignment is optional</li>
-                  <li>• Item name is required</li>
-                  <li>• Access control can be enabled/disabled</li>
-                </ul>
+
+              {/* Existing Room Equipments or Instructions */}
+              <div className="flex-1 bg-white px-4 py-8 rounded-lg shadow-md flex flex-col">
+                <div className="flex-1">
+                  {formData.roomId ? (
+                    <div>
+                      <h3 className="text-md font-semibold mb-6">Existing Equipment in {selectedRoom?.roomName}</h3>
+                      
+                      {loadingEquipments ? (
+                        <div className="flex items-center justify-center py-4">
+                          <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
+                          <span className="ml-2 text-gray-600">Loading equipments...</span>
+                        </div>
+                      ) : roomEquipments.length > 0 ? (
+                        <div className="space-y-2 max-h-64 overflow-y-auto">
+                          {roomEquipments.map((equipment, index) => (
+                            <div key={`${equipment.category}-${equipment._id}`} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                              <div className="flex-1">
+                                <div className="flex items-center gap-2">
+                                  <span className={`px-2 py-1 text-xs rounded font-medium ${
+                                    equipment.category === 'Door' ? 'bg-blue-100 text-blue-800' :
+                                    equipment.category === 'Light' ? 'bg-yellow-100 text-yellow-800' :
+                                    'bg-green-100 text-green-800'
+                                  }`}>
+                                    {equipment.category}
+                                  </span>
+                                  <span className="font-mono text-sm text-gray-600">{equipment.itemCode}</span>
+                                </div>
+                                <p className="font-medium text-gray-800">{equipment.itemName}</p>
+                              </div>
+                              <div className="text-right">
+                                <span className={`px-2 py-1 text-xs rounded ${
+                                  equipment.access ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                                }`}>
+                                  {equipment.access ? 'Enabled' : 'Disabled'}
+                                </span>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <div className="text-center py-8 text-gray-500">
+                          <p>No equipment found in this room</p>
+                          <p className="text-sm mt-1">This will be the first equipment in {selectedRoom?.roomName}</p>
+                        </div>
+                      )}
+                    </div>
+                  ) : (
+                    /* Instructions when no room is selected */
+                    <div className="p-4 bg-blue-50 rounded-lg">
+                      <h4 className="font-medium text-blue-800 mb-2">Instructions</h4>
+                      <ul className="text-sm text-blue-700 space-y-1">
+                        <li>• Select a category to generate item code</li>
+                        <li>• Choose a villa to assign the equipment</li>
+                        <li>• Room assignment is optional</li>
+                        <li>• Item name is required</li>
+                        <li>• Access control can be enabled/disabled</li>
+                      </ul>
+                    </div>
+                  )}
+                </div>
               </div>
-            )}
-            </div>
             </div>
 
-
-            {/* Submit */}
+            {/* Submit Button */}
             <button
               onClick={handleSubmit}
-              className="w-full mt-4 bg-blue-600 text-white py-2 rounded-md hover:bg-blue-700"
+              className="w-full bg-blue-600 text-white py-2 rounded-md hover:bg-blue-700"
             >
               Create Equipment
             </button>
           </div>
-          
         </div>
-        
       </div>
 
       {/* Success Modal */}
