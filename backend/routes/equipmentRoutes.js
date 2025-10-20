@@ -1,5 +1,5 @@
 import express from 'express';
-import { createEquipment, displaydoors, displaylights, displayACs, updateAirConditioner, updateDoor, updateLight } from '../controllers/equipmentController.js';
+import { createEquipment, displaydoors, displaylights, displayACs, updateAirConditioner, updateDoor, updateLight, getNextItemCode } from '../controllers/equipmentController.js';
 
 const router = express.Router();
 
@@ -11,5 +11,7 @@ router.get('/air-conditioners', displayACs); // Add route to display air conditi
 router.put('/air-conditioners/:acId', updateAirConditioner); // Add route to update air conditioner
 router.put('/doors/:doorId', updateDoor); // Add route to update door
 router.put('/lights/:lightId', updateLight); // Add route to update light
+
+router.get('/next-item-code/:category', getNextItemCode); 
 
 export default router;
