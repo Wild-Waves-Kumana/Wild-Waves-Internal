@@ -3,40 +3,98 @@ import Light from '../models/light.js';
 import AirConditioner from '../models/airconditioner.js';
 import Admin from '../models/admin.js';
 import Company from '../models/company.js';
-import Room from '../models/room.js'; // Make sure this import is present
-import Villa from '../models/villa.js'; // Import Villa model
+import Room from '../models/room.js';
+import Villa from '../models/villa.js';
 
-// helper ➜ ensure global uniqueness of itemCode
+// Helper to generate unique itemCode based on category, finding the first available number
+const generateUniqueItemCode = async (category) => {
+  const prefixes = {
+    "Doors": "D",
+    "Lights": "L", 
+    "Air Conditioner": "A",
+  };
+  const prefix = prefixes[category] || "E";
+
+  // Check ALL collections for existing codes with this prefix
+  const regex = new RegExp(`^${prefix}-(\\d{4})$`);
+  
+  // Get existing codes from ALL collections (doors, lights, ACs)
+  const [doorCodes, lightCodes, acCodes] = await Promise.all([
+    Door.find({ itemCode: { $regex: regex } }).select('itemCode').lean(),
+    Light.find({ itemCode: { $regex: regex } }).select('itemCode').lean(),
+    AirConditioner.find({ itemCode: { $regex: regex } }).select('itemCode').lean()
+  ]);
+
+  // Combine all codes from all collections and extract numbers
+  const allCodes = [...doorCodes, ...lightCodes, ...acCodes];
+  const existingNumbers = new Set();
+  
+  // Extract all numeric parts and store in Set for fast lookup
+  allCodes.forEach(item => {
+    const match = item.itemCode.match(regex);
+    if (match && match[1]) {
+      const number = parseInt(match[1], 10);
+      existingNumbers.add(number);
+    }
+  });
+
+  // Find the first available number starting from 1
+  let nextNumber = 1;
+  while (existingNumbers.has(nextNumber)) {
+    nextNumber++;
+  }
+
+  // Generate item code with the first available number
+  const itemCode = `${prefix}-${String(nextNumber).padStart(4, "0")}`;
+  
+  return itemCode;
+};
+
+// helper ➜ ensure global uniqueness of itemCode across all equipment collections
 const isItemCodeTaken = async (itemCode) => {
-  const inDoor = await Door.exists({ itemCode });
-  const inLight = await Light.exists({ itemCode });
-  const inAC   = await AirConditioner.exists({ itemCode });
-  return inDoor || inLight || inAC;
+  const [inDoor, inLight, inAC] = await Promise.all([
+    Door.exists({ itemCode }),
+    Light.exists({ itemCode }),
+    AirConditioner.exists({ itemCode })
+  ]);
+  return !!(inDoor || inLight || inAC);
+};
+
+// Get next available item code for preview
+export const getNextItemCode = async (req, res) => {
+  try {
+    const { category } = req.params;
+    console.log('Received category:', category); // Debug log
+    const nextItemCode = await generateUniqueItemCode(category);
+    console.log('Generated item code:', nextItemCode); // Debug log
+    res.json({ nextItemCode });
+  } catch (err) {
+    console.error('Error generating next item code:', err);
+    res.status(500).json({ message: 'Failed to generate next item code' });
+  }
 };
 
 export const createEquipment = async (req, res) => {
-  const { category, itemName, itemCode, access, adminId, villaId, roomId } = req.body;
+  const { category, itemName, access, adminId, villaId, roomId } = req.body;
 
   try {
-    // 1️⃣ Validate itemCode uniqueness
-    if (await isItemCodeTaken(itemCode)) {
-      return res.status(400).json({ message: 'Item Code Already Used !' });
-    }
+    // Generate unique itemCode based on category
+    const itemCode = await generateUniqueItemCode(category);
 
-    // 2.5️⃣ Fetch admin to get companyId
+    // Validate admin exists
     const admin = await Admin.findById(adminId);
     if (!admin) {
       return res.status(400).json({ message: 'Admin not found.' });
     }
     const companyId = admin.companyId;
 
-    // Fetch the villa to get villaName
+    // Validate villa exists
     const villa = await Villa.findById(villaId);
     if (!villa) {
       return res.status(400).json({ message: 'Villa not found.' });
     }
 
-    // 3️⃣ Choose the proper collection
+    // Choose the proper collection
     let EquipmentModel, companyField;
     switch (category) {
       case 'Doors':
@@ -55,7 +113,7 @@ export const createEquipment = async (req, res) => {
         return res.status(400).json({ message: 'Invalid category.' });
     }
 
-    // 4️⃣ Save document (add companyId)
+    // Create equipment data
     const baseEquipment = {
       itemName,
       itemCode,
@@ -66,30 +124,22 @@ export const createEquipment = async (req, res) => {
       companyId
     };
 
-    // Only assign user for Lights (if you want)
-    // if (category === 'Lights') {
-    //   baseEquipment.assignedUser = someUserId;
-    // }
-
-    // Do NOT set assignedUser for Doors or Air Conditioner
-
     const newEquipment = new EquipmentModel(baseEquipment);
-
     await newEquipment.save();
 
-    // --- Update Room collection ---
-    if (req.body.roomId) {
+    // Update Room collection
+    if (roomId) {
       let updateField = {};
       if (category === "Doors") updateField = { $push: { doors: newEquipment._id } };
       if (category === "Lights") updateField = { $push: { lights: newEquipment._id } };
       if (category === "Air Conditioner") updateField = { $push: { airConditioners: newEquipment._id } };
 
       if (Object.keys(updateField).length > 0) {
-        await Room.findByIdAndUpdate(req.body.roomId, updateField);
+        await Room.findByIdAndUpdate(roomId, updateField);
       }
     }
 
-    // --- Update Company collection ---
+    // Update Company collection
     if (companyField) {
       await Company.findByIdAndUpdate(
         companyId,
@@ -97,7 +147,10 @@ export const createEquipment = async (req, res) => {
       );
     }
 
-    res.status(201).json({ message: `${category} item created.` });
+    res.status(201).json({ 
+      message: `${category} item created successfully with code ${itemCode}`,
+      equipment: newEquipment 
+    });
   } catch (err) {
     console.error('Equipment creation error:', err);
     res.status(500).json({ message: 'Server error while creating equipment.' });
@@ -107,40 +160,32 @@ export const createEquipment = async (req, res) => {
 //display doors
 export const displaydoors = async (req, res) => {
   try {
-    // Populate assignedUser with username
-    const doors = await Door.find()
-    .populate('roomId', 'roomName');
+    const doors = await Door.find().populate('roomId', 'roomName');
     res.json(doors);
   } catch (err) {
     res.status(500).json({ message: 'Failed to fetch doors' });
   }
 };
 
-//display ACs
+//display lights
 export const displaylights = async (req, res) => {
   try {
-    // Populate assignedUser with username
-    const lights = await Light.find()
-    .populate('roomId', 'roomName');
+    const lights = await Light.find().populate('roomId', 'roomName');
     res.json(lights);
   } catch (err) {
     res.status(500).json({ message: 'Failed to fetch lights' });
   }
 };
 
-
 //display ACs
 export const displayACs = async (req, res) => {
   try {
-    // Populate assignedUser with username
-    const airconditioners = await AirConditioner.find()
-    .populate('roomId', 'roomName');    
-     res.json(airconditioners);
+    const airconditioners = await AirConditioner.find().populate('roomId', 'roomName');    
+    res.json(airconditioners);
   } catch (err) {
     res.status(500).json({ message: 'Failed to fetch airconditioners' });
   }
 };
-
 
 // Update Air Conditioner details
 export const updateAirConditioner = async (req, res) => {
@@ -156,6 +201,16 @@ export const updateAirConditioner = async (req, res) => {
       access
     } = req.body;
 
+    // Check if itemCode is being updated and ensure it's unique
+    if (itemCode) {
+      const existing = await AirConditioner.findById(acId);
+      if (existing && existing.itemCode !== itemCode) {
+        if (await isItemCodeTaken(itemCode)) {
+          return res.status(400).json({ message: 'Item Code Already Used!' });
+        }
+      }
+    }
+
     // Build update object
     const updateFields = {};
     if (itemName) updateFields.itemName = itemName;
@@ -163,7 +218,7 @@ export const updateAirConditioner = async (req, res) => {
     if (temperaturelevel !== undefined) updateFields.temperaturelevel = temperaturelevel;
     if (mode) updateFields.mode = mode;
     if (fanSpeed) updateFields.fanSpeed = fanSpeed;
-    if (status !== undefined) updateFields.status = status;   // <-- fix here
+    if (status !== undefined) updateFields.status = status;
     if (access !== undefined) updateFields.access = access; 
 
     const updatedAC = await AirConditioner.findByIdAndUpdate(
@@ -182,8 +237,6 @@ export const updateAirConditioner = async (req, res) => {
   }
 };
 
-
-
 //update Door details
 export const updateDoor = async (req, res) => {
   try {
@@ -195,6 +248,16 @@ export const updateDoor = async (req, res) => {
       status,
       access,
     } = req.body;
+
+    // Check if itemCode is being updated and ensure it's unique
+    if (itemCode) {
+      const existing = await Door.findById(doorId);
+      if (existing && existing.itemCode !== itemCode) {
+        if (await isItemCodeTaken(itemCode)) {
+          return res.status(400).json({ message: 'Item Code Already Used!' });
+        }
+      }
+    }
 
     // If access is being set to false, force status to false (OFF) and lockStatus to false (Locked)
     if (access === false || access === "false") {
@@ -238,13 +301,23 @@ export const updateLight = async (req, res) => {
       access
     } = req.body;
 
+    // Check if itemCode is being updated and ensure it's unique
+    if (itemCode) {
+      const existing = await Light.findById(lightId);
+      if (existing && existing.itemCode !== itemCode) {
+        if (await isItemCodeTaken(itemCode)) {
+          return res.status(400).json({ message: 'Item Code Already Used!' });
+        }
+      }
+    }
+
     // Build update object
     const updateFields = {};
     if (itemName) updateFields.itemName = itemName;
     if (itemCode) updateFields.itemCode = itemCode;
     if (brightness !== undefined) updateFields.brightness = brightness;
-    if (status !== undefined) updateFields.status = status;   // <-- fix here
-    if (access !== undefined) updateFields.access = access;   // <-- fix here
+    if (status !== undefined) updateFields.status = status;
+    if (access !== undefined) updateFields.access = access;
 
     const updatedLight = await Light.findByIdAndUpdate(
       lightId,
