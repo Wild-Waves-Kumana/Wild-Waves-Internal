@@ -253,7 +253,8 @@ const EquipmentCreation = () => {
                       </div>
                     ) : (
                       <span className="font-mono text-lg">{generatedItemCode}</span>
-                    )}
+                    )
+                    }
                   </div>
                   <p className="text-[10px] text-gray-500 mt-1">
                     Next available item code for {formData.category}
@@ -361,38 +362,45 @@ const EquipmentCreation = () => {
               {/* Preview */}
               <div className="flex-1 bg-white p-8 rounded-lg shadow-md">
                 <h3 className="text-md font-semibold mb-6">Equipment Preview</h3>
-                
                 <div className="space-y-4">
                   <div className="border-l-4 border-blue-500 pl-4">
                     <h4 className="font-sm text-gray-700">Category</h4>
-                    <p className="font-medium">{formData.category}</p>
+                    <p className={`text-medium ${!formData.category ? 'bg-yellow-100 px-2 py-1 rounded' : ''}`}>
+                      {formData.category || 'Not specified'}
+                    </p>
                   </div>
 
                   <div className="border-l-4 border-green-500 pl-4">
                     <h4 className="font-sm text-gray-700">Item Code</h4>
-                    <p className="text-medium font-mono">{generatedItemCode || 'Generating...'}</p>
+                    <p className={`text-medium font-mono ${!generatedItemCode ? 'bg-yellow-100 px-2 py-1 rounded' : ''}`}>
+                      {generatedItemCode || 'Generating...'}
+                    </p>
                   </div>
 
                   <div className="border-l-4 border-purple-500 pl-4">
                     <h4 className="font-sm text-gray-700">Item Name</h4>
-                    <p className="text-medium">{formData.itemName || 'Not specified'}</p>
+                    <p className={`text-medium ${!formData.itemName ? 'bg-yellow-100 px-2 py-1 rounded' : ''}`}>
+                      {formData.itemName || 'Not specified'}
+                    </p>
                   </div>
 
                   <div className="border-l-4 border-orange-500 pl-4">
                     <h4 className="font-sm text-gray-700">Villa</h4>
-                    <p className="text-medium">
+                    <p className={`text-medium ${!selectedVilla ? 'bg-yellow-100 px-2 py-1 rounded' : ''}`}>
                       {selectedVilla ? `${selectedVilla.villaName} (${selectedVilla.villaId})` : 'Not selected'}
                     </p>
                   </div>
 
                   <div className="border-l-4 border-yellow-500 pl-4">
                     <h4 className="font-sm text-gray-700">Room</h4>
-                    <p className="text-medium">{selectedRoom ? selectedRoom.roomName : 'Not assigned'}</p>
+                    <p className={`text-medium ${!selectedRoom ? 'bg-yellow-100 px-2 py-1 rounded' : ''}`}>
+                      {selectedRoom ? selectedRoom.roomName : 'Not assigned'}
+                    </p>
                   </div>
 
                   <div className="border-l-4 border-red-500 pl-4">
                     <h4 className="font-sm text-gray-700">Access</h4>
-                    <p className="text-medium">
+                    <p className={`text-medium ${formData.access === "" ? 'bg-yellow-100 px-2 py-1 rounded' : ''}`}>
                       <span className={`px-2 py-1 rounded text-sm ${
                         formData.access ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
                       }`}>
