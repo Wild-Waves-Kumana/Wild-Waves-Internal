@@ -10,9 +10,9 @@ const getStatusStyles = (status, selected) => {
   if (!selected) return `${base} bg-gray-100 text-gray-700 border-gray-300 hover:bg-blue-100`;
   switch (status) {
     case "Pending":
-      return `${base} bg-yellow-500 text-white border-yellow-600 shadow`;
-    case "Preparing":
       return `${base} bg-blue-500 text-white border-blue-600 shadow`;
+    case "Preparing":
+      return `${base} bg-indigo-500 text-white border-indigo-600 shadow`;
     case "Delivered":
       return `${base} bg-green-500 text-white border-green-600 shadow`;
     case "Cancelled":
@@ -250,13 +250,13 @@ const OngoingFoodOrders = () => {
     <div>
       {/* Dashboard Section */}
       <div className="flex flex-wrap justify-between gap-4 mb-6">
-        <div className="bg-yellow-100 border-l-4 border-yellow-500 rounded-lg p-4 min-w-[180px]">
-          <div className="text-lg font-bold text-yellow-700">{totalPending}</div>
-          <div className="text-sm text-yellow-800">Pending Orders</div>
-        </div>
         <div className="bg-blue-100 border-l-4 border-blue-500 rounded-lg p-4 min-w-[180px]">
-          <div className="text-lg font-bold text-blue-700">{totalPreparing}</div>
-          <div className="text-sm text-blue-800">Preparing Orders</div>
+          <div className="text-lg font-bold text-blue-700">{totalPending}</div>
+          <div className="text-sm text-blue-800">Pending Orders</div>
+        </div>
+        <div className="bg-indigo-100 border-l-4 border-indigo-500 rounded-lg p-4 min-w-[180px]">
+          <div className="text-lg font-bold text-indigo-700">{totalPreparing}</div>
+          <div className="text-sm text-indigo-800">Preparing Orders</div>
         </div>
         <div className="bg-red-100 border-l-4 border-red-500 rounded-lg p-4 min-w-[180px]">
           <div className="text-lg font-bold text-red-700">{totalTimerZero}</div>
