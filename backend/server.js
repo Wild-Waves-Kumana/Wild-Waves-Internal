@@ -21,7 +21,6 @@ dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT || 5000;
-const HOST = process.env.HOST || '127.0.0.1';
 
 // Middleware
 app.use(cors());
@@ -51,6 +50,6 @@ app.use('/api/food-cart', foodCartRoutes);
 app.use('/api/avatar', avatarRoutes);
 app.use('/api/face', faceRoutes);
 
-app.listen(PORT, HOST, () => {
-  console.log(`Server running on http://${HOST}:${PORT}`);
+app.listen(PORT, () => {
+  console.log(`Server running on http://localhost:${PORT}`);
 });
