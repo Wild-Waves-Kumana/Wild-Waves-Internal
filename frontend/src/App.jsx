@@ -34,6 +34,7 @@ import CompanyFoodOrders from './pages/food-pages/CompanyFoodOrders';
 import SuperAdminProfile from './pages/SAdminProfile';
 import SuperadminFoodOrdersHistory from './pages/food-pages/SAdminFoodOrders';
 import CompanyProfile from './pages/CompanyProfile';
+import CreateRoom from './pages/create-pages/CreateRoom';
 import Settings from './pages/Settings';
 
 function App() {
@@ -202,6 +203,17 @@ function App() {
           <ProtectedRoute allowedRoles={['admin', 'superadmin']}>
             <Layout>
               <CreateVilla />
+            </Layout>
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/create-room"
+        element={
+          <ProtectedRoute allowedRoles={['admin', 'superadmin']}>
+            <Layout>
+              <CreateRoom />
             </Layout>
           </ProtectedRoute>
         }
