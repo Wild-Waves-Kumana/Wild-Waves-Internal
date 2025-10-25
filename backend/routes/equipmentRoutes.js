@@ -12,6 +12,6 @@ router.put('/air-conditioners/:acId', updateAirConditioner); // Add route to upd
 router.put('/doors/:doorId', updateDoor); // Add route to update door
 router.put('/lights/:lightId', updateLight); // Add route to update light
 
-router.get('/next-item-code/:category', getNextItemCode); 
+router.get('/next-item-code/:category', getNextItemCode);
 
 export default router;
