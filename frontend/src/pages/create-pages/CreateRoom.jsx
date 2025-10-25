@@ -1,16 +1,17 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import { jwtDecode } from 'jwt-decode';
-import { useNavigate } from 'react-router-dom';
 import CreateVillaModal from '../../components/modals/CreateVillaModal';
 
 const CreateRoom = () => {
-  const navigate = useNavigate();
+  
   const [villas, setVillas] = useState([]);
   const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState('');
   const [selectedVillaId, setSelectedVillaId] = useState('');
   const [showCreateVillaModal, setShowCreateVillaModal] = useState(false);
+  const [generatedRoomId, setGeneratedRoomId] = useState('');
+  const [roomIdLoading, setRoomIdLoading] = useState(false);
 
   const [formData, setFormData] = useState({
     roomName: '',
@@ -54,6 +55,29 @@ const CreateRoom = () => {
     fetchVillas();
   }, []);
 
+  // Fetch next room ID when villa is selected
+  useEffect(() => {
+    const fetchNextRoomId = async () => {
+      if (!formData.villaId) {
+        setGeneratedRoomId('');
+        return;
+      }
+      setRoomIdLoading(true);
+      try {
+        const res = await axios.get(`/api/rooms/next-id/${formData.villaId}`);
+        if (res.data?.nextRoomId) {
+          setGeneratedRoomId(res.data.nextRoomId);
+        }
+      } catch (err) {
+        console.error('Failed to fetch next room ID', err);
+        setGeneratedRoomId('');
+      } finally {
+        setRoomIdLoading(false);
+      }
+    };
+    fetchNextRoomId();
+  }, [formData.villaId]);
+
   const handleVillaSelect = (villa) => {
     setSelectedVillaId(villa._id);
     setFormData((p) => ({ ...p, villaId: villa._id }));
@@ -82,10 +106,11 @@ const CreateRoom = () => {
     try {
       await axios.post('/api/rooms/create', {
         ...formData,
-        amenities: formData.amenities, // backend will parse string to array if needed
+        roomId: generatedRoomId, // Use generated room ID
+        amenities: formData.amenities,
       });
       setMessage('Room created successfully.');
-      // optional: navigate back to villa page or reset form
+      // Reset form
       setFormData({
         roomName: '',
         roomId: '',
@@ -97,6 +122,7 @@ const CreateRoom = () => {
         villaId: '',
       });
       setSelectedVillaId('');
+      setGeneratedRoomId('');
     } catch (err) {
       setMessage(err.response?.data?.message || 'Failed to create room.');
     }
@@ -134,7 +160,7 @@ const CreateRoom = () => {
                   ))
                 )}
 
-                {/* Create Villa button shown as last grid item — open modal */}
+                {/* Create Villa button */}
                 <button
                   type="button"
                   onClick={() => setShowCreateVillaModal(true)}
@@ -148,22 +174,26 @@ const CreateRoom = () => {
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium mb-1">Room Name</label>
-              <input
-                name="roomName"
-                value={formData.roomName}
-                onChange={handleChange}
-                className="w-full px-3 py-2 border rounded"
-                required
-              />
-            </div>
-
+            
             <div className="grid grid-cols-2 gap-4">
+              {/* Generated Room ID Display */}
               <div>
-                <label className="block text-sm font-medium mb-1">Room ID (optional)</label>
-                <input name="roomId" value={formData.roomId} onChange={handleChange} className="w-full px-3 py-2 border rounded" />
+                <label className="block text-sm font-medium mb-1">Room ID</label>
+                <div className="w-full px-3 py-2 border rounded-md bg-gray-50 text-gray-700 flex items-center">
+                  {roomIdLoading ? (
+                    <div className="flex items-center text-sm text-gray-600">
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600 mr-2"></div>
+                      Generating...
+                    </div>
+                  ) : (
+                    <span className="font-mono text-lg">{generatedRoomId || 'Select villa first'}</span>
+                  )}
+                </div>
+                <p className="text-xs text-gray-500 mt-1">
+                  {generatedRoomId ? 'Next available room ID' : 'Auto-generated after villa selection'}
+                </p>
               </div>
+              
               <div>
                 <label className="block text-sm font-medium mb-1">Type</label>
                 <select
@@ -180,6 +210,17 @@ const CreateRoom = () => {
                   <option value="other">Other</option>
                 </select>
               </div>
+            </div>
+            
+            <div>
+              <label className="block text-sm font-medium mb-1">Room Name</label>
+              <input
+                name="roomName"
+                value={formData.roomName}
+                onChange={handleChange}
+                className="w-full px-3 py-2 border rounded"
+                required
+              />
             </div>
 
             <div className="grid grid-cols-2 gap-4">
