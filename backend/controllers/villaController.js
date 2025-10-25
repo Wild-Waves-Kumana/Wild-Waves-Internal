@@ -2,14 +2,68 @@ import Villa from '../models/villa.js';
 import Admin from '../models/admin.js';
 import Company from '../models/company.js'; // <-- import Company
 
+// New: return next available villaId (V-XXX)
+export const getNextVillaId = async (req, res) => {
+  try {
+    const regex = /^V-(\d+)$/;
+    const villas = await Villa.find({ villaId: { $regex: regex } }).select('villaId').lean();
+
+    const existingNumbers = new Set();
+    villas.forEach(v => {
+      const match = v.villaId && v.villaId.match(regex);
+      if (match && match[1]) existingNumbers.add(parseInt(match[1], 10));
+    });
+
+    let next = 1;
+    while (existingNumbers.has(next)) next++;
+
+    const formatted = String(next).padStart(3, '0');
+    const villaId = `V-${formatted}`;
+
+    res.status(200).json({ nextVillaId: villaId });
+  } catch (error) {
+    console.error('getNextVillaId error:', error);
+    res.status(500).json({ message: 'Failed to generate next villaId' });
+  }
+};
+
 export const createVilla = async (req, res) => {
   try {
-    const { villaId, villaName, adminId } = req.body;
+    let { villaId, villaName, adminId } = req.body;
 
     // Fetch the admin to get the companyId
     const admin = await Admin.findById(adminId);
     if (!admin) {
       return res.status(400).json({ message: 'Admin not found' });
+    }
+
+    // If villaId not provided generate next available V-XXX (3 digits minimum)
+    if (!villaId) {
+      // find all villaIds matching pattern V-<number>
+      const regex = /^V-(\d+)$/;
+      const villas = await Villa.find({ villaId: { $regex: regex } }).select('villaId').lean();
+
+      const existingNumbers = new Set();
+      villas.forEach(v => {
+        const match = v.villaId && v.villaId.match(regex);
+        if (match && match[1]) {
+          existingNumbers.add(parseInt(match[1], 10));
+        }
+      });
+
+      // find smallest available number starting from 1
+      let next = 1;
+      while (existingNumbers.has(next)) next++;
+
+      // format as 3 digits (minimum) - V-001, V-012, V-123, etc.
+      const formatted = String(next).padStart(3, '0');
+      villaId = `V-${formatted}`;
+    } else {
+      // if provided, ensure uniqueness
+      const exists = await Villa.findOne({ villaId });
+      if (exists) {
+        return res.status(409).json({ message: 'villaId already exists' });
+      }
     }
 
     const newVilla = new Villa({
