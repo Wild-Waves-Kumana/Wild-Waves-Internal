@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import { jwtDecode } from 'jwt-decode';
 import { useNavigate } from 'react-router-dom';
+import CreateVillaModal from '../../components/modals/CreateVillaModal';
 
 const CreateRoom = () => {
   const navigate = useNavigate();
@@ -9,6 +10,7 @@ const CreateRoom = () => {
   const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState('');
   const [selectedVillaId, setSelectedVillaId] = useState('');
+  const [showCreateVillaModal, setShowCreateVillaModal] = useState(false);
 
   const [formData, setFormData] = useState({
     roomName: '',
@@ -57,6 +59,15 @@ const CreateRoom = () => {
     setFormData((p) => ({ ...p, villaId: villa._id }));
   };
 
+  // callback when modal creates a villa
+  const handleVillaCreated = (newVilla) => {
+    if (!newVilla) return;
+    // add to list and select it
+    setVillas((prev) => [newVilla, ...prev]);
+    setSelectedVillaId(newVilla._id);
+    setFormData((p) => ({ ...p, villaId: newVilla._id }));
+  };
+
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData((p) => ({ ...p, [name]: value }));
@@ -86,7 +97,6 @@ const CreateRoom = () => {
         villaId: '',
       });
       setSelectedVillaId('');
-      // navigate('/somewhere') // uncomment if you want to redirect
     } catch (err) {
       setMessage(err.response?.data?.message || 'Failed to create room.');
     }
@@ -102,24 +112,38 @@ const CreateRoom = () => {
           <div className="grid grid-cols-3 gap-2 mb-4 max-h-32 overflow-y-auto">
             {loading ? (
               <div className="col-span-3 text-center text-gray-500">Loading villas...</div>
-            ) : villas.length === 0 ? (
-              <div className="col-span-3 text-center text-gray-500">No villas available</div>
             ) : (
-              villas.map((villa) => (
+              <>
+                {villas.length === 0 ? (
+                  <div className="col-span-3 text-center text-gray-500">No villas available</div>
+                ) : (
+                  villas.map((villa) => (
+                    <button
+                      key={villa._id}
+                      type="button"
+                      onClick={() => handleVillaSelect(villa)}
+                      className={`px-3 py-2 rounded border text-sm text-left ${
+                        selectedVillaId === villa._id
+                          ? 'bg-blue-600 text-white border-blue-600'
+                          : 'bg-gray-100 text-gray-700 border-gray-300 hover:bg-blue-50'
+                      }`}
+                    >
+                      <div className="font-medium">{villa.villaName}</div>
+                      <div className="text-xs text-gray-500 mt-1">{villa.villaId}</div>
+                    </button>
+                  ))
+                )}
+
+                {/* Create Villa button shown as last grid item — open modal */}
                 <button
-                  key={villa._id}
                   type="button"
-                  onClick={() => handleVillaSelect(villa)}
-                  className={`px-3 py-2 rounded border text-sm text-left ${
-                    selectedVillaId === villa._id
-                      ? 'bg-blue-600 text-white border-blue-600'
-                      : 'bg-gray-100 text-gray-700 border-gray-300 hover:bg-blue-50'
-                  }`}
+                  onClick={() => setShowCreateVillaModal(true)}
+                  className="px-3 py-2 rounded border text-sm flex flex-col items-start justify-center bg-green-50 text-green-800 border-green-200 hover:bg-green-100"
                 >
-                  <div className="font-medium">{villa.villaName}</div>
-                  <div className="text-xs text-gray-500 mt-1">{villa.villaId}</div>
+                  <div className="font-medium">+ Create Villa</div>
+                  <div className="text-xs text-green-600 mt-1">Add new villa</div>
                 </button>
-              ))
+              </>
             )}
           </div>
 
@@ -208,6 +232,13 @@ const CreateRoom = () => {
           </form>
         </div>
       </div>
+
+      {/* Create Villa Modal */}
+      <CreateVillaModal
+        isOpen={showCreateVillaModal}
+        onClose={() => setShowCreateVillaModal(false)}
+        onCreated={handleVillaCreated}
+      />
     </div>
   );
 };
