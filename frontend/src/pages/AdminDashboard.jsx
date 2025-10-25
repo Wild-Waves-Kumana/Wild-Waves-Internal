@@ -37,12 +37,12 @@ const AdminDashboard = () => {
             <p className="text-white/90 text-sm text-center">Register new equipment</p>
           </button>
           <button
-            onClick={() => navigate('/create-villa')}
+            onClick={() => navigate('/create-room')}
             className="group bg-gradient-to-br from-indigo-500 to-blue-400 rounded-2xl shadow-xl p-8 flex flex-col items-center hover:scale-105 transition-transform duration-200"
           >
             <Home className="w-8 h-8 text-indigo-100 mb-2" />
-            <h2 className="text-xl font-semibold text-white mb-1">Create Villa</h2>
-            <p className="text-white/90 text-sm text-center">Add a new villa</p>
+            <h2 className="text-xl font-semibold text-white mb-1">Create Room</h2>
+            <p className="text-white/90 text-sm text-center">Add a new room</p>
           </button>
           <button
             onClick={() => navigate('/create-foods')}
