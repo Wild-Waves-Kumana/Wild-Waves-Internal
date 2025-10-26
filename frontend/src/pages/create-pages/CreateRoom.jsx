@@ -12,13 +12,22 @@ const CreateRoom = () => {
   const [showCreateVillaModal, setShowCreateVillaModal] = useState(false);
   const [generatedRoomId, setGeneratedRoomId] = useState('');
   const [roomIdLoading, setRoomIdLoading] = useState(false);
+  const [selectedAmenities, setSelectedAmenities] = useState([]);
+
+  const amenitiesList = [
+    "Air Conditioning",
+    "Wi-Fi",
+    "Television",
+    "Mini Fridge",
+    "Sounds Setup",
+  ];
 
   const [formData, setFormData] = useState({
     roomName: '',
     roomId: '',
     type: '',
     bedroomType: '',
-    amenities: '', // comma separated
+    amenities: '', // will be converted from selectedAmenities
     capacity: '',
     status: 'available',
     villaId: '',
@@ -95,6 +104,35 @@ const CreateRoom = () => {
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData((p) => ({ ...p, [name]: value }));
+    
+    // Reset bedroom-specific fields when type changes away from bedroom
+    if (name === 'type' && value !== 'bedroom') {
+      setFormData((p) => ({ ...p, bedroomType: '', capacity: '' }));
+    }
+  };
+
+  const toggleAmenity = (amenity) => {
+    setSelectedAmenities((prev) => {
+      if (prev.includes(amenity)) {
+        return prev.filter((a) => a !== amenity);
+      } else {
+        return [...prev, amenity];
+      }
+    });
+  };
+
+  const incrementCapacity = () => {
+    setFormData((p) => ({
+      ...p,
+      capacity: p.capacity === '' ? 1 : Math.min(parseInt(p.capacity) + 1, 99)
+    }));
+  };
+
+  const decrementCapacity = () => {
+    setFormData((p) => ({
+      ...p,
+      capacity: p.capacity === '' ? 0 : Math.max(parseInt(p.capacity) - 1, 0)
+    }));
   };
 
   const handleSubmit = async (e) => {
@@ -104,12 +142,29 @@ const CreateRoom = () => {
       return;
     }
     try {
-      await axios.post('/api/rooms/create', {
-        ...formData,
-        roomId: generatedRoomId, // Use generated room ID
-        amenities: formData.amenities,
-      });
+      // Prepare data - only include bedroom fields if type is bedroom
+      const submitData = {
+        roomName: formData.roomName,
+        roomId: generatedRoomId,
+        type: formData.type,
+        amenities: selectedAmenities.join(', '),
+        status: formData.status,
+        villaId: formData.villaId,
+      };
+
+      // Only add bedroom-specific fields if type is bedroom
+      if (formData.type === 'bedroom') {
+        if (formData.bedroomType) {
+          submitData.bedroomType = formData.bedroomType;
+        }
+        if (formData.capacity) {
+          submitData.capacity = parseInt(formData.capacity);
+        }
+      }
+
+      await axios.post('/api/rooms/create', submitData);
       setMessage('Room created successfully.');
+      
       // Reset form
       setFormData({
         roomName: '',
@@ -123,6 +178,7 @@ const CreateRoom = () => {
       });
       setSelectedVillaId('');
       setGeneratedRoomId('');
+      setSelectedAmenities([]);
     } catch (err) {
       setMessage(err.response?.data?.message || 'Failed to create room.');
     }
@@ -135,7 +191,7 @@ const CreateRoom = () => {
           <h2 className="text-2xl font-semibold mb-4">Create Room</h2>
 
           <label className="block font-medium mb-2">Select Villa</label>
-          <div className="grid grid-cols-3 gap-2 mb-4 max-h-32 overflow-y-auto">
+          <div className="grid grid-cols-5 gap-2 mb-4 max-h-32 overflow-y-auto">
             {loading ? (
               <div className="col-span-3 text-center text-gray-500">Loading villas...</div>
             ) : (
@@ -176,6 +232,22 @@ const CreateRoom = () => {
           <form onSubmit={handleSubmit} className="space-y-4">
             
             <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium mb-1">Type</label>
+                <select
+                  name="type"
+                  value={formData.type}
+                  onChange={handleChange}
+                  className="w-full px-3 py-2 border rounded"
+                >
+                  <option value="">Select type</option>
+                  <option value="bedroom">Bedroom</option>
+                  <option value="living room">Living Room</option>
+                  <option value="kitchen">Kitchen</option>
+                  <option value="bathroom">Bathroom</option>
+                  <option value="other">Other</option>
+                </select>
+              </div>
               {/* Generated Room ID Display */}
               <div>
                 <label className="block text-sm font-medium mb-1">Room ID</label>
@@ -193,23 +265,6 @@ const CreateRoom = () => {
                   {generatedRoomId ? 'Next available room ID' : 'Auto-generated after villa selection'}
                 </p>
               </div>
-              
-              <div>
-                <label className="block text-sm font-medium mb-1">Type</label>
-                <select
-                  name="type"
-                  value={formData.type}
-                  onChange={handleChange}
-                  className="w-full px-3 py-2 border rounded"
-                >
-                  <option value="">Select type</option>
-                  <option value="bedroom">Bedroom</option>
-                  <option value="living room">Living Room</option>
-                  <option value="kitchen">Kitchen</option>
-                  <option value="bathroom">Bathroom</option>
-                  <option value="other">Other</option>
-                </select>
-              </div>
             </div>
             
             <div>
@@ -223,35 +278,83 @@ const CreateRoom = () => {
               />
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium mb-1">Bedroom Type</label>
-                <div className="grid grid-cols-5 gap-2">
-                  {["single", "double", "queen", "king", "suite"].map((bt) => (
+            {/* Bedroom Type and Capacity - Only visible when type is bedroom */}
+            {formData.type === 'bedroom' && (
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium mb-1">Bedroom Type (Optional)</label>
+                  <div className="grid grid-cols-3 gap-2">
+                    {["single", "double", "queen", "king", "suite"].map((bt) => (
+                      <button
+                        key={bt}
+                        type="button"
+                        className={`px-3 py-2 rounded border text-xs text-center ${
+                          formData.bedroomType === bt
+                            ? "bg-blue-600 text-white border-blue-600"
+                            : "bg-gray-100 text-gray-700 border-gray-300 hover:bg-blue-50"
+                        }`}
+                        onClick={() => setFormData((p) => ({ ...p, bedroomType: bt }))}
+                      >
+                        {bt.charAt(0).toUpperCase() + bt.slice(1)}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-1">Capacity (Optional)</label>
+                  <div className="flex items-center gap-2">
                     <button
-                      key={bt}
                       type="button"
-                      className={`px-3 py-2 rounded border text-sm text-center ${
-                        formData.bedroomType === bt
-                          ? "bg-blue-600 text-white border-blue-600"
-                          : "bg-gray-100 text-gray-700 border-gray-300 hover:bg-blue-50"
-                      }`}
-                      onClick={() => setFormData((p) => ({ ...p, bedroomType: bt }))}
+                      onClick={decrementCapacity}
+                      className="px-3 py-2 border rounded bg-gray-100 hover:bg-gray-200 text-gray-700"
                     >
-                      {bt.charAt(0).toUpperCase() + bt.slice(1)}
+                      −
                     </button>
-                  ))}
+                    <input 
+                      name="capacity" 
+                      type="number"
+                      value={formData.capacity}
+                      onChange={handleChange}
+                      min="0"
+                      max="99"
+                      className="flex-1 px-3 py-2 border rounded text-center" 
+                      placeholder="0"
+                    />
+                    <button
+                      type="button"
+                      onClick={incrementCapacity}
+                      className="px-3 py-2 border rounded bg-gray-100 hover:bg-gray-200 text-gray-700"
+                    >
+                      +
+                    </button>
+                  </div>
                 </div>
               </div>
-              <div>
-                <label className="block text-sm font-medium mb-1">Capacity</label>
-                <input name="capacity" value={formData.capacity} onChange={handleChange} className="w-full px-3 py-2 border rounded" />
-              </div>
-            </div>
+            )}
 
             <div>
-              <label className="block text-sm font-medium mb-1">Amenities (comma separated)</label>
-              <input name="amenities" value={formData.amenities} onChange={handleChange} className="w-full px-3 py-2 border rounded" />
+              <label className="block text-sm font-medium mb-1">Amenities</label>
+              <div className="grid grid-cols-5 gap-2">
+                {amenitiesList.map((amenity) => (
+                  <button
+                    key={amenity}
+                    type="button"
+                    className={`px-3 py-2 rounded border text-sm text-center ${
+                      selectedAmenities.includes(amenity)
+                        ? "bg-blue-600 text-white border-blue-600"
+                        : "bg-gray-100 text-gray-700 border-gray-300 hover:bg-blue-50"
+                    }`}
+                    onClick={() => toggleAmenity(amenity)}
+                  >
+                    {amenity}
+                  </button>
+                ))}
+              </div>
+              {selectedAmenities.length > 0 && (
+                <p className="text-xs text-gray-500 mt-2">
+                  Selected: {selectedAmenities.join(', ')}
+                </p>
+              )}
             </div>
 
             <div>
