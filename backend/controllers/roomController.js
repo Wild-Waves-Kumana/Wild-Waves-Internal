@@ -52,12 +52,12 @@ export const createRoom = async (req, res) => {
   try {
     const {
       roomName,
-      roomId,        // optional, unique if provided
-      type,          // optional: "bedroom", "living room", ...
-      bedroomType,   // optional: "single","double",...
-      amenities,     // optional: array or comma-separated string
-      capacity,      // optional: number
-      status,        // optional: "available","occupied","maintenance"
+      roomId,
+      type,
+      bedroomType,
+      amenities,
+      capacity,
+      status,
       villaId
     } = req.body;
 
@@ -112,18 +112,30 @@ export const createRoom = async (req, res) => {
       amenitiesArray = amenities.split(",").map(a => a.trim()).filter(Boolean);
     }
 
-    const room = new Room({
+    // Build room data - only include bedroom fields if type is bedroom
+    const roomData = {
       roomName,
       roomId: generatedRoomId,
       type,
-      bedroomType,
       amenities: amenitiesArray,
-      capacity: capacity !== undefined ? Number(capacity) : undefined,
-      status,
+      status: status || 'available',
       villaId,
       companyId: villa.companyId,
-    });
+    };
 
+    // Only add bedroom-specific fields if type is bedroom AND they have values
+    if (type === 'bedroom') {
+      if (bedroomType && bedroomType.trim() !== '') {
+        roomData.bedroomType = bedroomType;
+      }
+      if (capacity !== undefined && capacity !== null && capacity !== '') {
+        roomData.capacity = Number(capacity);
+      }
+    }
+    // If type is not bedroom, explicitly leave out bedroomType and capacity
+    // Mongoose will use schema defaults or undefined
+
+    const room = new Room(roomData);
     await room.save();
 
     // Add room._id to villa's rooms array
