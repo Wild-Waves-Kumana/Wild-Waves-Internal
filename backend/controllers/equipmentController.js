@@ -9,9 +9,9 @@ import Villa from '../models/villa.js';
 // Helper to generate unique itemCode based on category, finding the first available number
 const generateUniqueItemCode = async (category) => {
   const prefixes = {
-    "Doors": "D",
-    "Lights": "L", 
-    "Air Conditioner": "A",
+    "Doors": "DR",
+    "Lights": "LT", 
+    "Air Conditioner": "AC",
   };
   const prefix = prefixes[category] || "E";
 
@@ -45,7 +45,7 @@ const generateUniqueItemCode = async (category) => {
   }
 
   // Generate item code with the first available number
-  const itemCode = `${prefix}-${String(nextNumber).padStart(4, "0")}`;
+  const itemCode = `${prefix}${String(nextNumber).padStart(4, "0")}`;
   
   return itemCode;
 };
