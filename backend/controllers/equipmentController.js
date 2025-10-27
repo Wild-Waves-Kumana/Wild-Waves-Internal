@@ -17,7 +17,7 @@ const generateUniqueItemCode = async (category) => {
   const prefix = prefixes[category] || "E";
 
   // Check ALL collections for existing codes with this prefix
-  const regex = new RegExp(`^${prefix}-(\\d{4})$`);
+  const regex = new RegExp(`^${prefix}(\\d{4})$`);
   
   // Get existing codes from ALL collections (doors, lights, ACs)
   const [doorCodes, lightCodes, acCodes] = await Promise.all([
@@ -45,7 +45,7 @@ const generateUniqueItemCode = async (category) => {
     nextNumber++;
   }
 
-  // Generate item code with the first available number
+  // Generate item code with the first available number (without hyphen)
   const itemCode = `${prefix}${String(nextNumber).padStart(4, "0")}`;
   
   return itemCode;
