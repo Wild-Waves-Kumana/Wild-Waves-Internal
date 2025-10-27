@@ -202,13 +202,15 @@ const EquipmentCreation = () => {
 
   return (
     <div className="min-h-screen bg-gray-100">
+
+      <h2 className="text-2xl font-semibold pb-4 ">Create Equipment</h2>
       <div className=" mx-auto">
         {/* Use flex instead of grid for equal height columns */}
         <div className="flex flex-col lg:flex-row gap-8 h-full">
           
           {/* Left Column - Form */}
           <div className="flex-1 bg-white p-6 rounded-lg shadow-md flex flex-col">
-            <h2 className="text-2xl font-semibold mb-6">Create Equipment</h2>
+            
             <Toaster
               message={message}
               type={toastType}
