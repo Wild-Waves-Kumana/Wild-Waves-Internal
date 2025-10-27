@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useCallback } from "react";
 import { jwtDecode } from "jwt-decode";
 import ImageCropper from "../../components/common/ImageCropper";
@@ -32,6 +31,8 @@ const CreateFoods = () => {
   const [uploading, setUploading] = useState(false);
   const [success, setSuccess] = useState("");
   const [error, setError] = useState("");
+  const [generatedFoodCode, setGeneratedFoodCode] = useState("");
+  const [foodCodeLoading, setFoodCodeLoading] = useState(false);
 
   // Cropping states
   const [cropModalOpen, setCropModalOpen] = useState(false);
@@ -57,6 +58,24 @@ const CreateFoods = () => {
     } catch {
       setCompanyId("");
     }
+  }, []);
+
+  // Fetch next available food code on component mount
+  useEffect(() => {
+    const fetchNextFoodCode = async () => {
+      setFoodCodeLoading(true);
+      try {
+        const response = await fetch("/api/foods/next-food-code");
+        const data = await response.json();
+        setGeneratedFoodCode(data.nextFoodCode);
+      } catch (err) {
+        console.error("Failed to generate food code:", err);
+        setGeneratedFoodCode("FD0001"); // Fallback
+      } finally {
+        setFoodCodeLoading(false);
+      }
+    };
+    fetchNextFoodCode();
   }, []);
 
   // Handle input changes
@@ -226,6 +245,10 @@ const CreateFoods = () => {
       if (res.ok) {
         setSuccess("Food item created successfully!");
         setForm(initialFormState);
+        // Fetch next food code after successful creation
+        const response = await fetch("/api/foods/next-food-code");
+        const data = await response.json();
+        setGeneratedFoodCode(data.nextFoodCode);
       } else {
         const data = await res.json();
         setError(data.message || "Failed to create food item.");
@@ -242,6 +265,24 @@ const CreateFoods = () => {
       {success && <div className="mb-4 text-green-600">{success}</div>}
       {error && <div className="mb-4 text-red-600">{error}</div>}
       <form onSubmit={handleSubmit} className="space-y-4">
+        {/* Food Code Display */}
+        <div>
+          <label className="block font-semibold mb-1">Food Code</label>
+          <div className="w-full px-4 py-2 border rounded-md bg-gray-50 text-gray-600 flex items-center">
+            {foodCodeLoading ? (
+              <div className="flex items-center">
+                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600 mr-2"></div>
+                Generating...
+              </div>
+            ) : (
+              <span className="font-mono text-lg">{generatedFoodCode}</span>
+            )}
+          </div>
+          <p className="text-xs text-gray-500 mt-1">
+            Next available food code
+          </p>
+        </div>
+
         <div>
           <label className="block font-semibold mb-1">Name</label>
           <input
