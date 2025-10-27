@@ -268,11 +268,13 @@ const CreateRoom = () => {
       />
 
       <div className="mx-auto">
+
+        <h2 className="text-2xl font-semibold py-2">Create Room</h2>
         <div className="flex flex-col lg:flex-row gap-8 h-full">
           
           {/* Left Column - Form */}
           <div className="flex-1 bg-white p-6 rounded-lg shadow-md flex flex-col">
-            <h2 className="text-2xl font-semibold mb-6">Create Room</h2>
+            
 
             <div className="space-y-4 flex-1">
               {/* Villa Selection */}
@@ -604,7 +606,7 @@ const CreateRoom = () => {
                           <span className="ml-2 text-gray-600">Loading rooms...</span>
                         </div>
                       ) : villaRooms.length > 0 ? (
-                        <div className="space-y-2 max-h-96 overflow-y-auto">
+                        <div className="space-y-2  overflow-y-auto max-h-112 ">
                           {villaRooms.map((room) => (
                             <div key={room._id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
                               <div className="flex-1">
