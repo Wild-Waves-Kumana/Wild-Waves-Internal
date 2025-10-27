@@ -257,20 +257,11 @@ const CreateRoom = () => {
 
   return (
     <div className="min-h-screen bg-gray-100">
-      {/* Toast Notification */}
-      <Toaster
-        message={toast.message}
-        type={toast.type}
-        isVisible={toast.show}
-        onClose={() => setToast({ ...toast, show: false })}
-        duration={3000}
-        position="top-right"
-      />
 
       <div className="mx-auto">
 
         <h2 className="text-2xl font-semibold py-2">Create Room</h2>
-        <div className="flex flex-col lg:flex-row gap-8 h-full">
+        <div className="flex flex-col lg:flex-row gap-6 h-full">
           
           {/* Left Column - Form */}
           <div className="flex-1 bg-white p-6 rounded-lg shadow-md flex flex-col">
@@ -359,7 +350,7 @@ const CreateRoom = () => {
                         Generating...
                       </div>
                     ) : (
-                      <span className="font-mono text-lg">{generatedRoomId || 'Select villa first'}</span>
+                      <span className="font-mono text-md">{generatedRoomId || 'Select villa first'}</span>
                     )}
                   </div>
                   <p className="text-[10px] text-gray-500 mt-1">
@@ -682,6 +673,16 @@ const CreateRoom = () => {
         }}
         villaName={selectedVilla?.villaName}
         loading={submitLoading}
+      />
+
+      {/* Toast Notification */}
+      <Toaster
+        message={toast.message}
+        type={toast.type}
+        isVisible={toast.show}
+        onClose={() => setToast({ ...toast, show: false })}
+        duration={3000}
+        position="top-right"
       />
     </div>
   );
