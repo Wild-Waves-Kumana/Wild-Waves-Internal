@@ -1,9 +1,13 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import { jwtDecode } from 'jwt-decode';
+import { useNavigate } from 'react-router-dom';
 import CreateVillaModal from '../../components/modals/CreateVillaModal';
+import ConfirmRoomCreationModal from '../../components/modals/ConfirmRoomCreationModal';
+import Toaster from '../../components/common/Toaster';
 
 const CreateRoom = () => {
+  const navigate = useNavigate();
   
   const [villas, setVillas] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -13,13 +17,32 @@ const CreateRoom = () => {
   const [generatedRoomId, setGeneratedRoomId] = useState('');
   const [roomIdLoading, setRoomIdLoading] = useState(false);
   const [selectedAmenities, setSelectedAmenities] = useState([]);
+  const [villaRooms, setVillaRooms] = useState([]);
+  const [loadingRooms, setLoadingRooms] = useState(false);
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
+  const [submitLoading, setSubmitLoading] = useState(false);
+  
+  // Toast state
+  const [toast, setToast] = useState({
+    show: false,
+    message: '',
+    type: 'success'
+  });
 
   const amenitiesList = [
-    "Air Conditioning",
+    "AC",
     "Wi-Fi",
     "Television",
     "Mini Fridge",
     "Sounds Setup",
+  ];
+
+  const roomTypes = [
+    { value: "bedroom", label: "Bedroom" },
+    { value: "living room", label: "Living Room" },
+    { value: "kitchen", label: "Kitchen" },
+    { value: "bathroom", label: "Bathroom" },
+    { value: "other", label: "Other" }
   ];
 
   const [formData, setFormData] = useState({
@@ -27,7 +50,7 @@ const CreateRoom = () => {
     roomId: '',
     type: '',
     bedroomType: '',
-    amenities: '', // will be converted from selectedAmenities
+    amenities: '',
     capacity: '',
     status: 'available',
     villaId: '',
@@ -87,6 +110,28 @@ const CreateRoom = () => {
     fetchNextRoomId();
   }, [formData.villaId]);
 
+  // Fetch villa rooms when villa is selected
+  useEffect(() => {
+    const fetchVillaRooms = async () => {
+      if (!formData.villaId) {
+        setVillaRooms([]);
+        return;
+      }
+      setLoadingRooms(true);
+      try {
+        const res = await axios.get('/api/rooms/all');
+        const filtered = res.data.filter(room => room.villaId === formData.villaId);
+        setVillaRooms(filtered);
+      } catch (err) {
+        console.error('Failed to fetch villa rooms', err);
+        setVillaRooms([]);
+      } finally {
+        setLoadingRooms(false);
+      }
+    };
+    fetchVillaRooms();
+  }, [formData.villaId]);
+
   const handleVillaSelect = (villa) => {
     setSelectedVillaId(villa._id);
     setFormData((p) => ({ ...p, villaId: villa._id }));
@@ -107,6 +152,15 @@ const CreateRoom = () => {
     
     // Reset bedroom-specific fields when type changes away from bedroom
     if (name === 'type' && value !== 'bedroom') {
+      setFormData((p) => ({ ...p, bedroomType: '', capacity: '' }));
+    }
+  };
+
+  const handleTypeSelect = (type) => {
+    setFormData((p) => ({ ...p, type }));
+    
+    // Reset bedroom-specific fields when type changes away from bedroom
+    if (type !== 'bedroom') {
       setFormData((p) => ({ ...p, bedroomType: '', capacity: '' }));
     }
   };
@@ -141,6 +195,12 @@ const CreateRoom = () => {
       setMessage('Room name and villa are required.');
       return;
     }
+    // Open confirmation modal instead of directly creating
+    setShowConfirmModal(true);
+  };
+
+  const handleConfirmCreate = async () => {
+    setSubmitLoading(true);
     try {
       // Prepare data - only include bedroom fields if type is bedroom
       const submitData = {
@@ -163,225 +223,434 @@ const CreateRoom = () => {
       }
 
       await axios.post('/api/rooms/create', submitData);
-      setMessage('Room created successfully.');
       
-      // Reset form
-      setFormData({
-        roomName: '',
-        roomId: '',
-        type: '',
-        bedroomType: '',
-        amenities: '',
-        capacity: '',
-        status: 'available',
-        villaId: '',
+      // Close modal
+      setShowConfirmModal(false);
+      
+      // Show success toast
+      setToast({
+        show: true,
+        message: `Room "${formData.roomName}" created successfully!`,
+        type: 'success'
       });
-      setSelectedVillaId('');
-      setGeneratedRoomId('');
-      setSelectedAmenities([]);
+      
+      // Wait for toast to be visible then navigate
+      setTimeout(() => {
+        navigate('/create-room');
+        // Force page refresh to reset state
+        window.location.reload();
+      }, 2000);
+      
     } catch (err) {
-      setMessage(err.response?.data?.message || 'Failed to create room.');
+      setShowConfirmModal(false);
+      setToast({
+        show: true,
+        message: err.response?.data?.message || 'Failed to create room.',
+        type: 'error'
+      });
+    } finally {
+      setSubmitLoading(false);
     }
   };
 
+  const selectedVilla = villas.find(v => v._id === selectedVillaId);
+
   return (
-    <div className="min-h-screen bg-gray-100 p-6">
-      <div className="max-w-3xl mx-auto">
-        <div className="bg-white p-6 rounded-lg shadow">
-          <h2 className="text-2xl font-semibold mb-4">Create Room</h2>
+    <div className="min-h-screen bg-gray-100">
+      {/* Toast Notification */}
+      <Toaster
+        message={toast.message}
+        type={toast.type}
+        isVisible={toast.show}
+        onClose={() => setToast({ ...toast, show: false })}
+        duration={3000}
+        position="top-right"
+      />
 
-          <label className="block font-medium mb-2">Select Villa</label>
-          <div className="grid grid-cols-5 gap-2 mb-4 max-h-32 overflow-y-auto">
-            {loading ? (
-              <div className="col-span-3 text-center text-gray-500">Loading villas...</div>
-            ) : (
-              <>
-                {villas.length === 0 ? (
-                  <div className="col-span-3 text-center text-gray-500">No villas available</div>
-                ) : (
-                  villas.map((villa) => (
-                    <button
-                      key={villa._id}
-                      type="button"
-                      onClick={() => handleVillaSelect(villa)}
-                      className={`px-3 py-2 rounded border text-sm text-left ${
-                        selectedVillaId === villa._id
-                          ? 'bg-blue-600 text-white border-blue-600'
-                          : 'bg-gray-100 text-gray-700 border-gray-300 hover:bg-blue-50'
-                      }`}
-                    >
-                      <div className="font-medium">{villa.villaName}</div>
-                      <div className="text-xs text-gray-500 mt-1">{villa.villaId}</div>
-                    </button>
-                  ))
-                )}
+      <div className="mx-auto">
+        <div className="flex flex-col lg:flex-row gap-8 h-full">
+          
+          {/* Left Column - Form */}
+          <div className="flex-1 bg-white p-6 rounded-lg shadow-md flex flex-col">
+            <h2 className="text-2xl font-semibold mb-6">Create Room</h2>
 
-                {/* Create Villa button */}
-                <button
-                  type="button"
-                  onClick={() => setShowCreateVillaModal(true)}
-                  className="px-3 py-2 rounded border text-sm flex flex-col items-start justify-center bg-green-50 text-green-800 border-green-200 hover:bg-green-100"
-                >
-                  <div className="font-medium">+ Create Villa</div>
-                  <div className="text-xs text-green-600 mt-1">Add new villa</div>
-                </button>
-              </>
-            )}
-          </div>
-
-          <form onSubmit={handleSubmit} className="space-y-4">
-            
-            <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-4 flex-1">
+              {/* Villa Selection */}
               <div>
-                <label className="block text-sm font-medium mb-1">Type</label>
-                <select
-                  name="type"
-                  value={formData.type}
-                  onChange={handleChange}
-                  className="w-full px-3 py-2 border rounded"
-                >
-                  <option value="">Select type</option>
-                  <option value="bedroom">Bedroom</option>
-                  <option value="living room">Living Room</option>
-                  <option value="kitchen">Kitchen</option>
-                  <option value="bathroom">Bathroom</option>
-                  <option value="other">Other</option>
-                </select>
-              </div>
-              {/* Generated Room ID Display */}
-              <div>
-                <label className="block text-sm font-medium mb-1">Room ID</label>
-                <div className="w-full px-3 py-2 border rounded-md bg-gray-50 text-gray-700 flex items-center">
-                  {roomIdLoading ? (
-                    <div className="flex items-center text-sm text-gray-600">
-                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600 mr-2"></div>
-                      Generating...
-                    </div>
+                <label className="block font-medium mb-1">Select Villa</label>
+                <div className="grid grid-cols-5 gap-2 mb-2 max-h-32 overflow-y-auto">
+                  {loading ? (
+                    <div className="col-span-3 text-center text-gray-500">Loading villas...</div>
                   ) : (
-                    <span className="font-mono text-lg">{generatedRoomId || 'Select villa first'}</span>
+                    <>
+                      {villas.length === 0 ? (
+                        <div className="col-span-3 text-center text-gray-500">No villas available</div>
+                      ) : (
+                        villas.map((villa) => (
+                          <button
+                            key={villa._id}
+                            type="button"
+                            onClick={() => handleVillaSelect(villa)}
+                            className={`px-4 py-2 rounded border text-xs ${
+                              selectedVillaId === villa._id
+                                ? 'bg-blue-600 text-white border-blue-600'
+                                : 'bg-gray-100 text-gray-700 border-gray-300 hover:bg-blue-100'
+                            }`}
+                          >
+                            {villa.villaName} ({villa.villaId})
+                          </button>
+                        ))
+                      )}
+                      <button
+                        type="button"
+                        onClick={() => setShowCreateVillaModal(true)}
+                        className="px-3 py-2 rounded border text-sm bg-green-50 text-green-800 border-green-200 hover:bg-green-100"
+                      >
+                        + Create Villa
+                      </button>
+                    </>
                   )}
                 </div>
-                <p className="text-xs text-gray-500 mt-1">
-                  {generatedRoomId ? 'Next available room ID' : 'Auto-generated after villa selection'}
-                </p>
               </div>
-            </div>
-            
-            <div>
-              <label className="block text-sm font-medium mb-1">Room Name</label>
-              <input
-                name="roomName"
-                value={formData.roomName}
-                onChange={handleChange}
-                className="w-full px-3 py-2 border rounded"
-                required
-              />
-            </div>
 
-            {/* Bedroom Type and Capacity - Only visible when type is bedroom */}
-            {formData.type === 'bedroom' && (
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium mb-1">Bedroom Type (Optional)</label>
-                  <div className="grid grid-cols-3 gap-2">
-                    {["single", "double", "queen", "king", "suite"].map((bt) => (
+              {/* Room Type Selection as Buttons */}
+              <div>
+                <label className="block font-medium mb-1">Room Type</label>
+                <div className="grid grid-cols-5 gap-2 mb-2">
+                  {roomTypes.map((type) => (
+                    <button
+                      key={type.value}
+                      type="button"
+                      className={`px-4 py-2 rounded border text-sm ${
+                        formData.type === type.value
+                          ? 'bg-blue-600 text-white border-blue-600'
+                          : 'bg-gray-100 text-gray-700 border-gray-300 hover:bg-blue-100'
+                      }`}
+                      onClick={() => handleTypeSelect(type.value)}
+                    >
+                      {type.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Room Name & Room ID */}
+              <div className="flex flex-col md:flex-row gap-4">
+                <div className="flex-1">
+                  <label className="block font-medium mb-1">Room Name</label>
+                  <input
+                    name="roomName"
+                    value={formData.roomName}
+                    onChange={handleChange}
+                    placeholder="Enter room name"
+                    className="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring"
+                    required
+                  />
+                </div>
+
+                <div className="flex-1">
+                  <label className="block font-medium mb-1">Room ID</label>
+                  <div className="w-full px-4 py-2 border rounded-md bg-gray-50 text-gray-600 flex items-center">
+                    {roomIdLoading ? (
+                      <div className="flex items-center">
+                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600 mr-2"></div>
+                        Generating...
+                      </div>
+                    ) : (
+                      <span className="font-mono text-lg">{generatedRoomId || 'Select villa first'}</span>
+                    )}
+                  </div>
+                  <p className="text-[10px] text-gray-500 mt-1">
+                    {generatedRoomId ? 'Next available room ID' : 'Auto-generated after villa selection'}
+                  </p>
+                </div>
+              </div>
+
+              {/* Bedroom Type and Capacity - Only visible when type is bedroom */}
+              {formData.type === 'bedroom' && (
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block font-medium mb-1">Bedroom Type (Optional)</label>
+                    <div className="grid grid-cols-3 gap-2">
+                      {["single", "double", "queen", "king", "suite"].map((bt) => (
+                        <button
+                          key={bt}
+                          type="button"
+                          className={`px-3 py-2 rounded border text-xs text-center ${
+                            formData.bedroomType === bt
+                              ? "bg-blue-600 text-white border-blue-600"
+                              : "bg-gray-100 text-gray-700 border-gray-300 hover:bg-blue-50"
+                          }`}
+                          onClick={() => setFormData((p) => ({ ...p, bedroomType: bt }))}
+                        >
+                          {bt.charAt(0).toUpperCase() + bt.slice(1)}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                  <div>
+                    <label className="block font-medium mb-1">Capacity (Optional)</label>
+                    <div className="flex items-center gap-2">
                       <button
-                        key={bt}
                         type="button"
-                        className={`px-3 py-2 rounded border text-xs text-center ${
-                          formData.bedroomType === bt
-                            ? "bg-blue-600 text-white border-blue-600"
-                            : "bg-gray-100 text-gray-700 border-gray-300 hover:bg-blue-50"
-                        }`}
-                        onClick={() => setFormData((p) => ({ ...p, bedroomType: bt }))}
+                        onClick={decrementCapacity}
+                        className="px-3 py-2 border rounded bg-gray-100 hover:bg-gray-200 text-gray-700"
                       >
-                        {bt.charAt(0).toUpperCase() + bt.slice(1)}
+                        −
                       </button>
-                    ))}
+                      <input 
+                        name="capacity"
+                        type="number"
+                        value={formData.capacity}
+                        onChange={handleChange}
+                        min="0"
+                        max="99"
+                        className="flex-1 px-3 py-2 border rounded text-center" 
+                        placeholder="0"
+                      />
+                      <button
+                        type="button"
+                        onClick={incrementCapacity}
+                        className="px-3 py-2 border rounded bg-gray-100 hover:bg-gray-200 text-gray-700"
+                      >
+                        +
+                      </button>
+                    </div>
                   </div>
                 </div>
-                <div>
-                  <label className="block text-sm font-medium mb-1">Capacity (Optional)</label>
-                  <div className="flex items-center gap-2">
-                    <button
-                      type="button"
-                      onClick={decrementCapacity}
-                      className="px-3 py-2 border rounded bg-gray-100 hover:bg-gray-200 text-gray-700"
-                    >
-                      −
-                    </button>
-                    <input 
-                      name="capacity" 
-                      type="number"
-                      value={formData.capacity}
-                      onChange={handleChange}
-                      min="0"
-                      max="99"
-                      className="flex-1 px-3 py-2 border rounded text-center" 
-                      placeholder="0"
-                    />
-                    <button
-                      type="button"
-                      onClick={incrementCapacity}
-                      className="px-3 py-2 border rounded bg-gray-100 hover:bg-gray-200 text-gray-700"
-                    >
-                      +
-                    </button>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            <div>
-              <label className="block text-sm font-medium mb-1">Amenities</label>
-              <div className="grid grid-cols-5 gap-2">
-                {amenitiesList.map((amenity) => (
-                  <button
-                    key={amenity}
-                    type="button"
-                    className={`px-3 py-2 rounded border text-sm text-center ${
-                      selectedAmenities.includes(amenity)
-                        ? "bg-blue-600 text-white border-blue-600"
-                        : "bg-gray-100 text-gray-700 border-gray-300 hover:bg-blue-50"
-                    }`}
-                    onClick={() => toggleAmenity(amenity)}
-                  >
-                    {amenity}
-                  </button>
-                ))}
-              </div>
-              {selectedAmenities.length > 0 && (
-                <p className="text-xs text-gray-500 mt-2">
-                  Selected: {selectedAmenities.join(', ')}
-                </p>
               )}
+
+              {/* Amenities */}
+              <div>
+                <label className="block font-medium mb-1">Amenities</label>
+                <div className="grid grid-cols-5 gap-2 mb-2">
+                  {amenitiesList.map((amenity) => (
+                    <button
+                      key={amenity}
+                      type="button"
+                      className={`px-4 py-2 rounded border text-xs ${
+                        selectedAmenities.includes(amenity)
+                          ? "bg-blue-600 text-white border-blue-600"
+                          : "bg-gray-100 text-gray-700 border-gray-300 hover:bg-blue-100"
+                      }`}
+                      onClick={() => toggleAmenity(amenity)}
+                    >
+                      {amenity}
+                    </button>
+                  ))}
+                </div>
+                {selectedAmenities.length > 0 && (
+                  <p className="text-xs text-gray-500 mt-2">
+                    Selected: {selectedAmenities.join(', ')}
+                  </p>
+                )}
+              </div>
+
+              {/* Status */}
+              <div>
+                <label className="block font-medium mb-1">Status</label>
+                <div className="flex flex-wrap gap-2 mb-2">
+                  {["available", "occupied", "maintenance"].map((status) => (
+                    <button
+                      key={status}
+                      type="button"
+                      className={`px-4 py-2 rounded border text-sm ${
+                        formData.status === status
+                          ? "bg-blue-600 text-white border-blue-600"
+                          : "bg-gray-100 text-gray-700 border-gray-300 hover:bg-blue-100"
+                      }`}
+                      onClick={() => setFormData((p) => ({ ...p, status }))}
+                    >
+                      {status.charAt(0).toUpperCase() + status.slice(1)}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {message && <div className="text-sm text-center text-gray-700">{message}</div>}
+            </div>
+          </div>
+
+          {/* Right Column - Preview & Existing Rooms */}
+          <div className="flex-1 flex flex-col gap-4">
+            <div className="flex flex-col md:flex-row gap-4 flex-1">
+              {/* Preview */}
+              <div className="flex-1 bg-white p-8 rounded-lg shadow-md">
+                <h3 className="text-md font-semibold mb-6">Room Preview</h3>
+                <div className="space-y-4">
+                  <div className="border-l-4 border-blue-500 pl-4">
+                    <h4 className="font-sm text-gray-700">Villa</h4>
+                    <p className={`text-medium ${!selectedVilla ? 'bg-yellow-100 px-2 py-1 rounded' : ''}`}>
+                      {selectedVilla ? `${selectedVilla.villaName} (${selectedVilla.villaId})` : 'Not selected'}
+                    </p>
+                  </div>
+
+                  <div className="border-l-4 border-green-500 pl-4">
+                    <h4 className="font-sm text-gray-700">Room ID</h4>
+                    <p className={`text-medium font-mono ${!generatedRoomId ? 'bg-yellow-100 px-2 py-1 rounded' : ''}`}>
+                      {generatedRoomId || 'Not generated'}
+                    </p>
+                  </div>
+
+                  <div className="border-l-4 border-purple-500 pl-4">
+                    <h4 className="font-sm text-gray-700">Room Name</h4>
+                    <p className={`text-medium ${!formData.roomName ? 'bg-yellow-100 px-2 py-1 rounded' : ''}`}>
+                      {formData.roomName || 'Not specified'}
+                    </p>
+                  </div>
+
+                  <div className="border-l-4 border-orange-500 pl-4">
+                    <h4 className="font-sm text-gray-700">Type</h4>
+                    <p className={`text-medium capitalize ${!formData.type ? 'bg-yellow-100 px-2 py-1 rounded' : ''}`}>
+                      {formData.type || 'Not specified'}
+                    </p>
+                  </div>
+
+                  {formData.bedroomType && (
+                    <div className="border-l-4 border-pink-500 pl-4">
+                      <h4 className="font-sm text-gray-700">Bedroom Type</h4>
+                      <p className="text-medium capitalize">{formData.bedroomType}</p>
+                    </div>
+                  )}
+
+                  {formData.capacity && formData.capacity > 0 && (
+                    <div className="border-l-4 border-indigo-500 pl-4">
+                      <h4 className="font-sm text-gray-700">Capacity</h4>
+                      <p className="text-medium">{formData.capacity} person(s)</p>
+                    </div>
+                  )}
+
+                  <div className="border-l-4 border-teal-500 pl-4">
+                    <h4 className="font-sm text-gray-700">Amenities</h4>
+                    {selectedAmenities.length > 0 ? (
+                      <div className="flex flex-wrap gap-1 mt-2">
+                        {selectedAmenities.map((amenity, idx) => (
+                          <span key={idx} className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">
+                            {amenity}
+                          </span>
+                        ))}
+                      </div>
+                    ) : (
+                      <p className="text-medium text-gray-500">No amenities</p>
+                    )}
+                  </div>
+
+                  <div className="border-l-4 border-yellow-500 pl-4">
+                    <h4 className="font-sm text-gray-700">Status</h4>
+                    <span className={`inline-block px-2 py-1 text-sm rounded ${
+                      formData.status === 'available' ? 'bg-green-100 text-green-800' :
+                      formData.status === 'occupied' ? 'bg-red-100 text-red-800' :
+                      'bg-yellow-100 text-yellow-800'
+                    }`}>
+                      {formData.status}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Existing Rooms */}
+              <div className="flex-1 bg-white px-4 py-8 rounded-lg shadow-md flex flex-col">
+                <div className="flex-1">
+                  {!selectedVillaId ? (
+                    <div className="p-4 bg-blue-50 rounded-lg">
+                      <h4 className="font-medium text-blue-800 mb-2">Instructions</h4>
+                      <ul className="text-sm text-blue-700 space-y-1">
+                        <li>• Select a villa to view its rooms</li>
+                        <li>• Choose room type by clicking the buttons</li>
+                        <li>• Room ID will be auto-generated</li>
+                        <li>• Enter room name</li>
+                        <li>• Configure bedroom-specific options if needed</li>
+                        <li>• Select amenities and status</li>
+                      </ul>
+                    </div>
+                  ) : (
+                    <>
+                      <h3 className="text-md font-semibold mb-6">
+                        Existing Rooms in {selectedVilla?.villaName}
+                      </h3>
+                      
+                      {loadingRooms ? (
+                        <div className="flex items-center justify-center py-4">
+                          <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
+                          <span className="ml-2 text-gray-600">Loading rooms...</span>
+                        </div>
+                      ) : villaRooms.length > 0 ? (
+                        <div className="space-y-2 max-h-96 overflow-y-auto">
+                          {villaRooms.map((room) => (
+                            <div key={room._id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                              <div className="flex-1">
+                                <div className="flex items-center gap-2">
+                                  <span className={`px-2 py-1 text-xs rounded font-medium ${
+                                    room.type === 'bedroom' ? 'bg-blue-100 text-blue-800' :
+                                    room.type === 'living room' ? 'bg-green-100 text-green-800' :
+                                    room.type === 'kitchen' ? 'bg-yellow-100 text-yellow-800' :
+                                    room.type === 'bathroom' ? 'bg-purple-100 text-purple-800' :
+                                    'bg-gray-100 text-gray-800'
+                                  }`}>
+                                    {room.type}
+                                  </span>
+                                  <span className="font-mono text-sm text-gray-600">{room.roomId}</span>
+                                </div>
+                                <p className="font-medium text-gray-800">{room.roomName}</p>
+                                {room.bedroomType && (
+                                  <p className="text-xs text-gray-600">Type: {room.bedroomType}</p>
+                                )}
+                              </div>
+                              <span className={`px-2 py-1 text-xs rounded ${
+                                room.status === 'available' ? 'bg-green-100 text-green-800' :
+                                room.status === 'occupied' ? 'bg-red-100 text-red-800' :
+                                'bg-yellow-100 text-yellow-800'
+                              }`}>
+                                {room.status}
+                              </span>
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <div className="text-center py-8 text-gray-500">
+                          <p>No rooms found in this villa</p>
+                          <p className="text-sm mt-1">This will be the first room</p>
+                        </div>
+                      )}
+                    </>
+                  )}
+                </div>
+              </div>
             </div>
 
-            <div>
-              <label className="block text-sm font-medium mb-1">Status</label>
-              <select name="status" value={formData.status} onChange={handleChange} className="w-full px-3 py-2 border rounded">
-                <option value="available">Available</option>
-                <option value="occupied">Occupied</option>
-                <option value="maintenance">Maintenance</option>
-              </select>
-            </div>
+            {/* Submit Button */}
+            <button
+              onClick={handleSubmit}
+              className="w-full bg-blue-600 text-white py-2 rounded-md hover:bg-blue-700"
+            >
+              Create Room
+            </button>
+          </div>
 
-            {message && <div className="text-sm text-center text-gray-700">{message}</div>}
-
-            <div className="pt-2">
-              <button type="submit" className="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700">
-                Create Room
-              </button>
-            </div>
-          </form>
         </div>
       </div>
 
-      {/* Create Villa Modal */}
       <CreateVillaModal
         isOpen={showCreateVillaModal}
         onClose={() => setShowCreateVillaModal(false)}
         onCreated={handleVillaCreated}
+      />
+
+      <ConfirmRoomCreationModal
+        isOpen={showConfirmModal}
+        onClose={() => setShowConfirmModal(false)}
+        onConfirm={handleConfirmCreate}
+        roomData={{
+          roomId: generatedRoomId,
+          roomName: formData.roomName,
+          type: formData.type,
+          bedroomType: formData.bedroomType,
+          capacity: formData.capacity,
+          amenities: selectedAmenities.join(', '),
+          status: formData.status,
+        }}
+        villaName={selectedVilla?.villaName}
+        loading={submitLoading}
       />
     </div>
   );
