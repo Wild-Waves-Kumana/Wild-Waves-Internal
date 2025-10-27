@@ -19,7 +19,6 @@ import UserProfile from './pages/UserProfile';
 import AdminProfile from './pages/AdminProfile';
 import CreateCompany from './pages/create-pages/CreateCompany';
 import CompanyDashboard from './pages/CompanyDashboard';
-import CreateVilla from './pages/create-pages/CreateVilla';
 import VillaProfile from './pages/VillaProfile';
 import UserFaceRegistration from './pages/UserFaceRegistration';
 import FoodCreate from './pages/create-pages/CreateFoods';
@@ -34,6 +33,7 @@ import CompanyFoodOrders from './pages/food-pages/CompanyFoodOrders';
 import SuperAdminProfile from './pages/SAdminProfile';
 import SuperadminFoodOrdersHistory from './pages/food-pages/SAdminFoodOrders';
 import CompanyProfile from './pages/CompanyProfile';
+import CreateRoom from './pages/create-pages/CreateRoom';
 import Settings from './pages/Settings';
 
 function App() {
@@ -196,12 +196,14 @@ function App() {
           </ProtectedRoute>
         }
       />
+      
+
       <Route
-        path="/create-villa"
+        path="/create-room"
         element={
           <ProtectedRoute allowedRoles={['admin', 'superadmin']}>
             <Layout>
-              <CreateVilla />
+              <CreateRoom />
             </Layout>
           </ProtectedRoute>
         }

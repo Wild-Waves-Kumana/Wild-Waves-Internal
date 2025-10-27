@@ -20,7 +20,7 @@ export function initMqtt() {
   // If user provided host without protocol (common), assume secure MQTT (mqtts)
   if (!/^mqtts?:\/\//i.test(brokerUrl)) {
     brokerUrl = `mqtts://${brokerUrl}`;
-    console.log('MQTT: prepended mqtts:// to broker URL, using', brokerUrl);
+    //console.log('MQTT: prepended mqtts:// to broker URL, using', brokerUrl);
   }
   const options = {};
   if (process.env.MQTT_USERNAME) options.username = process.env.MQTT_USERNAME;
@@ -29,7 +29,7 @@ export function initMqtt() {
   client = mqtt.connect(brokerUrl, options);
 
   client.on('connect', () => {
-    console.log('MQTT connected to', brokerUrl);
+    console.log('MQTT connected to', brokerUrl , '✅');
   });
   client.on('error', (err) => {
     // Common causes: unreachable broker, wrong URL/port, network issues, firewall or security groups blocking outbound
