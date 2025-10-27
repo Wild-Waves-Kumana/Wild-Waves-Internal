@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import { jwtDecode } from "jwt-decode";
 import { useNavigate } from "react-router-dom";
 import ImageCropper from "../../components/common/ImageCropper";
@@ -53,6 +53,9 @@ const CreateFoods = () => {
   const [cropImageSrc, setCropImageSrc] = useState(null);
   const [pendingFiles, setPendingFiles] = useState([]);
   const [currentCropIdx, setCurrentCropIdx] = useState(0);
+
+  // new: file input ref for visible button
+  const fileInputRef = useRef(null);
 
   // Get companyId from token or fetch admin
   useEffect(() => {
@@ -223,6 +226,8 @@ const CreateFoods = () => {
     setPendingFiles(files);
     setCurrentCropIdx(0);
     readAndCropNext(files, 0);
+    // reset input so same file(s) can be re-selected if needed
+    if (fileInputRef.current) fileInputRef.current.value = "";
     // eslint-disable-next-line
   }, []);
 
@@ -306,7 +311,42 @@ const CreateFoods = () => {
     setCurrentCropIdx(0);
   }, []);
 
-  // Remove image from preview and form
+  // utility to open hidden file input
+  const openFileDialog = () => {
+    if (uploading || cropModalOpen) return;
+    fileInputRef.current?.click();
+  };
+
+  // set an image as cover (move to front)
+  const handleSetCover = (url) => {
+    setForm((prev) => {
+      const images = [...prev.images];
+      const idx = images.indexOf(url);
+      if (idx > -1) {
+        images.splice(idx, 1);
+        images.unshift(url);
+      }
+      return { ...prev, images };
+    });
+  };
+
+  // move image left/right in preview
+  const handleMoveImage = (url, direction) => {
+    setForm((prev) => {
+      const images = [...prev.images];
+      const idx = images.indexOf(url);
+      if (idx === -1) return prev;
+      const newIdx = direction === "left" ? idx - 1 : idx + 1;
+      if (newIdx < 0 || newIdx >= images.length) return prev;
+      // swap
+      const tmp = images[newIdx];
+      images[newIdx] = images[idx];
+      images[idx] = tmp;
+      return { ...prev, images };
+    });
+  };
+
+  // Remove image from preview and form (existing, kept)
   const handleRemoveImage = useCallback(
     (url) => {
       setForm((prev) => ({
@@ -628,34 +668,92 @@ const CreateFoods = () => {
                 </div>
               </div>
 
-              {/* Multiple Image Upload Section with Cropper */}
+              {/* Multiple Image Upload Section with Cropper (updated) */}
               <div>
                 <label className="block font-medium mb-1">Food Photos</label>
+
+                <div className="flex items-center gap-3 mb-3">
+                  <button
+                    type="button"
+                    onClick={openFileDialog}
+                    disabled={uploading || cropModalOpen}
+                    className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    Add Photos
+                  </button>
+
+                  <span className="text-sm text-gray-500">You can add multiple photos. Crop will appear for each.</span>
+                </div>
+
+                {/* hidden file input (triggered by button) */}
                 <input
+                  ref={fileInputRef}
                   type="file"
                   accept="image/*"
                   multiple
                   onChange={handleImageUpload}
                   disabled={uploading || cropModalOpen}
-                  className="block"
+                  className="hidden"
                 />
+
+                {/* Previews */}
                 {form.images.length > 0 && (
                   <div className="flex gap-3 mt-2 flex-wrap">
                     {form.images.map((img, idx) => (
-                      <div key={img} className="relative group">
+                      <div key={img} className="relative group w-28 h-28 rounded overflow-hidden shadow">
                         <img
                           src={img}
                           alt={`Food ${idx + 1}`}
-                          className="h-20 w-20 object-cover rounded shadow"
+                          className="w-full h-full object-cover"
                         />
-                        <button
-                          type="button"
-                          onClick={() => handleRemoveImage(img)}
-                          className="absolute -top-2 -right-2 bg-red-600 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs opacity-80 hover:opacity-100"
-                          title="Remove"
-                        >
-                          ×
-                        </button>
+
+                        {/* overlay toolbar */}
+                        <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition flex flex-col justify-between">
+                          <div className="flex justify-between p-1">
+                            <button
+                              type="button"
+                              onClick={() => handleSetCover(img)}
+                              title={idx === 0 ? "Cover image" : "Set as cover"}
+                              className={`text-xs px-2 py-0.5 rounded ${idx === 0 ? 'bg-yellow-300 text-black' : 'bg-white/80 text-black hover:opacity-90'}`}
+                            >
+                              {idx === 0 ? "Cover" : "Set"}
+                            </button>
+
+                            <button
+                              type="button"
+                              onClick={() => handleRemoveImage(img)}
+                              title="Remove"
+                              className="text-xs px-2 py-0.5 rounded bg-red-600 text-white"
+                            >
+                              ×
+                            </button>
+                          </div>
+
+                          <div className="flex justify-between p-1">
+                            <div className="flex gap-1">
+                              <button
+                                type="button"
+                                onClick={() => handleMoveImage(img, "left")}
+                                disabled={idx === 0}
+                                title="Move left"
+                                className={`text-xs px-2 py-0.5 rounded bg-white/90 ${idx === 0 ? 'opacity-50 cursor-not-allowed' : ''}`}
+                              >
+                                ‹
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => handleMoveImage(img, "right")}
+                                disabled={idx === form.images.length - 1}
+                                title="Move right"
+                                className={`text-xs px-2 py-0.5 rounded bg-white/90 ${idx === form.images.length - 1 ? 'opacity-50 cursor-not-allowed' : ''}`}
+                              >
+                                ›
+                              </button>
+                            </div>
+
+                            <span className="text-xs text-white/90 px-1">{idx + 1}/{form.images.length}</span>
+                          </div>
+                        </div>
                       </div>
                     ))}
                   </div>
