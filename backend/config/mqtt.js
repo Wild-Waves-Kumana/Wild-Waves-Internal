@@ -26,6 +26,21 @@ const mqttService = {
     const message = { event: 'face_deleted', user_id: username };
     publish(topic, message);
     return { published: true };
+  },
+  async publishDoorLock(doorId, lockStatus, doorName, roomName) {
+    const topic = process.env.MQTT_TOPIC || 'wildwaves/faces';
+    const message = { 
+      event: 'door_lock_changed', 
+      door_id: doorId,
+      lock_status: lockStatus,
+      door_name: doorName,
+      room_name: roomName,
+      timestamp: new Date().toISOString()
+    };
+    console.log(`📤 Publishing MQTT message to topic ${topic}:`, message);
+    const result = publish(topic, message);
+    console.log(`📤 MQTT publish result:`, result);
+    return { published: result };
   }
 };
 

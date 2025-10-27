@@ -5,6 +5,7 @@ import Admin from '../models/admin.js';
 import Company from '../models/company.js';
 import Room from '../models/room.js';
 import Villa from '../models/villa.js';
+import mqttService from '../config/mqtt.js';
 
 // Helper to generate unique itemCode based on category, finding the first available number
 const generateUniqueItemCode = async (category) => {
@@ -249,10 +250,15 @@ export const updateDoor = async (req, res) => {
       access,
     } = req.body;
 
+    // Get the current door to check if lockStatus is changing
+    const currentDoor = await Door.findById(doorId).populate('roomId', 'roomName');
+    if (!currentDoor) {
+      return res.status(404).json({ message: 'Door not found' });
+    }
+
     // Check if itemCode is being updated and ensure it's unique
     if (itemCode) {
-      const existing = await Door.findById(doorId);
-      if (existing && existing.itemCode !== itemCode) {
+      if (currentDoor.itemCode !== itemCode) {
         if (await isItemCodeTaken(itemCode)) {
           return res.status(400).json({ message: 'Item Code Already Used!' });
         }
@@ -277,14 +283,41 @@ export const updateDoor = async (req, res) => {
       doorId,
       { $set: updateFields },
       { new: true, runValidators: true }
-    );
+    ).populate('roomId', 'roomName');
 
     if (!updatedDoor) {
       return res.status(404).json({ message: 'Door not found' });
     }
 
+    // Check if lockStatus changed and send MQTT notification
+    const lockStatusChanged = lockStatus !== undefined && currentDoor.lockStatus !== lockStatus;
+    console.log(`Door update debug - lockStatusChanged: ${lockStatusChanged}, MQTT connected: ${mqttService.isConnected}`);
+    console.log(`Current lockStatus: ${currentDoor.lockStatus}, New lockStatus: ${lockStatus}`);
+    
+    if (lockStatusChanged) {
+      if (mqttService.isConnected) {
+        try {
+          await mqttService.publishDoorLock(
+            doorId,
+            lockStatus,
+            updatedDoor.itemName || 'Unknown Door',
+            updatedDoor.roomId?.roomName || 'Unknown Room'
+          );
+          console.log(`✅ MQTT notification sent for door ${doorId}: lockStatus=${lockStatus}`);
+        } catch (mqttError) {
+          console.error('❌ Failed to send MQTT notification for door lock:', mqttError);
+          // Don't fail the request if MQTT fails
+        }
+      } else {
+        console.warn('⚠️ MQTT service not connected - door lock change not sent to Raspberry Pi');
+      }
+    } else {
+      console.log('ℹ️ No lock status change detected - MQTT notification skipped');
+    }
+
     res.json({ message: 'Door updated successfully', door: updatedDoor });
   } catch (err) {
+    console.error('Door update error:', err);
     res.status(500).json({ message: 'Server error while updating door' });
   }
 };
@@ -334,3 +367,4 @@ export const updateLight = async (req, res) => {
     res.status(500).json({ message: 'Server error while updating light' });
   }
 };
+
