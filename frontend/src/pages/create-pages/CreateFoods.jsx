@@ -7,7 +7,7 @@ import Toaster from "../../components/common/Toaster";
 
 const categories = ["Main", "Dessert", "Beverage", "Snack"];
 const availableOnOptions = ["Breakfast", "Lunch", "Dinner", "Teatime", "Anytime"];
-const portionOptions = ["Small", "Medium", "Large"];
+const portionOptions = ["Medium", "Large", "Family"];
 
 const cropAspectRatios = {
   Square: 1,
@@ -20,11 +20,12 @@ const initialFormState = {
   name: "",
   description: "",
   price: "",
-  category: categories[0],
+  category: "",
   isAvailable: true,
   availableOn: [],
   portions: [],
   images: [],
+  useDefaultPrice: false,
 };
 
 const CreateFoods = () => {
@@ -37,6 +38,8 @@ const CreateFoods = () => {
   const [generatedFoodCode, setGeneratedFoodCode] = useState("");
   const [foodCodeLoading, setFoodCodeLoading] = useState(false);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
+  const [existingFoods, setExistingFoods] = useState([]);
+  const [loadingFoods, setLoadingFoods] = useState(false);
 
   // Toast state
   const [toast, setToast] = useState({
@@ -89,19 +92,35 @@ const CreateFoods = () => {
     fetchNextFoodCode();
   }, []);
 
+  // Fetch existing foods when category or companyId changes
+  useEffect(() => {
+    const fetchExistingFoods = async () => {
+      if (!form.category || !companyId) {
+        setExistingFoods([]);
+        return;
+      }
+      setLoadingFoods(true);
+      try {
+        const response = await fetch(`/api/foods/all?companyId=${companyId}`);
+        const data = await response.json();
+        // Filter by selected category
+        const filtered = data.filter(food => food.category === form.category);
+        setExistingFoods(filtered);
+      } catch (err) {
+        console.error("Failed to fetch existing foods:", err);
+        setExistingFoods([]);
+      } finally {
+        setLoadingFoods(false);
+      }
+    };
+    fetchExistingFoods();
+  }, [form.category, companyId]);
+
   // Handle input changes
   const handleChange = useCallback(
     (e) => {
       const { name, value, type, checked } = e.target;
       setForm((prev) => {
-        if (name === "availableOn") {
-          return {
-            ...prev,
-            availableOn: checked
-              ? [...prev.availableOn, value]
-              : prev.availableOn.filter((v) => v !== value),
-          };
-        }
         if (name.startsWith("portion-")) {
           const portionName = name.split("-")[1];
           const portions = prev.portions.filter((p) => p.name !== portionName);
@@ -122,19 +141,80 @@ const CreateFoods = () => {
     []
   );
 
-  // Handle portion checkbox (add/remove portion)
-  const handlePortionCheck = useCallback((e) => {
-    const { value, checked } = e.target;
+  // Handle category selection
+  const handleCategorySelect = (category) => {
+    setForm((prev) => ({ ...prev, category }));
+  };
+
+  // Handle available on selection
+  const handleAvailableOnSelect = (option) => {
+    setForm((prev) => {
+      const currentAvailableOn = prev.availableOn || [];
+      const specificOptions = ["Breakfast", "Lunch", "Dinner", "Teatime"];
+      
+      if (option === "Anytime") {
+        // If clicking Anytime
+        if (currentAvailableOn.includes("Anytime")) {
+          // Deselect Anytime and all others
+          return { ...prev, availableOn: [] };
+        } else {
+          // Select Anytime and all specific options
+          return { ...prev, availableOn: [...specificOptions, "Anytime"] };
+        }
+      } else {
+        // Clicking a specific option
+        let newAvailableOn;
+        if (currentAvailableOn.includes(option)) {
+          // Deselect the option and Anytime
+          newAvailableOn = currentAvailableOn.filter(o => o !== option && o !== "Anytime");
+        } else {
+          // Select the option
+          newAvailableOn = [...currentAvailableOn.filter(o => o !== "Anytime"), option];
+          
+          // Check if all specific options are now selected
+          const allSpecificSelected = specificOptions.every(opt => 
+            newAvailableOn.includes(opt)
+          );
+          
+          // If all are selected, also add Anytime
+          if (allSpecificSelected) {
+            newAvailableOn.push("Anytime");
+          }
+        }
+        return { ...prev, availableOn: newAvailableOn };
+      }
+    });
+  };
+
+  // Handle portion selection
+  const handlePortionSelect = (portion) => {
     setForm((prev) => {
       let portions = prev.portions || [];
-      if (checked && !portions.find((p) => p.name === value)) {
-        portions = [...portions, { name: value, price: "" }];
-      } else if (!checked) {
-        portions = portions.filter((p) => p.name !== value);
+      const exists = portions.find((p) => p.name === portion);
+      
+      if (exists) {
+        // Remove the portion
+        portions = portions.filter((p) => p.name !== portion);
+      } else {
+        // Add the portion with empty price and disable default price
+        portions = [...portions, { name: portion, price: "" }];
       }
-      return { ...prev, portions };
+      return { 
+        ...prev, 
+        portions,
+        useDefaultPrice: false // Disable default price when portion is selected
+      };
     });
-  }, []);
+  };
+
+  // Handle default price selection
+  const handleDefaultPriceSelect = () => {
+    setForm((prev) => ({
+      ...prev,
+      useDefaultPrice: !prev.useDefaultPrice,
+      portions: prev.useDefaultPrice ? prev.portions : [] // Clear portions when enabling default price
+    }));
+  };
 
   // Handle multiple image uploads with cropping
   const handleImageUpload = useCallback((e) => {
@@ -199,7 +279,7 @@ const CreateFoods = () => {
         setToast({
           show: true,
           message: "Image upload failed.",
-          type: "error"
+            type: "error"
         });
       }
       setUploading(false);
@@ -239,6 +319,14 @@ const CreateFoods = () => {
 
   const handleSubmit = (e) => {
     e.preventDefault();
+    if (!form.category) {
+      setToast({
+        show: true,
+        message: "Please select a category.",
+        type: "error"
+      });
+      return;
+    }
     setShowConfirmModal(true);
   };
 
@@ -249,7 +337,7 @@ const CreateFoods = () => {
         ...form,
         companyId,
       };
-      if (!form.portions || form.portions.length === 0) {
+      if (form.useDefaultPrice || !form.portions || form.portions.length === 0) {
         payload.portions = [];
         payload.price = form.price;
       } else {
@@ -311,218 +399,400 @@ const CreateFoods = () => {
         position="top-right"
       />
 
-      <div className="max-w-lg mx-auto bg-white shadow rounded p-6">
-        <h2 className="text-2xl font-bold mb-4">Create Food Item</h2>
+      <div className="mx-auto">
+        <h2 className="text-2xl font-semibold mb-4">Create Food Item</h2>
         
-        <form onSubmit={handleSubmit} className="space-y-4">
-          {/* Food Code Display */}
-          <div>
-            <label className="block font-semibold mb-1">Food Code</label>
-            <div className="w-full px-4 py-2 border rounded-md bg-gray-50 text-gray-600 flex items-center">
-              {foodCodeLoading ? (
-                <div className="flex items-center">
-                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600 mr-2"></div>
-                  Generating...
-                </div>
-              ) : (
-                <span className="font-mono text-lg">{generatedFoodCode}</span>
-              )}
-            </div>
-            <p className="text-xs text-gray-500 mt-1">
-              Next available food code
-            </p>
-          </div>
-
-          <div>
-            <label className="block font-semibold mb-1">Name</label>
-            <input
-              type="text"
-              name="name"
-              value={form.name}
-              onChange={handleChange}
-              required
-              className="w-full border rounded px-3 py-2"
-            />
-          </div>
-          <div>
-            <label className="block font-semibold mb-1">Description</label>
-            <textarea
-              name="description"
-              value={form.description}
-              onChange={handleChange}
-              rows={3}
-              className="w-full border rounded px-3 py-2"
-            />
-          </div>
-          <div>
-            <label className="block font-semibold mb-1">Category</label>
-            <select
-              name="category"
-              value={form.category}
-              onChange={handleChange}
-              className="w-full border rounded px-3 py-2"
-            >
-              {categories.map((cat) => (
-                <option key={cat} value={cat}>
-                  {cat}
-                </option>
-              ))}
-            </select>
-          </div>
-          {/* Available On Section */}
-          <div>
-            <label className="block font-semibold mb-1">Available On</label>
-            <div className="flex flex-wrap gap-4">
-              {availableOnOptions.map((option) => (
-                <label key={option} className="flex items-center gap-2">
+        <div className="flex flex-col lg:flex-row gap-8 items-start">
+          
+          {/* Left Column - Form */}
+          <div className="flex-3 bg-white p-6 rounded-lg shadow-md">
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <div className="flex flex-col md:flex-row gap-4">
+                <div className="flex-2">
+                  <label className="block font-medium mb-1">Name</label>
                   <input
-                    type="checkbox"
-                    name="availableOn"
-                    value={option}
-                    checked={form.availableOn.includes(option)}
+                    type="text"
+                    name="name"
+                    value={form.name}
                     onChange={handleChange}
-                    className="accent-blue-600"
+                    required
+                    className="w-full border rounded px-3 py-2 focus:outline-none focus:ring"
                   />
-                  {option}
-                </label>
-              ))}
-            </div>
-          </div>
-          {/* Portion Section */}
-          <div>
-            <label className="block font-semibold mb-1">Portion & Prices</label>
-            <div className="flex flex-col gap-2">
-              {portionOptions.map((portion) => {
-                const portionObj = form.portions.find((p) => p.name === portion) || {};
-                return (
-                  <div key={portion} className="flex items-center gap-3">
-                    <input
-                      type="checkbox"
-                      value={portion}
-                      checked={!!form.portions.find((p) => p.name === portion)}
-                      onChange={handlePortionCheck}
-                      id={`portion-check-${portion}`}
-                    />
-                    <label htmlFor={`portion-check-${portion}`} className="w-20">{portion}</label>
-                    <input
-                      type="number"
-                      name={`portion-${portion}`}
-                      value={portionObj.price || ""}
-                      onChange={handleChange}
-                      min="0"
-                      step="0.01"
-                      placeholder="Price"
-                      className="border rounded px-2 py-1 w-32"
-                      disabled={!form.portions.find((p) => p.name === portion)}
-                    />
-                    <span className="text-gray-500">LKR</span>
+                </div>
+
+                {/* Food Code Display */}
+                <div className="flex-1">
+                  <label className="block font-medium mb-1">Food Code</label>
+                  <div className="w-full px-4 py-2 border rounded-md bg-gray-50 text-gray-600 flex items-center">
+                    {foodCodeLoading ? (
+                      <div className="flex items-center">
+                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600 mr-2"></div>
+                        Generating...
+                      </div>
+                    ) : (
+                      <span className="font-mono text-lg">{generatedFoodCode}</span>
+                    )}
                   </div>
-                );
-              })}
-            </div>
-          </div>
-          {/* Default Price if no portions */}
-          {(!form.portions || form.portions.length === 0) && (
-            <div>
-              <label className="block font-semibold mb-1">Price (LKR)</label>
-              <input
-                type="number"
-                name="price"
-                value={form.price}
-                onChange={handleChange}
-                min="0"
-                step="0.01"
-                required
-                className="w-full border rounded px-3 py-2"
-              />
-            </div>
-          )}
-          {/* Multiple Image Upload Section with Cropper */}
-          <div>
-            <label className="block font-semibold mb-1">Food Photos</label>
-            <input
-              type="file"
-              accept="image/*"
-              multiple
-              onChange={handleImageUpload}
-              disabled={uploading || cropModalOpen}
-              className="block"
-            />
-            {form.images.length > 0 && (
-              <div className="flex gap-3 mt-2 flex-wrap">
-                {form.images.map((img, idx) => (
-                  <div key={img} className="relative group">
-                    <img
-                      src={img}
-                      alt={`Food ${idx + 1}`}
-                      className="h-20 w-20 object-cover rounded shadow"
-                    />
+                  <p className="text-[10px] text-gray-500 mt-1">
+                    Next available food code
+                  </p>
+                </div>
+              </div>
+
+              {/* Category and Description Row */}
+              <div className="flex flex-col md:flex-row gap-4">
+                
+
+                {/* Description */}
+                <div className="flex-2">
+                  <label className="block font-medium mb-1">Description</label>
+                  <textarea
+                    name="description"
+                    value={form.description}
+                    onChange={handleChange}
+                    rows={4}
+                    className="w-full border rounded px-3 py-2 focus:outline-none focus:ring resize-none"
+                  />
+                </div>
+
+                {/* Category Selection as 2x2 Grid */}
+                <div className="flex-1">
+                  <label className="block font-medium mb-4">Category</label>
+                  <div className="grid grid-cols-2 gap-2">
+                    {categories.map((cat) => (
+                      <button
+                        key={cat}
+                        type="button"
+                        className={`px-4 py-2 rounded border text-sm ${
+                          form.category === cat
+                            ? 'bg-blue-600 text-white border-blue-600'
+                            : 'bg-gray-100 text-gray-700 border-gray-300 hover:bg-blue-100'
+                        }`}
+                        onClick={() => handleCategorySelect(cat)}
+                      >
+                        {cat}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              {/* Available On Section as Buttons */}
+              <div>
+                <label className="block font-medium mb-1">Available On</label>
+                <div className="grid grid-cols-5 gap-2">
+                  {availableOnOptions.map((option) => (
+                    <button
+                      key={option}
+                      type="button"
+                      className={`px-4 py-2 rounded border text-sm ${
+                        form.availableOn.includes(option)
+                          ? 'bg-blue-600 text-white border-blue-600'
+                          : 'bg-gray-100 text-gray-700 border-gray-300 hover:bg-blue-100'
+                      }`}
+                      onClick={() => handleAvailableOnSelect(option)}
+                    >
+                      {option}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Portion & Prices Section */}
+              <div>
+                <label className="block font-medium mb-1">Portion & Prices</label>
+                <div className="grid grid-cols-4 gap-3">
+                  {/* Portion Options */}
+                  {portionOptions.map((portion) => {
+                    const portionObj = form.portions.find((p) => p.name === portion);
+                    const isSelected = !!portionObj;
+                    const isDisabled = form.useDefaultPrice;
+                    
+                    return (
+                      <div
+                        key={portion}
+                        className={`border rounded-lg p-3 transition-colors ${
+                          isDisabled
+                            ? 'border-gray-200 bg-gray-100 opacity-50 cursor-not-allowed'
+                            : isSelected
+                            ? 'border-blue-600 bg-blue-50'
+                            : 'border-gray-300 bg-gray-50'
+                        }`}
+                      >
+                        <button
+                          type="button"
+                          onClick={() => !isDisabled && handlePortionSelect(portion)}
+                          disabled={isDisabled}
+                          className={`w-full text-left font-medium text-sm mb-2 ${
+                            isDisabled
+                              ? 'text-gray-400 cursor-not-allowed'
+                              : isSelected 
+                              ? 'text-blue-700' 
+                              : 'text-gray-700'
+                          }`}
+                        >
+                          {portion}
+                        </button>
+                        <div className="relative">
+                          <input
+                            type="number"
+                            name={`portion-${portion}`}
+                            value={portionObj?.price || ""}
+                            onChange={handleChange}
+                            onClick={() => {
+                              if (!isSelected && !isDisabled) {
+                                handlePortionSelect(portion);
+                              }
+                            }}
+                            min="0"
+                            step="0.01"
+                            placeholder="0.00"
+                            disabled={isDisabled}
+                            className={`w-full border rounded px-3 py-2 pr-12 text-sm ${
+                              isDisabled
+                                ? 'bg-gray-100 cursor-not-allowed text-gray-400'
+                                : isSelected
+                                ? 'border-blue-300 focus:border-blue-500 focus:ring focus:ring-blue-200'
+                                : 'border-gray-300'
+                            }`}
+                          />
+                          <span className={`absolute right-3 top-2.5 text-sm ${
+                            isDisabled ? 'text-gray-400' : 'text-gray-500'
+                          }`}>
+                            LKR
+                          </span>
+                        </div>
+                      </div>
+                    );
+                  })}
+
+                  {/* Default Price Option */}
+                  <div
+                    className={`border rounded-lg p-3 transition-colors ${
+                      form.portions && form.portions.length > 0
+                        ? 'border-gray-200 bg-gray-100 opacity-50 cursor-not-allowed'
+                        : form.useDefaultPrice
+                        ? 'border-blue-600 bg-blue-50'
+                        : 'border-gray-300 bg-purple-50'
+                    }`}
+                  >
                     <button
                       type="button"
-                      onClick={() => handleRemoveImage(img)}
-                      className="absolute -top-2 -right-2 bg-red-600 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs opacity-80 hover:opacity-100"
-                      title="Remove"
+                      onClick={() => {
+                        if (!form.portions || form.portions.length === 0) {
+                          handleDefaultPriceSelect();
+                        }
+                      }}
+                      disabled={form.portions && form.portions.length > 0}
+                      className={`w-full text-left font-bold text-md mb-2 ${
+                        form.portions && form.portions.length > 0
+                          ? 'text-gray-400 cursor-not-allowed'
+                          : form.useDefaultPrice 
+                          ? 'text-blue-700' 
+                          : 'text-gray-700'
+                      }`}
                     >
-                      ×
+                      Price
                     </button>
+                    <div className="relative">
+                      <input
+                        type="number"
+                        name="price"
+                        value={form.price}
+                        onChange={handleChange}
+                        onClick={() => {
+                          if (!form.useDefaultPrice && (!form.portions || form.portions.length === 0)) {
+                            handleDefaultPriceSelect();
+                          }
+                        }}
+                        min="0"
+                        step="0.01"
+                        placeholder="0.00"
+                        disabled={form.portions && form.portions.length > 0}
+                        required={form.useDefaultPrice && (!form.portions || form.portions.length === 0)}
+                        className={`w-full border rounded px-3 py-2 pr-12 text-sm ${
+                          form.portions && form.portions.length > 0
+                            ? 'bg-gray-100 cursor-not-allowed text-gray-400'
+                            : form.useDefaultPrice
+                            ? 'border-blue-300 focus:border-blue-500 focus:ring focus:ring-blue-200'
+                            : 'border-gray-300'
+                        }`}
+                      />
+                      <span className={`absolute right-3 top-2.5 text-sm ${
+                        form.portions && form.portions.length > 0 ? 'text-gray-400' : 'text-gray-500'
+                      }`}>
+                        LKR
+                      </span>
+                    </div>
                   </div>
-                ))}
+                </div>
               </div>
+
+              {/* Multiple Image Upload Section with Cropper */}
+              <div>
+                <label className="block font-medium mb-1">Food Photos</label>
+                <input
+                  type="file"
+                  accept="image/*"
+                  multiple
+                  onChange={handleImageUpload}
+                  disabled={uploading || cropModalOpen}
+                  className="block"
+                />
+                {form.images.length > 0 && (
+                  <div className="flex gap-3 mt-2 flex-wrap">
+                    {form.images.map((img, idx) => (
+                      <div key={img} className="relative group">
+                        <img
+                          src={img}
+                          alt={`Food ${idx + 1}`}
+                          className="h-20 w-20 object-cover rounded shadow"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => handleRemoveImage(img)}
+                          className="absolute -top-2 -right-2 bg-red-600 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs opacity-80 hover:opacity-100"
+                          title="Remove"
+                        >
+                          ×
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              <div className="flex items-center">
+                <input
+                  type="checkbox"
+                  name="isAvailable"
+                  checked={form.isAvailable}
+                  onChange={handleChange}
+                  id="isAvailable"
+                  className="mr-2"
+                />
+                <label htmlFor="isAvailable" className="font-medium">
+                  Available
+                </label>
+              </div>
+
+              <button
+                type="submit"
+                disabled={loading || !companyId || uploading || cropModalOpen}
+                className="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Create Food
+              </button>
+            </form>
+          </div>
+
+          {/* Right Column - Existing Foods */}
+          <div className="flex-2 bg-white px-4 py-8 rounded-lg shadow-md flex flex-col max-h-[600px]">
+            {!form.category ? (
+              <div className="p-4 bg-blue-50 rounded-lg">
+                <h4 className="font-medium text-blue-800 mb-2">Instructions</h4>
+                <ul className="text-sm text-blue-700 space-y-1">
+                  <li>• Enter food name</li>
+                  <li>• Food code will be auto-generated</li>
+                  <li>• Add description (optional)</li>
+                  <li>• Select category to view existing foods</li>
+                  <li>• Choose when the food is available</li>
+                  <li>• Add portion sizes and prices, or set a default price</li>
+                  <li>• Upload food photos (optional)</li>
+                </ul>
+              </div>
+            ) : (
+              <>
+                <h3 className="text-md font-semibold mb-6 flex-shrink-0">
+                  Existing {form.category} Foods
+                </h3>
+                
+                {loadingFoods ? (
+                  <div className="flex items-center justify-center py-4">
+                    <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
+                    <span className="ml-2 text-gray-600">Loading foods...</span>
+                  </div>
+                ) : existingFoods.length > 0 ? (
+                  <div className="space-y-2 flex-1 overflow-y-auto pr-2">
+                    {existingFoods.map((food) => (
+                      <div key={food._id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg flex-shrink-0">
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2">
+                            <span className="font-mono text-sm text-gray-600">{food.foodCode}</span>
+                            <span className={`px-2 py-1 text-xs rounded ${
+                              food.isAvailable ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                            }`}>
+                              {food.isAvailable ? 'Available' : 'Unavailable'}
+                            </span>
+                          </div>
+                          <p className="font-medium text-gray-800">{food.name}</p>
+                          {food.portions && food.portions.length > 0 ? (
+                            <div className="flex flex-wrap gap-1 mt-1">
+                              {food.portions.map((portion, idx) => (
+                                <span key={idx} className="text-xs text-gray-600">
+                                  {portion.name}: LKR {parseFloat(portion.price).toFixed(2)}
+                                  {idx < food.portions.length - 1 ? ',' : ''}
+                                </span>
+                              ))}
+                            </div>
+                          ) : (
+                            <p className="text-sm text-gray-600">LKR {food.price ? parseFloat(food.price).toFixed(2) : '0.00'}</p>
+                          )}
+                        </div>
+                        {food.images && food.images.length > 0 && (
+                          <img
+                            src={food.images[0]}
+                            alt={food.name}
+                            className="h-12 w-12 object-cover rounded ml-2"
+                          />
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="flex-1 flex items-center justify-center text-gray-500">
+                    <div className="text-center">
+                      <p>No {form.category} foods found</p>
+                      <p className="text-sm mt-1">This will be the first one</p>
+                    </div>
+                  </div>
+                )}
+              </>
             )}
           </div>
-          <div className="flex items-center">
-            <input
-              type="checkbox"
-              name="isAvailable"
-              checked={form.isAvailable}
-              onChange={handleChange}
-              id="isAvailable"
-              className="mr-2"
-            />
-            <label htmlFor="isAvailable" className="font-semibold">
-              Available
-            </label>
-          </div>
-          <button
-            type="submit"
-            disabled={loading || !companyId || uploading || cropModalOpen}
-            className="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            Create Food
-          </button>
-        </form>
-        
-        {/* Image Cropper Modal */}
-        {cropModalOpen && cropImageSrc && (
-          <ImageCropper
-            imageSrc={cropImageSrc}
-            onCropComplete={handleCropComplete}
-            onCancel={handleCropCancel}
-            aspectRatios={cropAspectRatios}
-            cropShape="rect"
-            title="Crop Food Image"
-          />
-        )}
-
-        {/* Confirm Food Creation Modal */}
-        <ConfirmFoodCreationModal
-          isOpen={showConfirmModal}
-          onClose={() => setShowConfirmModal(false)}
-          onConfirm={handleConfirmCreate}
-          foodData={{
-            foodCode: generatedFoodCode,
-            name: form.name,
-            description: form.description,
-            category: form.category,
-            isAvailable: form.isAvailable,
-            availableOn: form.availableOn,
-            portions: form.portions,
-            price: form.price,
-            images: form.images,
-          }}
-          loading={loading}
-        />
+        </div>
       </div>
+      
+      {/* Image Cropper Modal */}
+      {cropModalOpen && cropImageSrc && (
+        <ImageCropper
+          imageSrc={cropImageSrc}
+          onCropComplete={handleCropComplete}
+          onCancel={handleCropCancel}
+          aspectRatios={cropAspectRatios}
+          cropShape="rect"
+          title="Crop Food Image"
+        />
+      )}
+
+      {/* Confirm Food Creation Modal */}
+      <ConfirmFoodCreationModal
+        isOpen={showConfirmModal}
+        onClose={() => setShowConfirmModal(false)}
+        onConfirm={handleConfirmCreate}
+        foodData={{
+          foodCode: generatedFoodCode,
+          name: form.name,
+          description: form.description,
+          category: form.category,
+          isAvailable: form.isAvailable,
+          availableOn: form.availableOn,
+          portions: form.portions,
+          price: form.price,
+          images: form.images,
+        }}
+        loading={loading}
+      />
     </div>
   );
 };
