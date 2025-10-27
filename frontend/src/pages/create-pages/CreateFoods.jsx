@@ -434,7 +434,7 @@ const CreateFoods = () => {
       <div className="h-full">
         <h2 className="text-2xl font-semibold mb-4">Create Food Item</h2>
         
-        <div className="flex flex-col lg:flex-row gap-8 items-stretch">
+        <div className="flex flex-col lg:flex-row gap-6 items-stretch">
           {/* Left Column - Form */}
           <div className="flex-3 bg-white p-6 rounded-lg shadow-md flex flex-col h-full">
             <form onSubmit={handleSubmit} className="space-y-4">
@@ -903,7 +903,7 @@ const CreateFoods = () => {
         duration={3000}
         position="top-right"
       />
-      
+
     </div>
   );
 };

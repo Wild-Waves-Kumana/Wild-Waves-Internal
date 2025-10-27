@@ -206,7 +206,7 @@ const EquipmentCreation = () => {
       <h2 className="text-2xl font-semibold pb-4 ">Create Equipment</h2>
       <div className=" mx-auto">
         {/* Use flex instead of grid for equal height columns */}
-        <div className="flex flex-col lg:flex-row gap-8 h-full">
+        <div className="flex flex-col lg:flex-row gap-6 h-full">
           
           {/* Left Column - Form */}
           <div className="flex-1 bg-white p-6 rounded-lg shadow-md flex flex-col">
