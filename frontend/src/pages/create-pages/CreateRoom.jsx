@@ -368,11 +368,11 @@ const CreateRoom = () => {
 
               {/* Bedroom Type and Capacity - Only visible when type is bedroom */}
               {formData.type === 'bedroom' && (
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="block font-medium mb-1">Bedroom Type (Optional)</label>
-                    <div className="grid grid-cols-3 gap-2">
-                      {["single", "double", "queen", "king", "suite"].map((bt) => (
+                <div className="grid grid-cols-3 gap-10">
+                  <div className="col-span-2">
+                    <label className="block font-medium mb-2">Bedroom Type (Optional)</label>
+                    <div className="grid grid-cols-4 gap-2">
+                      {["single", "double", "king", "suite"].map((bt) => (
                         <button
                           key={bt}
                           type="button"
@@ -388,34 +388,63 @@ const CreateRoom = () => {
                       ))}
                     </div>
                   </div>
-                  <div>
+                  <div className="col-span-1">
                     <label className="block font-medium mb-1">Capacity (Optional)</label>
-                    <div className="flex items-center gap-2">
+
+                    {/* Updated capacity control (matches provided quantity UI) */}
+                    <div className="relative flex items-center ">
                       <button
                         type="button"
                         onClick={decrementCapacity}
-                        className="px-3 py-2 border rounded bg-gray-100 hover:bg-gray-200 text-gray-700"
+                        className="bg-gray-100 hover:bg-gray-200 border border-gray-300 rounded-l-lg p-3 focus:ring-2 focus:outline-none"
+                        aria-label="Decrease capacity"
                       >
-                        −
+                        <svg className="w-3 h-3 text-gray-900" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 18 2">
+                          <path stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M1 1h16"/>
+                        </svg>
                       </button>
-                      <input 
+
+                      <input
+                        id="capacity-input"
                         name="capacity"
                         type="number"
-                        value={formData.capacity}
-                        onChange={handleChange}
-                        min="0"
-                        max="99"
-                        className="flex-1 px-3 py-2 border rounded text-center" 
+                        min={0}
+                        max={99}
+                        value={formData.capacity === '' ? '' : formData.capacity}
+                        onChange={(e) => {
+                          const val = e.target.value;
+                          // allow empty string to represent unset optional field
+                          if (val === '') {
+                            setFormData((p) => ({ ...p, capacity: '' }));
+                            return;
+                          }
+                          // clamp and store numeric value
+                          let num = parseInt(val, 10);
+                          if (Number.isNaN(num)) {
+                            num = '';
+                          } else {
+                            num = Math.max(0, Math.min(99, num));
+                          }
+                          setFormData((p) => ({ ...p, capacity: num }));
+                        }}
+                        className="bg-gray-50 border-x-0 border-gray-300  text-center text-gray-900 text-sm block w-full py-2.5"
                         placeholder="0"
+                        aria-describedby="capacity-helper"
                       />
+
                       <button
                         type="button"
                         onClick={incrementCapacity}
-                        className="px-3 py-2 border rounded bg-gray-100 hover:bg-gray-200 text-gray-700"
+                        className="bg-gray-100 hover:bg-gray-200 border border-gray-300 rounded-r-lg p-3 focus:ring-2 focus:outline-none"
+                        aria-label="Increase capacity"
                       >
-                        +
+                        <svg className="w-3 h-3 text-gray-900" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 18 18">
+                          <path stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 1v16M1 9h16"/>
+                        </svg>
                       </button>
                     </div>
+
+            
                   </div>
                 </div>
               )}
