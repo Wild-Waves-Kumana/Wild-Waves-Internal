@@ -1,6 +1,9 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { jwtDecode } from "jwt-decode";
+import { useNavigate } from "react-router-dom";
 import ImageCropper from "../../components/common/ImageCropper";
+import ConfirmFoodCreationModal from "../../components/modals/ConfirmFoodCreationModal";
+import Toaster from "../../components/common/Toaster";
 
 const categories = ["Main", "Dessert", "Beverage", "Snack"];
 const availableOnOptions = ["Breakfast", "Lunch", "Dinner", "Teatime", "Anytime"];
@@ -25,14 +28,22 @@ const initialFormState = {
 };
 
 const CreateFoods = () => {
+  const navigate = useNavigate();
+  
   const [form, setForm] = useState(initialFormState);
   const [companyId, setCompanyId] = useState("");
   const [loading, setLoading] = useState(false);
   const [uploading, setUploading] = useState(false);
-  const [success, setSuccess] = useState("");
-  const [error, setError] = useState("");
   const [generatedFoodCode, setGeneratedFoodCode] = useState("");
   const [foodCodeLoading, setFoodCodeLoading] = useState(false);
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
+
+  // Toast state
+  const [toast, setToast] = useState({
+    show: false,
+    message: '',
+    type: 'success'
+  });
 
   // Cropping states
   const [cropModalOpen, setCropModalOpen] = useState(false);
@@ -156,7 +167,6 @@ const CreateFoods = () => {
     async (croppedImageBlob) => {
       setCropModalOpen(false);
       setUploading(true);
-      setError("");
       try {
         const formData = new FormData();
         formData.append("file", croppedImageBlob);
@@ -179,10 +189,18 @@ const CreateFoods = () => {
             images: [...prev.images, data.secure_url],
           }));
         } else {
-          setError("Image upload failed.");
+          setToast({
+            show: true,
+            message: "Image upload failed.",
+            type: "error"
+          });
         }
       } catch {
-        setError("Image upload failed.");
+        setToast({
+          show: true,
+          message: "Image upload failed.",
+          type: "error"
+        });
       }
       setUploading(false);
 
@@ -219,11 +237,13 @@ const CreateFoods = () => {
     []
   );
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = (e) => {
     e.preventDefault();
+    setShowConfirmModal(true);
+  };
+
+  const handleConfirmCreate = async () => {
     setLoading(true);
-    setSuccess("");
-    setError("");
     try {
       const payload = {
         ...form,
@@ -243,215 +263,266 @@ const CreateFoods = () => {
         body: JSON.stringify(payload),
       });
       if (res.ok) {
-        setSuccess("Food item created successfully!");
-        setForm(initialFormState);
-        // Fetch next food code after successful creation
-        const response = await fetch("/api/foods/next-food-code");
-        const data = await response.json();
-        setGeneratedFoodCode(data.nextFoodCode);
+        setShowConfirmModal(false);
+        
+        // Show success toast
+        setToast({
+          show: true,
+          message: `Food item "${form.name}" created successfully!`,
+          type: 'success'
+        });
+        
+        // Wait for toast to be visible then navigate
+        setTimeout(() => {
+          navigate('/create-foods');
+          // Force page refresh to reset state
+          window.location.reload();
+        }, 2000);
+        
       } else {
         const data = await res.json();
-        setError(data.message || "Failed to create food item.");
+        setShowConfirmModal(false);
+        setToast({
+          show: true,
+          message: data.message || "Failed to create food item.",
+          type: "error"
+        });
       }
     } catch {
-      setError("Failed to create food item.");
+      setShowConfirmModal(false);
+      setToast({
+        show: true,
+        message: "Failed to create food item.",
+        type: "error"
+      });
     }
     setLoading(false);
   };
 
   return (
-    <div className="max-w-lg mx-auto mt-10 bg-white shadow rounded p-6">
-      <h2 className="text-2xl font-bold mb-4">Create Food Item</h2>
-      {success && <div className="mb-4 text-green-600">{success}</div>}
-      {error && <div className="mb-4 text-red-600">{error}</div>}
-      <form onSubmit={handleSubmit} className="space-y-4">
-        {/* Food Code Display */}
-        <div>
-          <label className="block font-semibold mb-1">Food Code</label>
-          <div className="w-full px-4 py-2 border rounded-md bg-gray-50 text-gray-600 flex items-center">
-            {foodCodeLoading ? (
-              <div className="flex items-center">
-                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600 mr-2"></div>
-                Generating...
-              </div>
-            ) : (
-              <span className="font-mono text-lg">{generatedFoodCode}</span>
-            )}
-          </div>
-          <p className="text-xs text-gray-500 mt-1">
-            Next available food code
-          </p>
-        </div>
+    <div className="min-h-screen bg-gray-100 p-6">
+      {/* Toast Notification */}
+      <Toaster
+        message={toast.message}
+        type={toast.type}
+        isVisible={toast.show}
+        onClose={() => setToast({ ...toast, show: false })}
+        duration={3000}
+        position="top-right"
+      />
 
-        <div>
-          <label className="block font-semibold mb-1">Name</label>
-          <input
-            type="text"
-            name="name"
-            value={form.name}
-            onChange={handleChange}
-            required
-            className="w-full border rounded px-3 py-2"
-          />
-        </div>
-        <div>
-          <label className="block font-semibold mb-1">Description</label>
-          <textarea
-            name="description"
-            value={form.description}
-            onChange={handleChange}
-            rows={3}
-            className="w-full border rounded px-3 py-2"
-          />
-        </div>
-        <div>
-          <label className="block font-semibold mb-1">Category</label>
-          <select
-            name="category"
-            value={form.category}
-            onChange={handleChange}
-            className="w-full border rounded px-3 py-2"
-          >
-            {categories.map((cat) => (
-              <option key={cat} value={cat}>
-                {cat}
-              </option>
-            ))}
-          </select>
-        </div>
-        {/* Available On Section */}
-        <div>
-          <label className="block font-semibold mb-1">Available On</label>
-          <div className="flex flex-wrap gap-4">
-            {availableOnOptions.map((option) => (
-              <label key={option} className="flex items-center gap-2">
-                <input
-                  type="checkbox"
-                  name="availableOn"
-                  value={option}
-                  checked={form.availableOn.includes(option)}
-                  onChange={handleChange}
-                  className="accent-blue-600"
-                />
-                {option}
-              </label>
-            ))}
-          </div>
-        </div>
-        {/* Portion Section */}
-        <div>
-          <label className="block font-semibold mb-1">Portion & Prices</label>
-          <div className="flex flex-col gap-2">
-            {portionOptions.map((portion) => {
-              const portionObj = form.portions.find((p) => p.name === portion) || {};
-              return (
-                <div key={portion} className="flex items-center gap-3">
-                  <input
-                    type="checkbox"
-                    value={portion}
-                    checked={!!form.portions.find((p) => p.name === portion)}
-                    onChange={handlePortionCheck}
-                    id={`portion-check-${portion}`}
-                  />
-                  <label htmlFor={`portion-check-${portion}`} className="w-20">{portion}</label>
-                  <input
-                    type="number"
-                    name={`portion-${portion}`}
-                    value={portionObj.price || ""}
-                    onChange={handleChange}
-                    min="0"
-                    step="0.01"
-                    placeholder="Price"
-                    className="border rounded px-2 py-1 w-32"
-                    disabled={!form.portions.find((p) => p.name === portion)}
-                  />
-                  <span className="text-gray-500">LKR</span>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-        {/* Default Price if no portions */}
-        {(!form.portions || form.portions.length === 0) && (
+      <div className="max-w-lg mx-auto bg-white shadow rounded p-6">
+        <h2 className="text-2xl font-bold mb-4">Create Food Item</h2>
+        
+        <form onSubmit={handleSubmit} className="space-y-4">
+          {/* Food Code Display */}
           <div>
-            <label className="block font-semibold mb-1">Price (LKR)</label>
+            <label className="block font-semibold mb-1">Food Code</label>
+            <div className="w-full px-4 py-2 border rounded-md bg-gray-50 text-gray-600 flex items-center">
+              {foodCodeLoading ? (
+                <div className="flex items-center">
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600 mr-2"></div>
+                  Generating...
+                </div>
+              ) : (
+                <span className="font-mono text-lg">{generatedFoodCode}</span>
+              )}
+            </div>
+            <p className="text-xs text-gray-500 mt-1">
+              Next available food code
+            </p>
+          </div>
+
+          <div>
+            <label className="block font-semibold mb-1">Name</label>
             <input
-              type="number"
-              name="price"
-              value={form.price}
+              type="text"
+              name="name"
+              value={form.name}
               onChange={handleChange}
-              min="0"
-              step="0.01"
               required
               className="w-full border rounded px-3 py-2"
             />
           </div>
-        )}
-        {/* Multiple Image Upload Section with Cropper */}
-        <div>
-          <label className="block font-semibold mb-1">Food Photos</label>
-          <input
-            type="file"
-            accept="image/*"
-            multiple
-            onChange={handleImageUpload}
-            disabled={uploading || cropModalOpen}
-            className="block"
-          />
-          {form.images.length > 0 && (
-            <div className="flex gap-3 mt-2 flex-wrap">
-              {form.images.map((img, idx) => (
-                <div key={img} className="relative group">
-                  <img
-                    src={img}
-                    alt={`Food ${idx + 1}`}
-                    className="h-20 w-20 object-cover rounded shadow"
+          <div>
+            <label className="block font-semibold mb-1">Description</label>
+            <textarea
+              name="description"
+              value={form.description}
+              onChange={handleChange}
+              rows={3}
+              className="w-full border rounded px-3 py-2"
+            />
+          </div>
+          <div>
+            <label className="block font-semibold mb-1">Category</label>
+            <select
+              name="category"
+              value={form.category}
+              onChange={handleChange}
+              className="w-full border rounded px-3 py-2"
+            >
+              {categories.map((cat) => (
+                <option key={cat} value={cat}>
+                  {cat}
+                </option>
+              ))}
+            </select>
+          </div>
+          {/* Available On Section */}
+          <div>
+            <label className="block font-semibold mb-1">Available On</label>
+            <div className="flex flex-wrap gap-4">
+              {availableOnOptions.map((option) => (
+                <label key={option} className="flex items-center gap-2">
+                  <input
+                    type="checkbox"
+                    name="availableOn"
+                    value={option}
+                    checked={form.availableOn.includes(option)}
+                    onChange={handleChange}
+                    className="accent-blue-600"
                   />
-                  <button
-                    type="button"
-                    onClick={() => handleRemoveImage(img)}
-                    className="absolute -top-2 -right-2 bg-red-600 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs opacity-80 hover:opacity-100"
-                    title="Remove"
-                  >
-                    ×
-                  </button>
-                </div>
+                  {option}
+                </label>
               ))}
             </div>
+          </div>
+          {/* Portion Section */}
+          <div>
+            <label className="block font-semibold mb-1">Portion & Prices</label>
+            <div className="flex flex-col gap-2">
+              {portionOptions.map((portion) => {
+                const portionObj = form.portions.find((p) => p.name === portion) || {};
+                return (
+                  <div key={portion} className="flex items-center gap-3">
+                    <input
+                      type="checkbox"
+                      value={portion}
+                      checked={!!form.portions.find((p) => p.name === portion)}
+                      onChange={handlePortionCheck}
+                      id={`portion-check-${portion}`}
+                    />
+                    <label htmlFor={`portion-check-${portion}`} className="w-20">{portion}</label>
+                    <input
+                      type="number"
+                      name={`portion-${portion}`}
+                      value={portionObj.price || ""}
+                      onChange={handleChange}
+                      min="0"
+                      step="0.01"
+                      placeholder="Price"
+                      className="border rounded px-2 py-1 w-32"
+                      disabled={!form.portions.find((p) => p.name === portion)}
+                    />
+                    <span className="text-gray-500">LKR</span>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+          {/* Default Price if no portions */}
+          {(!form.portions || form.portions.length === 0) && (
+            <div>
+              <label className="block font-semibold mb-1">Price (LKR)</label>
+              <input
+                type="number"
+                name="price"
+                value={form.price}
+                onChange={handleChange}
+                min="0"
+                step="0.01"
+                required
+                className="w-full border rounded px-3 py-2"
+              />
+            </div>
           )}
-        </div>
-        <div className="flex items-center">
-          <input
-            type="checkbox"
-            name="isAvailable"
-            checked={form.isAvailable}
-            onChange={handleChange}
-            id="isAvailable"
-            className="mr-2"
+          {/* Multiple Image Upload Section with Cropper */}
+          <div>
+            <label className="block font-semibold mb-1">Food Photos</label>
+            <input
+              type="file"
+              accept="image/*"
+              multiple
+              onChange={handleImageUpload}
+              disabled={uploading || cropModalOpen}
+              className="block"
+            />
+            {form.images.length > 0 && (
+              <div className="flex gap-3 mt-2 flex-wrap">
+                {form.images.map((img, idx) => (
+                  <div key={img} className="relative group">
+                    <img
+                      src={img}
+                      alt={`Food ${idx + 1}`}
+                      className="h-20 w-20 object-cover rounded shadow"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => handleRemoveImage(img)}
+                      className="absolute -top-2 -right-2 bg-red-600 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs opacity-80 hover:opacity-100"
+                      title="Remove"
+                    >
+                      ×
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+          <div className="flex items-center">
+            <input
+              type="checkbox"
+              name="isAvailable"
+              checked={form.isAvailable}
+              onChange={handleChange}
+              id="isAvailable"
+              className="mr-2"
+            />
+            <label htmlFor="isAvailable" className="font-semibold">
+              Available
+            </label>
+          </div>
+          <button
+            type="submit"
+            disabled={loading || !companyId || uploading || cropModalOpen}
+            className="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            Create Food
+          </button>
+        </form>
+        
+        {/* Image Cropper Modal */}
+        {cropModalOpen && cropImageSrc && (
+          <ImageCropper
+            imageSrc={cropImageSrc}
+            onCropComplete={handleCropComplete}
+            onCancel={handleCropCancel}
+            aspectRatios={cropAspectRatios}
+            cropShape="rect"
+            title="Crop Food Image"
           />
-          <label htmlFor="isAvailable" className="font-semibold">
-            Available
-          </label>
-        </div>
-        <button
-          type="submit"
-          disabled={loading || !companyId || uploading || cropModalOpen}
-          className="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700"
-        >
-          {loading ? "Creating..." : "Create Food"}
-        </button>
-      </form>
-      {/* Image Cropper Modal */}
-      {cropModalOpen && cropImageSrc && (
-        <ImageCropper
-          imageSrc={cropImageSrc}
-          onCropComplete={handleCropComplete}
-          onCancel={handleCropCancel}
-          aspectRatios={cropAspectRatios}
-          cropShape="rect"
-          title="Crop Food Image"
+        )}
+
+        {/* Confirm Food Creation Modal */}
+        <ConfirmFoodCreationModal
+          isOpen={showConfirmModal}
+          onClose={() => setShowConfirmModal(false)}
+          onConfirm={handleConfirmCreate}
+          foodData={{
+            foodCode: generatedFoodCode,
+            name: form.name,
+            description: form.description,
+            category: form.category,
+            isAvailable: form.isAvailable,
+            availableOn: form.availableOn,
+            portions: form.portions,
+            price: form.price,
+            images: form.images,
+          }}
+          loading={loading}
         />
-      )}
+      </div>
     </div>
   );
 };
