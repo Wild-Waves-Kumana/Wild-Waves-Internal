@@ -428,24 +428,15 @@ const CreateFoods = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-100 p-6">
-      {/* Toast Notification */}
-      <Toaster
-        message={toast.message}
-        type={toast.type}
-        isVisible={toast.show}
-        onClose={() => setToast({ ...toast, show: false })}
-        duration={3000}
-        position="top-right"
-      />
+    <div className="min-h-screen bg-gray-100 py-2">
+      
 
-      <div className="mx-auto">
+      <div className="h-full">
         <h2 className="text-2xl font-semibold mb-4">Create Food Item</h2>
         
-        <div className="flex flex-col lg:flex-row gap-8 items-start">
-          
+        <div className="flex flex-col lg:flex-row gap-8 items-stretch">
           {/* Left Column - Form */}
-          <div className="flex-3 bg-white p-6 rounded-lg shadow-md">
+          <div className="flex-3 bg-white p-6 rounded-lg shadow-md flex flex-col h-full">
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="flex flex-col md:flex-row gap-4">
                 <div className="flex-2">
@@ -761,17 +752,28 @@ const CreateFoods = () => {
               </div>
 
               <div className="flex items-center">
-                <input
-                  type="checkbox"
-                  name="isAvailable"
-                  checked={form.isAvailable}
-                  onChange={handleChange}
-                  id="isAvailable"
-                  className="mr-2"
-                />
-                <label htmlFor="isAvailable" className="font-medium">
-                  Available
-                </label>
+                <div className="flex items-center gap-3">
+                  <button
+                    type="button"
+                    role="switch"
+                    aria-checked={form.isAvailable}
+                    onClick={() =>
+                      setForm((prev) => ({ ...prev, isAvailable: !prev.isAvailable }))
+                    }
+                    className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer items-center rounded-full transition-colors focus:outline-none ${
+                      form.isAvailable ? "bg-green-500" : "bg-gray-300"
+                    }`}
+                  >
+                    <span
+                      className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform ${
+                        form.isAvailable ? "translate-x-5" : "translate-x-1"
+                      }`}
+                    />
+                  </button>
+                  <span className="font-medium select-none">
+                    {form.isAvailable ? "Available" : "Unavailable"}
+                  </span>
+                </div>
               </div>
 
               <button
@@ -785,7 +787,7 @@ const CreateFoods = () => {
           </div>
 
           {/* Right Column - Existing Foods */}
-          <div className="flex-2 bg-white px-4 py-8 rounded-lg shadow-md flex flex-col max-h-[600px]">
+          <div className="flex-2 bg-white px-4 py-8 rounded-lg shadow-md flex flex-col h-full overflow-y-auto min-w-0">
             {!form.category ? (
               <div className="p-4 bg-blue-50 rounded-lg">
                 <h4 className="font-medium text-blue-800 mb-2">Instructions</h4>
@@ -891,6 +893,17 @@ const CreateFoods = () => {
         }}
         loading={loading}
       />
+
+      {/* Toast Notification */}
+      <Toaster
+        message={toast.message}
+        type={toast.type}
+        isVisible={toast.show}
+        onClose={() => setToast({ ...toast, show: false })}
+        duration={3000}
+        position="top-right"
+      />
+      
     </div>
   );
 };
