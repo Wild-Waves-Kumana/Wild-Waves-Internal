@@ -3,7 +3,7 @@ import React, { useEffect, useState } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import { jwtDecode } from 'jwt-decode';
-import Modal from '../../components/common/Modal';
+import ConfirmEquipmentCreationModal from '../../components/modals/ConfirmEquipmentCreationModal';
 import Toaster from '../../components/common/Toaster';
 
 const EquipmentCreation = () => {
@@ -13,14 +13,19 @@ const EquipmentCreation = () => {
   const [rooms, setRooms] = useState([]);
   const [generatedItemCode, setGeneratedItemCode] = useState("");
   const [loading, setLoading] = useState(false);
-  const [showSuccessModal, setShowSuccessModal] = useState(false);
-  const [createdEquipment, setCreatedEquipment] = useState(null);
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
+  const [submitLoading, setSubmitLoading] = useState(false);
   const [roomEquipments, setRoomEquipments] = useState([]);
   const [loadingEquipments, setLoadingEquipments] = useState(false);
   
-  const [message, setMessage] = useState("");
-  const [showToast, setShowToast] = useState(false);
-  const [toastType, setToastType] = useState('info');
+  
+  // Toast state
+  const [toast, setToast] = useState({
+    show: false,
+    message: '',
+    type: 'success'
+  });
+  
   const token = localStorage.getItem('token');
 
   const [formData, setFormData] = useState({
@@ -157,16 +162,26 @@ const EquipmentCreation = () => {
     setSelectedVillaRooms(villaRoomObjs);
   };
 
-  // submit handler
-  const handleSubmit = async () => {
-    const { category, itemName, villaId, access } = formData;
+  // submit handler - opens confirmation modal
+  const handleSubmit = () => {
+    const { itemName, villaId, roomId } = formData;
 
-    if (!itemName || !villaId) {
-      setMessage("Please fill in all required fields.");
-      setToastType('error');
-      setShowToast(true);
+    if (!itemName || !villaId || !roomId) {
+      setToast({
+        show: true,
+        message: "Please fill in all required fields.",
+        type: 'error'
+      });
       return;
     }
+
+    // Open confirmation modal
+    setShowConfirmModal(true);
+  };
+
+  // Actual creation after confirmation
+  const handleConfirmCreate = async () => {
+    const { category, itemName, villaId, roomId, access } = formData;
 
     let adminId = null;
     if (token) {
@@ -178,21 +193,43 @@ const EquipmentCreation = () => {
       }
     }
 
+    setSubmitLoading(true);
     try {
-      const response = await axios.post("/api/equipment/create", {
+      await axios.post("/api/equipment/create", {
         category,
         itemName,
         villaId,
-        roomId: formData.roomId,
+        roomId,
         access,
         adminId,
       });
-      setCreatedEquipment(response.data.equipment);
-      setShowSuccessModal(true);
+
+      // Close modal
+      setShowConfirmModal(false);
+      
+      // Show success toast
+      setToast({
+        show: true,
+        message: `Equipment "${itemName}" created successfully!`,
+        type: 'success'
+      });
+      
+      // Wait for toast to be visible then navigate
+      setTimeout(() => {
+        navigate('/create-equipment');
+        // Force page refresh to reset state
+        window.location.reload();
+      }, 2000);
+      
     } catch (err) {
-      setMessage(err.response?.data?.message || "Failed to create equipment.");
-      setToastType('error');
-      setShowToast(true);
+      setShowConfirmModal(false);
+      setToast({
+        show: true,
+        message: err.response?.data?.message || "Failed to create equipment.",
+        type: 'error'
+      });
+    } finally {
+      setSubmitLoading(false);
     }
   };
 
@@ -202,6 +239,15 @@ const EquipmentCreation = () => {
 
   return (
     <div className="min-h-screen bg-gray-100">
+      {/* Toast Notification */}
+      <Toaster
+        message={toast.message}
+        type={toast.type}
+        isVisible={toast.show}
+        onClose={() => setToast({ ...toast, show: false })}
+        duration={3000}
+        position="top-right"
+      />
 
       <h2 className="text-2xl font-semibold pb-4 ">Create Equipment</h2>
       <div className=" mx-auto">
@@ -210,15 +256,6 @@ const EquipmentCreation = () => {
           
           {/* Left Column - Form */}
           <div className="flex-1 bg-white p-6 rounded-lg shadow-md flex flex-col">
-            
-            <Toaster
-              message={message}
-              type={toastType}
-              isVisible={showToast && !!message}
-              onClose={() => setShowToast(false)}
-              duration={4000}
-              position="top-right"
-            />
 
             <div className="space-y-4 flex-1">
               {/* Category & Item Code in same row */}
@@ -254,9 +291,8 @@ const EquipmentCreation = () => {
                         Generating...
                       </div>
                     ) : (
-                      <span className="font-mono text-lg">{generatedItemCode}</span>
-                    )
-                    }
+                      <span className="font-mono text-md">{generatedItemCode}</span>
+                    )}
                   </div>
                   <p className="text-[10px] text-gray-500 mt-1">
                     Next available item code for {formData.category}
@@ -487,44 +523,21 @@ const EquipmentCreation = () => {
         </div>
       </div>
 
-      {/* Success Modal */}
-      <Modal isVisible={showSuccessModal} onClose={() => setShowSuccessModal(false)} width="max-w-lg">
-        <h2 className="text-xl font-bold mb-4 text-center">Equipment Created Successfully</h2>
-        {createdEquipment && (
-          <div className="space-y-2">
-            <div>
-              <span className="font-semibold">Item Code:</span> {createdEquipment.itemCode}
-            </div>
-            <div>
-              <span className="font-semibold">Category:</span> {formData.category}
-            </div>
-            <div>
-              <span className="font-semibold">Item Name:</span> {createdEquipment.itemName}
-            </div>
-            <div>
-              <span className="font-semibold">Villa:</span> {selectedVilla ? `${selectedVilla.villaName} (${selectedVilla.villaId})` : '-'
-              }
-            </div>
-            <div>
-              <span className="font-semibold">Room:</span> {selectedRoom ? selectedRoom.roomName : 'Not assigned'}
-            </div>
-            <div>
-              <span className="font-semibold">Access:</span> {formData.access ? 'Enabled' : 'Disabled'}
-            </div>
-          </div>
-        )}
-        <div className="flex justify-end gap-2 mt-6">
-          <button
-            className="px-4 py-2 rounded bg-blue-600 text-white hover:bg-blue-700"
-            onClick={() => {
-              setShowSuccessModal(false);
-              navigate('/admindashboard');
-            }}
-          >
-            OK
-          </button>
-        </div>
-      </Modal>
+      {/* Confirm Equipment Creation Modal */}
+      <ConfirmEquipmentCreationModal
+        isOpen={showConfirmModal}
+        onClose={() => setShowConfirmModal(false)}
+        onConfirm={handleConfirmCreate}
+        equipmentData={{
+          category: formData.category,
+          itemCode: generatedItemCode,
+          itemName: formData.itemName,
+          access: formData.access,
+        }}
+        villaName={selectedVilla?.villaName}
+        roomName={selectedRoom?.roomName}
+        loading={submitLoading}
+      />
     </div>
   );
 };
