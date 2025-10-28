@@ -63,7 +63,7 @@ const mqttService = {
     publish(topic, message);
     return { published: true };
   },
-  async publishDoorLock(doorId, lockStatus, doorName, roomName) {
+  async publishDoorLock(doorId, lockStatus, doorName, roomName, itemCode) {
     const topic = process.env.MQTT_TOPIC || 'wildwaves/faces';
     const message = { 
       event: 'door_lock_changed', 
@@ -71,6 +71,7 @@ const mqttService = {
       lock_status: lockStatus,
       door_name: doorName,
       room_name: roomName,
+      item_code: itemCode,
       timestamp: new Date().toISOString()
     };
     console.log(`📤 Publishing MQTT message to topic ${topic}:`, message);
