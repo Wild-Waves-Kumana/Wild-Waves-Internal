@@ -29,7 +29,7 @@ export const getNextVillaId = async (req, res) => {
 
 export const createVilla = async (req, res) => {
   try {
-    let { villaId, villaName, villaLocation, hasAC, villaBasePrice, adminId } = req.body;
+    let { villaId, villaName, description, villaLocation, hasAC, villaBasePrice, adminId } = req.body;
 
     // Fetch the admin to get the companyId
     const admin = await Admin.findById(adminId);
@@ -80,6 +80,7 @@ export const createVilla = async (req, res) => {
     const newVilla = new Villa({
       villaId,
       villaName,
+      description: description || '',
       villaLocation: villaLocation || '',
       hasAC: hasAC !== undefined ? hasAC : false,
       villaBasePrice: Object.keys(basePriceData).length > 0 ? basePriceData : undefined,

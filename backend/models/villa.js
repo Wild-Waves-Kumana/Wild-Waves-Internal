@@ -3,6 +3,7 @@ import mongoose from 'mongoose';
 const villaSchema = new mongoose.Schema({
   villaId: { type: String, required: true, unique: true },
   villaName: { type: String, required: true },
+  description: { type: String },
   villaLocation: { type: String },
   hasAC: { type: Boolean, default: false },
   villaBasePrice: {
