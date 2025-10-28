@@ -5,6 +5,10 @@ const villaSchema = new mongoose.Schema({
   villaName: { type: String, required: true },
   villaLocation: { type: String },
   hasAC: { type: Boolean, default: false },
+  villaBasePrice: {
+    withAC: { type: Number },
+    withoutAC: { type: Number }
+  },
   rooms: [{ type: mongoose.Schema.Types.ObjectId, ref: "Room" }], 
   adminId: { type: mongoose.Schema.Types.ObjectId, ref: 'user', required: true },
   companyId: { type: mongoose.Schema.Types.ObjectId, ref: 'company', required: true },
