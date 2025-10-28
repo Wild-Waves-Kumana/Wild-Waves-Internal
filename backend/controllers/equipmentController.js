@@ -301,7 +301,8 @@ export const updateDoor = async (req, res) => {
             doorId,
             lockStatus,
             updatedDoor.itemName || 'Unknown Door',
-            updatedDoor.roomId?.roomName || 'Unknown Room'
+            updatedDoor.roomId?.roomName || 'Unknown Room',
+            updatedDoor.itemCode || '0'
           );
           console.log(`✅ MQTT notification sent for door ${doorId}: lockStatus=${lockStatus}`);
         } catch (mqttError) {
