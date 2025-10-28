@@ -29,7 +29,7 @@ export const getNextVillaId = async (req, res) => {
 
 export const createVilla = async (req, res) => {
   try {
-    let { villaId, villaName, adminId } = req.body;
+    let { villaId, villaName, villaLocation, hasAC, adminId } = req.body;
 
     // Fetch the admin to get the companyId
     const admin = await Admin.findById(adminId);
@@ -69,6 +69,8 @@ export const createVilla = async (req, res) => {
     const newVilla = new Villa({
       villaId,
       villaName,
+      villaLocation: villaLocation || '',
+      hasAC: hasAC !== undefined ? hasAC : false,
       adminId,
       companyId: admin.companyId, // get companyId from admin
     });
