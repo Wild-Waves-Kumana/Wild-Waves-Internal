@@ -6,6 +6,8 @@ import Modal from '../../components/common/Modal';
 const CreateVillaModal = ({ isOpen, onClose, onCreated }) => {
   const [villaId, setVillaId] = useState('');
   const [villaName, setVillaName] = useState('');
+  const [villaLocation, setVillaLocation] = useState('');
+  const [hasAC, setHasAC] = useState(false);
   const [message, setMessage] = useState('');
   const [loading, setLoading] = useState(false);
   const [idLoading, setIdLoading] = useState(false);
@@ -46,6 +48,8 @@ const CreateVillaModal = ({ isOpen, onClose, onCreated }) => {
     if (isOpen) {
       fetchNextVillaId();
       setVillaName('');
+      setVillaLocation('');
+      setHasAC(false);
       setMessage('');
     }
   }, [isOpen]);
@@ -58,6 +62,8 @@ const CreateVillaModal = ({ isOpen, onClose, onCreated }) => {
       const res = await axios.post('/api/villas/create', {
         villaId,
         villaName,
+        villaLocation,
+        hasAC,
         adminId,
       });
       setMessage('Villa created successfully.');
@@ -66,6 +72,8 @@ const CreateVillaModal = ({ isOpen, onClose, onCreated }) => {
       // reset and close
       setVillaId('');
       setVillaName('');
+      setVillaLocation('');
+      setHasAC(false);
       setTimeout(() => {
         setMessage('');
         onClose();
@@ -101,14 +109,53 @@ const CreateVillaModal = ({ isOpen, onClose, onCreated }) => {
             <p className="text-xs text-gray-500 mt-1">Next available villa id</p>
           </div>
 
-          <input
-            type="text"
-            placeholder="Villa Name"
-            value={villaName}
-            onChange={(e) => setVillaName(e.target.value)}
-            required
-            className="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring"
-          />
+          <div>
+            <label className="block text-sm font-medium mb-1">Villa Name</label>
+            <input
+              type="text"
+              placeholder="Villa Name"
+              value={villaName}
+              onChange={(e) => setVillaName(e.target.value)}
+              required
+              className="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium mb-1">Villa Location (Optional)</label>
+            <input
+              type="text"
+              placeholder="Enter location"
+              value={villaLocation}
+              onChange={(e) => setVillaLocation(e.target.value)}
+              className="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium mb-2">Air Conditioning</label>
+            <div className="flex items-center gap-3">
+              <button
+                type="button"
+                role="switch"
+                aria-checked={hasAC}
+                onClick={() => setHasAC(!hasAC)}
+                className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer items-center rounded-full transition-colors focus:outline-none ${
+                  hasAC ? "bg-blue-600" : "bg-gray-300"
+                }`}
+              >
+                <span
+                  className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform ${
+                    hasAC ? "translate-x-6" : "translate-x-1"
+                  }`}
+                />
+              </button>
+              <span className="font-medium select-none text-sm">
+                {hasAC ? "Has AC" : "No AC"}
+              </span>
+            </div>
+          </div>
+
           <div className="flex gap-2 justify-end">
             <button
               type="button"
@@ -120,7 +167,7 @@ const CreateVillaModal = ({ isOpen, onClose, onCreated }) => {
             </button>
             <button
               type="submit"
-              className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+              className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50"
               disabled={loading}
             >
               {loading ? 'Creating...' : 'Create Villa'}
