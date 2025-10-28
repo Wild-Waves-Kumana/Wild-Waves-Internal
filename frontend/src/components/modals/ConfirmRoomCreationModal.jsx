@@ -55,10 +55,10 @@ const ConfirmRoomCreationModal = ({ isOpen, onClose, onConfirm, roomData, villaN
             </div>
           )}
 
-          {roomData.basePrice && (
+          {roomData.roomBasePrice && (
             <div className="border-l-4 border-emerald-500 pl-4">
               <h4 className="text-sm font-medium text-gray-700">Base Price</h4>
-              <p className="text-lg ">LKR {parseFloat(roomData.basePrice).toFixed(2)} per night</p>
+              <p className="text-lg ">LKR {parseFloat(roomData.roomBasePrice).toFixed(2)} per night</p>
             </div>
           )}
 

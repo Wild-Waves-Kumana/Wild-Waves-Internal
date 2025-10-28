@@ -52,7 +52,7 @@ const CreateRoom = () => {
     bedroomType: '',
     amenities: '',
     capacity: '',
-    basePrice: '',
+    roomBasePrice: '',
     status: 'available',
     villaId: '',
   });
@@ -153,7 +153,7 @@ const CreateRoom = () => {
     
     // Reset bedroom-specific fields when type changes away from bedroom
     if (name === 'type' && value !== 'bedroom') {
-      setFormData((p) => ({ ...p, bedroomType: '', capacity: '', basePrice: '' }));
+      setFormData((p) => ({ ...p, bedroomType: '', capacity: '', roomBasePrice: '' }));
     }
   };
 
@@ -162,7 +162,7 @@ const CreateRoom = () => {
     
     // Reset bedroom-specific fields when type changes away from bedroom
     if (type !== 'bedroom') {
-      setFormData((p) => ({ ...p, bedroomType: '', capacity: '', basePrice: '' }));
+      setFormData((p) => ({ ...p, bedroomType: '', capacity: '', roomBasePrice: '' }));
     }
   };
 
@@ -221,8 +221,8 @@ const CreateRoom = () => {
         if (formData.capacity) {
           submitData.capacity = parseInt(formData.capacity);
         }
-        if (formData.basePrice) {
-          submitData.basePrice = parseFloat(formData.basePrice);
+        if (formData.roomBasePrice) {
+          submitData.roomBasePrice = parseFloat(formData.roomBasePrice);
         }
       }
 
@@ -502,8 +502,8 @@ const CreateRoom = () => {
                     <div className="relative">
                       <input
                         type="number"
-                        name="basePrice"
-                        value={formData.basePrice}
+                        name="roomBasePrice"
+                        value={formData.roomBasePrice}
                         onChange={handleChange}
                         min="0"
                         step="1"
@@ -570,10 +570,10 @@ const CreateRoom = () => {
                     </div>
                   )}
 
-                  {formData.basePrice && formData.basePrice > 0 && (
+                  {formData.roomBasePrice && formData.roomBasePrice > 0 && (
                     <div className="border-l-4 border-emerald-500 pl-4">
                       <h4 className="font-sm text-gray-700">Base Price</h4>
-                      <p className="text-medium">LKR {parseFloat(formData.basePrice).toFixed(2)} per night</p>
+                      <p className="text-medium">LKR {parseFloat(formData.roomBasePrice).toFixed(2)} per night</p>
                     </div>
                   )}
 
@@ -703,7 +703,7 @@ const CreateRoom = () => {
           type: formData.type,
           bedroomType: formData.bedroomType,
           capacity: formData.capacity,
-          basePrice: formData.basePrice,
+          roomBasePrice: formData.roomBasePrice,
           amenities: selectedAmenities.join(', '),
           status: formData.status,
         }}
