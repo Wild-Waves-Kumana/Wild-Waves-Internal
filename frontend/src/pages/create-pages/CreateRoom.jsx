@@ -52,6 +52,7 @@ const CreateRoom = () => {
     bedroomType: '',
     amenities: '',
     capacity: '',
+    basePrice: '',
     status: 'available',
     villaId: '',
   });
@@ -152,7 +153,7 @@ const CreateRoom = () => {
     
     // Reset bedroom-specific fields when type changes away from bedroom
     if (name === 'type' && value !== 'bedroom') {
-      setFormData((p) => ({ ...p, bedroomType: '', capacity: '' }));
+      setFormData((p) => ({ ...p, bedroomType: '', capacity: '', basePrice: '' }));
     }
   };
 
@@ -161,7 +162,7 @@ const CreateRoom = () => {
     
     // Reset bedroom-specific fields when type changes away from bedroom
     if (type !== 'bedroom') {
-      setFormData((p) => ({ ...p, bedroomType: '', capacity: '' }));
+      setFormData((p) => ({ ...p, bedroomType: '', capacity: '', basePrice: '' }));
     }
   };
 
@@ -219,6 +220,9 @@ const CreateRoom = () => {
         }
         if (formData.capacity) {
           submitData.capacity = parseInt(formData.capacity);
+        }
+        if (formData.basePrice) {
+          submitData.basePrice = parseFloat(formData.basePrice);
         }
       }
 
@@ -468,25 +472,49 @@ const CreateRoom = () => {
                 )}
               </div>
 
-              {/* Status */}
-              <div>
-                <label className="block font-medium mb-1">Status</label>
-                <div className="flex flex-wrap gap-2 mb-2">
-                  {["available", "occupied", "maintenance"].map((status) => (
-                    <button
-                      key={status}
-                      type="button"
-                      className={`px-4 py-2 rounded border text-sm ${
-                        formData.status === status
-                          ? "bg-blue-600 text-white border-blue-600"
-                          : "bg-gray-100 text-gray-700 border-gray-300 hover:bg-blue-100"
-                      }`}
-                      onClick={() => setFormData((p) => ({ ...p, status }))}
-                    >
-                      {status.charAt(0).toUpperCase() + status.slice(1)}
-                    </button>
-                  ))}
+              {/* Status and Base Price Row */}
+              <div className="flex flex-col md:flex-row gap-4">
+                {/* Status */}
+                <div className={formData.type === 'bedroom' ? 'flex-2' : 'flex-1'}>
+                  <label className="block font-mono mb-1">Status</label>
+                  <div className="flex flex-wrap gap-2 mb-2">
+                    {["available", "occupied", "maintenance"].map((status) => (
+                      <button
+                        key={status}
+                        type="button"
+                        className={`px-4 py-2 rounded border text-sm ${
+                          formData.status === status
+                            ? "bg-blue-600 text-white border-blue-600"
+                            : "bg-gray-100 text-gray-700 border-gray-300 hover:bg-blue-100"
+                        }`}
+                        onClick={() => setFormData((p) => ({ ...p, status }))}
+                      >
+                        {status.charAt(0).toUpperCase() + status.slice(1)}
+                      </button>
+                    ))}
+                  </div>
                 </div>
+
+                {/* Base Price - Only visible when type is bedroom */}
+                {formData.type === 'bedroom' && (
+                  <div className="flex-1">
+                    <label className="block font-medium mb-1">Base Price (Optional)</label>
+                    <div className="relative">
+                      <input
+                        type="number"
+                        name="basePrice"
+                        value={formData.basePrice}
+                        onChange={handleChange}
+                        min="0"
+                        step="1"
+                        placeholder="0.00"
+                        className="w-full px-4 py-2 pr-16 border rounded-md focus:outline-none focus:ring"
+                      />
+                      <span className="absolute right-4 top-2.5 text-gray-500">LKR</span>
+                    </div>
+                    <p className="text-xs text-gray-500 mt-1">Per night rate</p>
+                  </div>
+                )}
               </div>
 
               {message && <div className="text-sm text-center text-gray-700">{message}</div>}
@@ -539,6 +567,13 @@ const CreateRoom = () => {
                     <div className="border-l-4 border-indigo-500 pl-4">
                       <h4 className="font-sm text-gray-700">Capacity</h4>
                       <p className="text-medium">{formData.capacity} person(s)</p>
+                    </div>
+                  )}
+
+                  {formData.basePrice && formData.basePrice > 0 && (
+                    <div className="border-l-4 border-emerald-500 pl-4">
+                      <h4 className="font-sm text-gray-700">Base Price</h4>
+                      <p className="text-medium">LKR {parseFloat(formData.basePrice).toFixed(2)} per night</p>
                     </div>
                   )}
 
@@ -668,6 +703,7 @@ const CreateRoom = () => {
           type: formData.type,
           bedroomType: formData.bedroomType,
           capacity: formData.capacity,
+          basePrice: formData.basePrice,
           amenities: selectedAmenities.join(', '),
           status: formData.status,
         }}

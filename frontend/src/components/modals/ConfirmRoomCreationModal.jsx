@@ -9,87 +9,87 @@ const ConfirmRoomCreationModal = ({ isOpen, onClose, onConfirm, roomData, villaN
         <p className="text-center text-gray-600 mb-6">Please review the room details before creating</p>
 
         <div className="space-y-4 bg-gray-50 p-4 rounded-lg">
-
           <div className="flex flex-col md:flex-row gap-4">
-
-            {/* Villa Info */}
-          <div className="flex-1 border-l-4 border-blue-500 pl-4">
-            <h4 className="text-sm font-medium text-gray-700">Villa</h4>
-            <p className="text-lg font-semibold">{villaName || 'Not selected'}</p>
-          </div>
-
-          {/* Room Name */}
-            <div className="flex-1 border-l-4 border-purple-500 pl-4">
-              <h4 className="text-sm font-medium text-gray-700">Room Name</h4>
-              <p className="text-lg font-semibold">{roomData.roomName || 'Not specified'}</p>
+            {/* Villa */}
+            <div className="flex-1 border-l-4 border-blue-500 pl-4">
+              <h4 className="text-sm font-medium text-gray-700">Villa</h4>
+              <p className="text-lg font-semibold">{villaName || 'Not selected'}</p>
             </div>
-          </div>
-          
-
-          <div className="flex flex-col md:flex-row gap-4">
 
             {/* Room ID */}
             <div className="flex-1 border-l-4 border-green-500 pl-4">
               <h4 className="text-sm font-medium text-gray-700">Room ID</h4>
               <p className="text-lg font-mono">{roomData.roomId || 'Not generated'}</p>
             </div>
-
-            
-
           </div>
-          
+
           <div className="flex flex-col md:flex-row gap-4">
-          <div className="flex-1 border-l-4 border-orange-500 pl-4">
-            <h4 className="text-sm font-medium text-gray-700">Type</h4>
-            <p className="text-lg capitalize">{roomData.type || 'Not specified'}</p>
+            {/* Room Name */}
+            <div className="flex-1 border-l-4 border-purple-500 pl-4">
+              <h4 className="text-sm font-medium text-gray-700">Room Name</h4>
+              <p className="text-lg font-semibold">{roomData.roomName || 'Not specified'}</p>
+            </div>
+
+            {/* Type */}
+            <div className="flex-1 border-l-4 border-orange-500 pl-4">
+              <h4 className="text-sm font-medium text-gray-700">Type</h4>
+              <p className="text-lg capitalize">{roomData.type || 'Not specified'}</p>
+            </div>
           </div>
 
-          {/* Bedroom Type (if applicable) */}
-          {roomData.bedroomType && (
-            <div className="flex-1 border-l-4 border-pink-500 pl-4">
-              <h4 className="text-sm font-medium text-gray-700">Bedroom Type</h4>
-              <p className="text-lg capitalize">{roomData.bedroomType}</p>
+          {(roomData.bedroomType || roomData.capacity) && (
+            <div className="flex flex-col md:flex-row gap-4">
+              {roomData.bedroomType && (
+                <div className="flex-1 border-l-4 border-pink-500 pl-4">
+                  <h4 className="text-sm font-medium text-gray-700">Bedroom Type</h4>
+                  <p className="text-lg capitalize">{roomData.bedroomType}</p>
+                </div>
+              )}
+
+              {roomData.capacity && (
+                <div className="flex-1 border-l-4 border-indigo-500 pl-4">
+                  <h4 className="text-sm font-medium text-gray-700">Capacity</h4>
+                  <p className="text-lg">{roomData.capacity} person(s)</p>
+                </div>
+              )}
             </div>
           )}
 
-          </div>
-          {/* Type */}
-          
-
-          {/* Capacity (if applicable) */}
-          {roomData.capacity && roomData.capacity > 0 && (
-            <div className="border-l-4 border-indigo-500 pl-4">
-              <h4 className="text-sm font-medium text-gray-700">Capacity</h4>
-              <p className="text-lg">{roomData.capacity} person(s)</p>
+          {roomData.basePrice && (
+            <div className="border-l-4 border-emerald-500 pl-4">
+              <h4 className="text-sm font-medium text-gray-700">Base Price</h4>
+              <p className="text-lg ">LKR {parseFloat(roomData.basePrice).toFixed(2)} per night</p>
             </div>
           )}
 
-          {/* Amenities */}
-          <div className="border-l-4 border-teal-500 pl-4">
-            <h4 className="text-sm font-medium text-gray-700">Amenities</h4>
-            {roomData.amenities && roomData.amenities.length > 0 ? (
-              <div className="flex flex-wrap gap-2 mt-2">
-                {roomData.amenities.split(', ').map((amenity, idx) => (
-                  <span key={idx} className="text-sm bg-blue-100 text-blue-800 px-3 py-1 rounded-full">
-                    {amenity}
-                  </span>
-                ))}
-              </div>
-            ) : (
-              <p className="text-lg text-gray-500">No amenities selected</p>
-            )}
-          </div>
+          <div className="flex flex-col md:flex-row gap-4">
+            {/* Amenities */}
+            <div className="flex-1 border-l-4 border-teal-500 pl-4">
+              <h4 className="text-sm font-medium text-gray-700">Amenities</h4>
+              {roomData.amenities ? (
+                <div className="flex flex-wrap gap-1 mt-2">
+                  {roomData.amenities.split(', ').map((amenity, idx) => (
+                    <span key={idx} className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">
+                      {amenity}
+                    </span>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-sm text-gray-500">No amenities</p>
+              )}
+            </div>
 
-          {/* Status */}
-          <div className="border-l-4 border-yellow-500 pl-4">
-            <h4 className="text-sm font-medium text-gray-700">Status</h4>
-            <span className={`inline-block px-3 py-1 text-sm rounded-full ${
-              roomData.status === 'available' ? 'bg-green-100 text-green-800' :
-              roomData.status === 'occupied' ? 'bg-red-100 text-red-800' :
-              'bg-yellow-100 text-yellow-800'
-            }`}>
-              {roomData.status}
-            </span>
+            {/* Status */}
+            <div className="flex-1 border-l-4 border-yellow-500 pl-4">
+              <h4 className="text-sm font-medium text-gray-700">Status</h4>
+              <span className={`inline-block px-3 py-1 text-sm rounded-full mt-1 ${
+                roomData.status === 'available' ? 'bg-green-100 text-green-800' :
+                roomData.status === 'occupied' ? 'bg-red-100 text-red-800' :
+                'bg-yellow-100 text-yellow-800'
+              }`}>
+                {roomData.status}
+              </span>
+            </div>
           </div>
         </div>
 
