@@ -8,6 +8,8 @@ const CreateVillaModal = ({ isOpen, onClose, onCreated }) => {
   const [villaName, setVillaName] = useState('');
   const [villaLocation, setVillaLocation] = useState('');
   const [hasAC, setHasAC] = useState(false);
+  const [basePriceWithAC, setBasePriceWithAC] = useState('');
+  const [basePriceWithoutAC, setBasePriceWithoutAC] = useState('');
   const [message, setMessage] = useState('');
   const [loading, setLoading] = useState(false);
   const [idLoading, setIdLoading] = useState(false);
@@ -26,18 +28,12 @@ const CreateVillaModal = ({ isOpen, onClose, onCreated }) => {
   const fetchNextVillaId = async () => {
     setIdLoading(true);
     try {
-      console.log('Fetching next villa ID...'); // DEBUG
       const res = await axios.get('/api/villas/next-id');
-      console.log('Response:', res.data); // DEBUG
       if (res.data?.nextVillaId) {
         setVillaId(res.data.nextVillaId);
-        console.log('Villa ID set to:', res.data.nextVillaId); // DEBUG
-      } else {
-        console.log('No nextVillaId in response'); // DEBUG
       }
     } catch (err) {
       console.error('Failed to fetch next villa id', err);
-      console.error('Error response:', err.response); // DEBUG
     } finally {
       setIdLoading(false);
     }
@@ -50,6 +46,8 @@ const CreateVillaModal = ({ isOpen, onClose, onCreated }) => {
       setVillaName('');
       setVillaLocation('');
       setHasAC(false);
+      setBasePriceWithAC('');
+      setBasePriceWithoutAC('');
       setMessage('');
     }
   }, [isOpen]);
@@ -59,11 +57,16 @@ const CreateVillaModal = ({ isOpen, onClose, onCreated }) => {
     setLoading(true);
     setMessage('');
     try {
+      const villaBasePrice = {};
+      if (basePriceWithAC) villaBasePrice.withAC = parseFloat(basePriceWithAC);
+      if (basePriceWithoutAC) villaBasePrice.withoutAC = parseFloat(basePriceWithoutAC);
+
       const res = await axios.post('/api/villas/create', {
         villaId,
         villaName,
         villaLocation,
         hasAC,
+        villaBasePrice: Object.keys(villaBasePrice).length > 0 ? villaBasePrice : undefined,
         adminId,
       });
       setMessage('Villa created successfully.');
@@ -74,6 +77,8 @@ const CreateVillaModal = ({ isOpen, onClose, onCreated }) => {
       setVillaName('');
       setVillaLocation('');
       setHasAC(false);
+      setBasePriceWithAC('');
+      setBasePriceWithoutAC('');
       setTimeout(() => {
         setMessage('');
         onClose();
@@ -154,6 +159,47 @@ const CreateVillaModal = ({ isOpen, onClose, onCreated }) => {
                 {hasAC ? "Has AC" : "No AC"}
               </span>
             </div>
+          </div>
+
+          {/* Villa Base Price Section */}
+          <div>
+            <label className="block text-sm font-medium mb-2">Villa Base Price (Optional)</label>
+            <div className="grid grid-cols-2 gap-4">
+              {/* With AC Price */}
+              <div>
+                <label className="block text-xs text-gray-600 mb-1">With AC</label>
+                <div className="relative">
+                  <input
+                    type="number"
+                    value={basePriceWithAC}
+                    onChange={(e) => setBasePriceWithAC(e.target.value)}
+                    min="0"
+                    step="0.01"
+                    placeholder="0.00"
+                    className="w-full px-4 py-2 pr-16 border rounded-md focus:outline-none focus:ring"
+                  />
+                  <span className="absolute right-4 top-2.5 text-sm text-gray-500">LKR</span>
+                </div>
+              </div>
+
+              {/* Without AC Price */}
+              <div>
+                <label className="block text-xs text-gray-600 mb-1">Without AC</label>
+                <div className="relative">
+                  <input
+                    type="number"
+                    value={basePriceWithoutAC}
+                    onChange={(e) => setBasePriceWithoutAC(e.target.value)}
+                    min="0"
+                    step="0.01"
+                    placeholder="0.00"
+                    className="w-full px-4 py-2 pr-16 border rounded-md focus:outline-none focus:ring"
+                  />
+                  <span className="absolute right-4 top-2.5 text-sm text-gray-500">LKR</span>
+                </div>
+              </div>
+            </div>
+            <p className="text-xs text-gray-500 mt-1">Base price per night for entire villa</p>
           </div>
 
           <div className="flex gap-2 justify-end">
