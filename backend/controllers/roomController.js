@@ -57,6 +57,7 @@ export const createRoom = async (req, res) => {
       bedroomType,
       amenities,
       capacity,
+      basePrice,
       status,
       villaId
     } = req.body;
@@ -131,8 +132,11 @@ export const createRoom = async (req, res) => {
       if (capacity !== undefined && capacity !== null && capacity !== '') {
         roomData.capacity = Number(capacity);
       }
+      if (basePrice !== undefined && basePrice !== null && basePrice !== '') {
+        roomData.basePrice = Number(basePrice);
+      }
     }
-    // If type is not bedroom, explicitly leave out bedroomType and capacity
+    // If type is not bedroom, explicitly leave out bedroomType, capacity, and basePrice
     // Mongoose will use schema defaults or undefined
 
     const room = new Room(roomData);

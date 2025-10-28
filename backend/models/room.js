@@ -7,6 +7,7 @@ const roomSchema = new mongoose.Schema({
   bedroomType: { type: String, enum: ["single", "double", "queen", "king", "suite"] },
   amenities: [{ type: String }],
   capacity: { type: Number, default: 0 },
+  basePrice: { type: Number },
   status: { type: String, enum: ["available", "occupied", "maintenance"], default: "available" },
   villaId: { type: mongoose.Schema.Types.ObjectId, ref: "villa", required: true },
   companyId: { type: mongoose.Schema.Types.ObjectId, ref: "company", required: true },
