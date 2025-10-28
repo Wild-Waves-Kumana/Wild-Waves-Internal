@@ -6,6 +6,7 @@ import Modal from '../../components/common/Modal';
 const CreateVillaModal = ({ isOpen, onClose, onCreated }) => {
   const [villaId, setVillaId] = useState('');
   const [villaName, setVillaName] = useState('');
+  const [description, setDescription] = useState('');
   const [villaLocation, setVillaLocation] = useState('');
   const [hasAC, setHasAC] = useState(false);
   const [basePriceWithAC, setBasePriceWithAC] = useState('');
@@ -44,6 +45,7 @@ const CreateVillaModal = ({ isOpen, onClose, onCreated }) => {
     if (isOpen) {
       fetchNextVillaId();
       setVillaName('');
+      setDescription('');
       setVillaLocation('');
       setHasAC(false);
       setBasePriceWithAC('');
@@ -52,8 +54,7 @@ const CreateVillaModal = ({ isOpen, onClose, onCreated }) => {
     }
   }, [isOpen]);
 
-  const handleCreate = async (e) => {
-    e.preventDefault();
+  const handleCreate = async () => {
     setLoading(true);
     setMessage('');
     try {
@@ -64,6 +65,7 @@ const CreateVillaModal = ({ isOpen, onClose, onCreated }) => {
       const res = await axios.post('/api/villas/create', {
         villaId,
         villaName,
+        description,
         villaLocation,
         hasAC,
         villaBasePrice: Object.keys(villaBasePrice).length > 0 ? villaBasePrice : undefined,
@@ -75,6 +77,7 @@ const CreateVillaModal = ({ isOpen, onClose, onCreated }) => {
       // reset and close
       setVillaId('');
       setVillaName('');
+      setDescription('');
       setVillaLocation('');
       setHasAC(false);
       setBasePriceWithAC('');
@@ -96,33 +99,46 @@ const CreateVillaModal = ({ isOpen, onClose, onCreated }) => {
       <div className="w-full">
         <h2 className="text-2xl font-semibold text-center mb-4">Create Villa</h2>
         {message && <p className="text-center text-sm text-green-600 mb-3">{message}</p>}
-        <form onSubmit={handleCreate} className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium mb-1">Villa ID</label>
-            <div>
-              <div className="w-full px-4 py-2 border rounded-md bg-gray-50 text-gray-700 flex items-center">
-                {idLoading ? (
-                  <div className="flex items-center text-sm text-gray-600">
-                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600 mr-2"></div>
-                    Generating...
-                  </div>
-                ) : (
-                  <span className="font-mono text-lg">{villaId}</span>
-                )}
+        
+        <div className="space-y-4">
+          <div className="flex flec-col md:flex-row gap-4">
+            <div className='flex-1'>
+              <label className="block text-sm font-medium mb-1">Villa ID</label>
+              <div>
+                <div className="w-full px-4 py-2 border rounded-md bg-gray-50 text-gray-700 flex items-center">
+                  {idLoading ? (
+                    <div className="flex items-center text-sm text-gray-600">
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600 mr-2"></div>
+                      Generating...
+                    </div>
+                  ) : (
+                    <span className="font-mono text-lg">{villaId}</span>
+                  )}
+                </div>
               </div>
+              <p className="text-xs text-gray-500 mt-1">Next available villa id</p>
             </div>
-            <p className="text-xs text-gray-500 mt-1">Next available villa id</p>
+
+            <div className='flex-2'>
+              <label className="block text-sm font-medium mb-1">Villa Name</label>
+              <input
+                type="text"
+                placeholder="Villa Name"
+                value={villaName}
+                onChange={(e) => setVillaName(e.target.value)}
+                className="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring"
+              />
+            </div>
           </div>
 
           <div>
-            <label className="block text-sm font-medium mb-1">Villa Name</label>
-            <input
-              type="text"
-              placeholder="Villa Name"
-              value={villaName}
-              onChange={(e) => setVillaName(e.target.value)}
-              required
-              className="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring"
+            <label className="block text-sm font-medium mb-1">Description (Optional)</label>
+            <textarea
+              placeholder="Enter villa description"
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              rows={3}
+              className="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring resize-none"
             />
           </div>
 
@@ -212,14 +228,15 @@ const CreateVillaModal = ({ isOpen, onClose, onCreated }) => {
               Cancel
             </button>
             <button
-              type="submit"
+              type="button"
               className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50"
+              onClick={handleCreate}
               disabled={loading}
             >
               {loading ? 'Creating...' : 'Create Villa'}
             </button>
           </div>
-        </form>
+        </div>
       </div>
     </Modal>
   );
