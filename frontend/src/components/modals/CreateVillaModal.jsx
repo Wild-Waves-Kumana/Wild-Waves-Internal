@@ -112,7 +112,7 @@ const CreateVillaModal = ({ isOpen, onClose, onCreated }) => {
                       Generating...
                     </div>
                   ) : (
-                    <span className="font-mono text-lg">{villaId}</span>
+                    <span className=", font-mono text-lg">{villaId}</span>
                   )}
                 </div>
               </div>
