@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import Toaster from '../../components/common/Toaster';
-import BookingCalendar from '../../components/common/BookingCalender';
+import BookingCalendar from '../../components/bookings/BookingCalender';
 
 const CreateBooking = () => {
   const [bookingId, setBookingId] = useState('');
@@ -60,6 +60,19 @@ const CreateBooking = () => {
     }
   };
 
+  // Get check-in and check-out dates from selected dates
+  const getCheckInCheckOut = () => {
+    if (selectedDates.length === 0) return { checkin: null, checkout: null };
+    
+    const sorted = [...selectedDates].sort((a, b) => a - b);
+    return {
+      checkin: sorted[0],
+      checkout: sorted[sorted.length - 1]
+    };
+  };
+
+  const { checkin, checkout } = getCheckInCheckOut();
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     
@@ -83,12 +96,14 @@ const CreateBooking = () => {
 
     setLoading(true);
     try {
-      await axios.post('/api/bookings/create', {
+      const response = await axios.post('/api/bookings/create', {
         bookingId,
         email,
         contactNumber,
         selectedDates: selectedDates.map(date => date.toISOString())
       });
+
+      console.log('Booking created:', response.data);
 
       setToast({
         show: true,
@@ -174,6 +189,43 @@ const CreateBooking = () => {
                   placeholder="+94 XX XXX XXXX"
                   className="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring"
                 />
+              </div>
+
+              {/* Check-in and Check-out Dates Display */}
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block font-medium mb-1">Check-in Date</label>
+                  <div className="w-full px-4 py-2 border rounded-md bg-gray-50 text-gray-700">
+                    {checkin ? (
+                      <span className="text-sm">
+                        {checkin.toLocaleDateString('en-US', { 
+                          month: 'short', 
+                          day: 'numeric', 
+                          year: 'numeric' 
+                        })}
+                      </span>
+                    ) : (
+                      <span className="text-gray-400 text-sm">Not selected</span>
+                    )}
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block font-medium mb-1">Check-out Date</label>
+                  <div className="w-full px-4 py-2 border rounded-md bg-gray-50 text-gray-700">
+                    {checkout ? (
+                      <span className="text-sm">
+                        {checkout.toLocaleDateString('en-US', { 
+                          month: 'short', 
+                          day: 'numeric', 
+                          year: 'numeric' 
+                        })}
+                      </span>
+                    ) : (
+                      <span className="text-gray-400 text-sm">Not selected</span>
+                    )}
+                  </div>
+                </div>
               </div>
 
               {/* Selected Dates Display */}
