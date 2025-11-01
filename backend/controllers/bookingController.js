@@ -45,11 +45,16 @@ export const createBooking = async (req, res) => {
     const {
       bookingId,
       email,
-      contactNumber
+      contactNumber,
+      selectedDates
     } = req.body;
 
     if (!bookingId || !email || !contactNumber) {
       return res.status(400).json({ message: "Booking ID, email and contact number are required" });
+    }
+
+    if (!selectedDates || selectedDates.length === 0) {
+      return res.status(400).json({ message: "At least one date must be selected" });
     }
 
     // Check if bookingId already exists
@@ -61,7 +66,8 @@ export const createBooking = async (req, res) => {
     const booking = new Booking({
       bookingId,
       email,
-      contactNumber
+      contactNumber,
+      selectedDates: selectedDates.map(date => new Date(date))
     });
 
     await booking.save();
