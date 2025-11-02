@@ -176,3 +176,20 @@ export const getRoomsByUser =  async (req, res) => {
   const rooms = await Room.find({ villaId: req.params.userId });
   res.json(rooms);
 };
+
+// Add this new function
+export const getRoomById = async (req, res) => {
+  try {
+    const { roomId } = req.params;
+    const room = await Room.findById(roomId);
+    
+    if (!room) {
+      return res.status(404).json({ message: "Room not found" });
+    }
+    
+    res.status(200).json(room);
+  } catch (error) {
+    console.error("Error fetching room:", error);
+    res.status(500).json({ message: "Failed to fetch room", error: error.message });
+  }
+};
