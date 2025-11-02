@@ -63,17 +63,54 @@ export const createBooking = async (req, res) => {
       return res.status(409).json({ message: "Booking ID already exists" });
     }
 
+    // Convert selected dates to Date objects and sort them
+    const dates = selectedDates.map(date => new Date(date)).sort((a, b) => a - b);
+    
+    // Get first date as check-in and last date as check-out
+    const checkinDate = dates[0];
+    const checkoutDate = dates[dates.length - 1];
+
     const booking = new Booking({
       bookingId,
       email,
       contactNumber,
-      selectedDates: selectedDates.map(date => new Date(date))
+      selectedDates: dates,
+      checkinDate,
+      checkoutDate
     });
 
     await booking.save();
     res.status(201).json(booking);
   } catch (err) {
     console.error("createBooking error:", err);
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
+// Get all bookings
+export const getAllBookings = async (req, res) => {
+  try {
+    const bookings = await Booking.find();
+    res.status(200).json(bookings);
+  } catch (err) {
+    console.error("getAllBookings error:", err);
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
+// Get booking by ID
+export const getBookingById = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const booking = await Booking.findById(id);
+    
+    if (!booking) {
+      return res.status(404).json({ message: "Booking not found" });
+    }
+    
+    res.status(200).json(booking);
+  } catch (err) {
+    console.error("getBookingById error:", err);
     res.status(500).json({ message: "Server error" });
   }
 };

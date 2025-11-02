@@ -5,7 +5,9 @@ const bookingSchema = new mongoose.Schema({
   name: { type: String },
   email: { type: String, required: true },
   contactNumber: { type: String, required: true },
-  selectedDates: [{ type: Date }], // Array to store multiple dates
+  selectedDates: [{ type: Date }],
+  checkinDate: { type: Date, required: true },
+  checkoutDate: { type: Date, required: true },
 });
 
 export default mongoose.model("Booking", bookingSchema);
