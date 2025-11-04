@@ -10,9 +10,9 @@ import mqttService from '../config/mqtt.js';
 // Helper to generate unique itemCode based on category, finding the first available number
 const generateUniqueItemCode = async (category) => {
   const prefixes = {
-    "Doors": "DR",
-    "Lights": "LT", 
-    "Air Conditioner": "AC",
+    Doors: "D",
+    Lights: "L",
+    "Air Conditioner": "A",
   };
   const prefix = prefixes[category] || "E";
 
@@ -21,17 +21,23 @@ const generateUniqueItemCode = async (category) => {
   
   // Get existing codes from ALL collections (doors, lights, ACs)
   const [doorCodes, lightCodes, acCodes] = await Promise.all([
-    Door.find({ itemCode: { $regex: regex } }).select('itemCode').lean(),
-    Light.find({ itemCode: { $regex: regex } }).select('itemCode').lean(),
-    AirConditioner.find({ itemCode: { $regex: regex } }).select('itemCode').lean()
+    Door.find({ itemCode: { $regex: regex } })
+      .select("itemCode")
+      .lean(),
+    Light.find({ itemCode: { $regex: regex } })
+      .select("itemCode")
+      .lean(),
+    AirConditioner.find({ itemCode: { $regex: regex } })
+      .select("itemCode")
+      .lean(),
   ]);
 
   // Combine all codes from all collections and extract numbers
   const allCodes = [...doorCodes, ...lightCodes, ...acCodes];
   const existingNumbers = new Set();
-  
+
   // Extract all numeric parts and store in Set for fast lookup
-  allCodes.forEach(item => {
+  allCodes.forEach((item) => {
     const match = item.itemCode.match(regex);
     if (match && match[1]) {
       const number = parseInt(match[1], 10);
@@ -56,7 +62,7 @@ const isItemCodeTaken = async (itemCode) => {
   const [inDoor, inLight, inAC] = await Promise.all([
     Door.exists({ itemCode }),
     Light.exists({ itemCode }),
-    AirConditioner.exists({ itemCode })
+    AirConditioner.exists({ itemCode }),
   ]);
   return !!(inDoor || inLight || inAC);
 };
@@ -65,13 +71,13 @@ const isItemCodeTaken = async (itemCode) => {
 export const getNextItemCode = async (req, res) => {
   try {
     const { category } = req.params;
-    console.log('Received category:', category); // Debug log
+    console.log("Received category:", category); // Debug log
     const nextItemCode = await generateUniqueItemCode(category);
-    console.log('Generated item code:', nextItemCode); // Debug log
+    console.log("Generated item code:", nextItemCode); // Debug log
     res.json({ nextItemCode });
   } catch (err) {
-    console.error('Error generating next item code:', err);
-    res.status(500).json({ message: 'Failed to generate next item code' });
+    console.error("Error generating next item code:", err);
+    res.status(500).json({ message: "Failed to generate next item code" });
   }
 };
 
@@ -85,33 +91,33 @@ export const createEquipment = async (req, res) => {
     // Validate admin exists
     const admin = await Admin.findById(adminId);
     if (!admin) {
-      return res.status(400).json({ message: 'Admin not found.' });
+      return res.status(400).json({ message: "Admin not found." });
     }
     const companyId = admin.companyId;
 
     // Validate villa exists
     const villa = await Villa.findById(villaId);
     if (!villa) {
-      return res.status(400).json({ message: 'Villa not found.' });
+      return res.status(400).json({ message: "Villa not found." });
     }
 
     // Choose the proper collection
     let EquipmentModel, companyField;
     switch (category) {
-      case 'Doors':
+      case "Doors":
         EquipmentModel = Door;
-        companyField = 'doors';
+        companyField = "doors";
         break;
-      case 'Lights':
+      case "Lights":
         EquipmentModel = Light;
-        companyField = 'lights';
+        companyField = "lights";
         break;
-      case 'Air Conditioner':
+      case "Air Conditioner":
         EquipmentModel = AirConditioner;
-        companyField = 'airconditioners';
+        companyField = "airconditioners";
         break;
       default:
-        return res.status(400).json({ message: 'Invalid category.' });
+        return res.status(400).json({ message: "Invalid category." });
     }
 
     // Create equipment data
@@ -122,7 +128,7 @@ export const createEquipment = async (req, res) => {
       access: Boolean(access),
       roomId,
       createdAdminId: adminId,
-      companyId
+      companyId,
     };
 
     const newEquipment = new EquipmentModel(baseEquipment);
@@ -131,9 +137,12 @@ export const createEquipment = async (req, res) => {
     // Update Room collection
     if (roomId) {
       let updateField = {};
-      if (category === "Doors") updateField = { $push: { doors: newEquipment._id } };
-      if (category === "Lights") updateField = { $push: { lights: newEquipment._id } };
-      if (category === "Air Conditioner") updateField = { $push: { airConditioners: newEquipment._id } };
+      if (category === "Doors")
+        updateField = { $push: { doors: newEquipment._id } };
+      if (category === "Lights")
+        updateField = { $push: { lights: newEquipment._id } };
+      if (category === "Air Conditioner")
+        updateField = { $push: { airConditioners: newEquipment._id } };
 
       if (Object.keys(updateField).length > 0) {
         await Room.findByIdAndUpdate(roomId, updateField);
@@ -142,51 +151,58 @@ export const createEquipment = async (req, res) => {
 
     // Update Company collection
     if (companyField) {
-      await Company.findByIdAndUpdate(
-        companyId,
-        { $addToSet: { [companyField]: newEquipment._id } }
-      );
+      await Company.findByIdAndUpdate(companyId, {
+        $addToSet: { [companyField]: newEquipment._id },
+      });
     }
 
-    res.status(201).json({ 
+    res.status(201).json({
       message: `${category} item created successfully with code ${itemCode}`,
-      equipment: newEquipment 
+      equipment: newEquipment,
     });
   } catch (err) {
-    console.error('Equipment creation error:', err);
-    res.status(500).json({ message: 'Server error while creating equipment.' });
+    console.error("Equipment creation error:", err);
+    res.status(500).json({ message: "Server error while creating equipment." });
   }
 };
 
 //display doors
 export const displaydoors = async (req, res) => {
   try {
-    const doors = await Door.find().populate('roomId', 'roomName');
+    const doors = await Door.find().populate("roomId", "roomName");
     res.json(doors);
   } catch (err) {
-    res.status(500).json({ message: 'Failed to fetch doors' });
+    res.status(500).json({ message: "Failed to fetch doors" });
   }
 };
 
 //display lights
 export const displaylights = async (req, res) => {
   try {
-    const lights = await Light.find().populate('roomId', 'roomName');
+    const lights = await Light.find().populate("roomId", "roomName");
     res.json(lights);
   } catch (err) {
-    res.status(500).json({ message: 'Failed to fetch lights' });
+    res.status(500).json({ message: "Failed to fetch lights" });
   }
 };
 
 //display ACs
 export const displayACs = async (req, res) => {
   try {
-    const airconditioners = await AirConditioner.find().populate('roomId', 'roomName');    
+    const airconditioners = await AirConditioner.find().populate(
+      "roomId",
+      "roomName"
+    );
     res.json(airconditioners);
   } catch (err) {
-    res.status(500).json({ message: 'Failed to fetch airconditioners' });
+    res.status(500).json({ message: "Failed to fetch airconditioners" });
   }
 };
+
+// Helper function
+function constrain(value, min, max) {
+  return Math.min(Math.max(value, min), max);
+}
 
 // Update Air Conditioner details
 export const updateAirConditioner = async (req, res) => {
@@ -199,7 +215,7 @@ export const updateAirConditioner = async (req, res) => {
       mode,
       fanSpeed,
       status,
-      access
+      access,
     } = req.body;
 
     // Check if itemCode is being updated and ensure it's unique
@@ -207,34 +223,96 @@ export const updateAirConditioner = async (req, res) => {
       const existing = await AirConditioner.findById(acId);
       if (existing && existing.itemCode !== itemCode) {
         if (await isItemCodeTaken(itemCode)) {
-          return res.status(400).json({ message: 'Item Code Already Used!' });
+          return res.status(400).json({ message: "Item Code Already Used!" });
         }
       }
     }
 
+    // Get current AC data
+    const currentAC = await AirConditioner.findById(acId);
+    if (!currentAC) {
+      return res.status(404).json({ message: "Air Conditioner not found" });
+    }
+
     // Build update object
     const updateFields = {};
-    if (itemName) updateFields.itemName = itemName;
-    if (itemCode) updateFields.itemCode = itemCode;
-    if (temperaturelevel !== undefined) updateFields.temperaturelevel = temperaturelevel;
-    if (mode) updateFields.mode = mode;
-    if (fanSpeed) updateFields.fanSpeed = fanSpeed;
-    if (status !== undefined) updateFields.status = status;
-    if (access !== undefined) updateFields.access = access; 
+    if (itemName !== undefined) updateFields.itemName = itemName;
+    if (itemCode !== undefined) updateFields.itemCode = itemCode;
+    if (access !== undefined) updateFields.access = access;
 
+    // Temperature validation and update
+    if (temperaturelevel !== undefined && temperaturelevel !== null) {
+      updateFields.temperaturelevel = constrain(temperaturelevel, 16, 30);
+    }
+
+    // Mode validation and update
+    const validModes = ["Cool", "Heat", "Fan", "Dry", "Auto"];
+    if (mode !== undefined) {
+      if (validModes.includes(mode)) {
+        updateFields.mode = mode;
+      } else {
+        return res.status(400).json({
+          message: "Invalid mode. Must be: Cool, Heat, Fan, Dry, or Auto",
+        });
+      }
+    }
+
+    // Fan speed validation and update
+    const validFanSpeeds = ["Low", "Medium", "High", "Auto"];
+    if (fanSpeed !== undefined) {
+      if (validFanSpeeds.includes(fanSpeed)) {
+        updateFields.fanSpeed = fanSpeed;
+      } else {
+        return res.status(400).json({
+          message: "Invalid fan speed. Must be: Low, Medium, High, or Auto",
+        });
+      }
+    }
+
+    // Status update
+    if (status !== undefined) {
+      updateFields.status = status;
+    }
+
+    // Update database
     const updatedAC = await AirConditioner.findByIdAndUpdate(
       acId,
       { $set: updateFields },
       { new: true, runValidators: true }
     );
 
-    if (!updatedAC) {
-      return res.status(404).json({ message: 'Air Conditioner not found' });
-    }
+    // Prepare values for MQTT
+    const mqttItemCode = updatedAC.itemCode;
+    const mqttStatus = updatedAC.status;
+    const mqttTemperature = updatedAC.temperaturelevel;
+    const mqttMode = updatedAC.mode;
+    const mqttFanSpeed = updatedAC.fanSpeed;
+    const mqttAccess = updatedAC.access;
 
-    res.json({ message: 'Air Conditioner updated successfully', airConditioner: updatedAC });
+    // Publish to MQTT with all AC parameters
+    await mqttService.publishACControl(
+      acId,
+      mqttItemCode,
+      mqttStatus,
+      mqttTemperature,
+      mqttMode,
+      mqttFanSpeed,
+      mqttAccess
+    );
+
+    console.log(
+      `AC ${acId} (${mqttItemCode}) updated - Status: ${mqttStatus}, Temp: ${mqttTemperature}°C, Mode: ${mqttMode}, Fan: ${mqttFanSpeed}`
+    );
+
+    res.json({
+      message: "Air Conditioner updated successfully",
+      airConditioner: updatedAC,
+    });
   } catch (err) {
-    res.status(500).json({ message: 'Server error while updating air conditioner' });
+    console.error("Error updating air conditioner:", err);
+    res.status(500).json({
+      message: "Server error while updating air conditioner",
+    });
   }
 };
 
@@ -242,13 +320,7 @@ export const updateAirConditioner = async (req, res) => {
 export const updateDoor = async (req, res) => {
   try {
     const { doorId } = req.params;
-    let {
-      itemName,
-      itemCode,
-      lockStatus,
-      status,
-      access,
-    } = req.body;
+    let { itemName, itemCode, lockStatus, status, access } = req.body;
 
     // Get the current door to check if lockStatus is changing
     const currentDoor = await Door.findById(doorId).populate('roomId', 'roomName');
@@ -260,7 +332,7 @@ export const updateDoor = async (req, res) => {
     if (itemCode) {
       if (currentDoor.itemCode !== itemCode) {
         if (await isItemCodeTaken(itemCode)) {
-          return res.status(400).json({ message: 'Item Code Already Used!' });
+          return res.status(400).json({ message: "Item Code Already Used!" });
         }
       }
     }
@@ -315,7 +387,7 @@ export const updateDoor = async (req, res) => {
       console.log('ℹ️ No lock status change detected - MQTT notification skipped');
     }
 
-    res.json({ message: 'Door updated successfully', door: updatedDoor });
+    res.json({ message: "Door updated successfully", door: updatedDoor });
   } catch (err) {
     console.error('Door update error:', err);
     res.status(500).json({ message: 'Server error while updating door' });
@@ -326,45 +398,73 @@ export const updateDoor = async (req, res) => {
 export const updateLight = async (req, res) => {
   try {
     const { lightId } = req.params;
-    const {
-      itemName,
-      itemCode,
-      brightness,
-      status,
-      access
-    } = req.body;
+    const { itemName, itemCode, brightness, status, access } = req.body;
 
     // Check if itemCode is being updated and ensure it's unique
     if (itemCode) {
       const existing = await Light.findById(lightId);
       if (existing && existing.itemCode !== itemCode) {
         if (await isItemCodeTaken(itemCode)) {
-          return res.status(400).json({ message: 'Item Code Already Used!' });
+          return res.status(400).json({ message: "Item Code Already Used!" });
         }
       }
     }
 
+    // Get current light data
+    const currentLight = await Light.findById(lightId);
+    if (!currentLight) {
+      return res.status(404).json({ message: "Light not found" });
+    }
+
     // Build update object
     const updateFields = {};
-    if (itemName) updateFields.itemName = itemName;
-    if (itemCode) updateFields.itemCode = itemCode;
-    if (brightness !== undefined) updateFields.brightness = brightness;
-    if (status !== undefined) updateFields.status = status;
+    if (itemName !== undefined) updateFields.itemName = itemName;
+    if (itemCode !== undefined) updateFields.itemCode = itemCode;
     if (access !== undefined) updateFields.access = access;
 
+    // Handle brightness - NEVER auto-change status based on brightness
+    if (brightness !== undefined && brightness !== null) {
+      updateFields.brightness = constrain(brightness, 0, 100);
+    }
+
+    // Handle status - ONLY changes when explicitly set
+    if (status !== undefined) {
+      updateFields.status = status;
+    }
+
+    // Update database
     const updatedLight = await Light.findByIdAndUpdate(
       lightId,
       { $set: updateFields },
       { new: true, runValidators: true }
     );
 
-    if (!updatedLight) {
-      return res.status(404).json({ message: 'Light not found' });
-    }
+    // Prepare values for MQTT
+    const mqttItemCode = updatedLight.itemCode;
+    const mqttStatus = updatedLight.status;
+    const mqttBrightness = updatedLight.brightness;
+    const mqttAccess = updatedLight.access;
 
-    res.json({ message: 'Light updated successfully', light: updatedLight });
+    // Publish to MQTT with itemCode
+    await mqttService.publishLightControl(
+      lightId,
+      mqttItemCode, // Include itemCode
+      mqttStatus,
+      mqttBrightness,
+      mqttAccess
+    );
+
+    console.log(
+      `Light ${lightId} (${mqttItemCode}) updated - Status: ${mqttStatus}, Brightness: ${mqttBrightness}%`
+    );
+
+    res.json({
+      message: "Light updated successfully",
+      light: updatedLight,
+    });
   } catch (err) {
-    res.status(500).json({ message: 'Server error while updating light' });
+    console.error("Error updating light:", err);
+    res.status(500).json({ message: "Server error while updating light" });
   }
 };
 
