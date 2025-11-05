@@ -1,14 +1,19 @@
-import { initMqtt, publish } from '../notifications/mqtt.js';
+import { initMqtt, publish } from "../notifications/mqtt.js";
 
 let client = null;
 try {
-  if (!(process.env.MQTT_ENABLED && process.env.MQTT_ENABLED.toLowerCase() === 'false')) {
+  if (
+    !(
+      process.env.MQTT_ENABLED &&
+      process.env.MQTT_ENABLED.toLowerCase() === "false"
+    )
+  ) {
     client = initMqtt();
   } else {
-    console.log('MQTT disabled via MQTT_ENABLED=false');
+    console.log("MQTT disabled via MQTT_ENABLED=false");
   }
 } catch (err) {
-  console.warn('MQTT init failed:', err.message || err);
+  console.warn("MQTT init failed:", err.message || err);
 }
 
 const mqttService = {
@@ -16,14 +21,45 @@ const mqttService = {
     return client && client.connected;
   },
   async publishFaceRegister(username, uploadedUrls) {
-    const topic = process.env.MQTT_TOPIC || 'wildwaves/faces';
-    const message = { event: 'new_face_registered', user_id: username, image_urls: uploadedUrls };
+    const topic = process.env.MQTT_TOPIC || "wildwaves/faces";
+    const message = {
+      event: "new_face_registered",
+      user_id: username,
+      image_urls: uploadedUrls,
+    };
     publish(topic, message);
     return { published: true };
   },
   async publishFaceDelete(username) {
-    const topic = process.env.MQTT_TOPIC || 'wildwaves/faces';
-    const message = { event: 'face_deleted', user_id: username };
+    const topic = process.env.MQTT_TOPIC || "wildwaves/faces";
+    const message = { event: "face_deleted", user_id: username };
+    publish(topic, message);
+    return { published: true };
+  },
+  async publishLightControl(
+    lightId,
+    itemCode,
+    status,
+    brightness,
+    access = true
+  ) {
+    const topic = `wildwaves/lights/${lightId}`;
+    const message = {
+      event: "light_control",
+      lightId: lightId,
+      itemCode: itemCode, // CRITICAL: Include itemCode
+      status: status,
+      brightness: brightness,
+      access: access,
+    };
+    publish(topic, message);
+    console.log(`Published to ${topic}:`, message);
+    return { published: true };
+  },
+
+  async publishEspConfig(lightId) {
+    const topic = "wildwaves/config/esp32";
+    const message = { event: "config", lightId: lightId };
     publish(topic, message);
     return { published: true };
   },
@@ -41,7 +77,31 @@ const mqttService = {
     const result = publish(topic, message);
     console.log(`📤 MQTT publish result:`, result);
     return { published: result };
-  }
+  },
+  async publishACControl(
+    acId,
+    itemCode,
+    status,
+    temperature,
+    mode,
+    fanSpeed,
+    access = true
+  ) {
+    const topic = `wildwaves/ac/${acId}`;
+    const message = {
+      event: "ac_control",
+      acId: acId,
+      itemCode: itemCode,
+      status: status,
+      temperature: temperature,
+      mode: mode,
+      fanSpeed: fanSpeed,
+      access: access,
+    };
+    publish(topic, message);
+    console.log(`Published to ${topic}:`, message);
+    return { published: true };
+  },
 };
 
 export default mqttService;
