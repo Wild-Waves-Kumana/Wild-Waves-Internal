@@ -10,9 +10,9 @@ import mqttService from '../config/mqtt.js';
 // Helper to generate unique itemCode based on category, finding the first available number
 const generateUniqueItemCode = async (category) => {
   const prefixes = {
-    Doors: "D",
-    Lights: "L",
-    "Air Conditioner": "A",
+    "Doors": "DR",
+    "Lights": "LT",
+    "Air Conditioner": "AC",
   };
   const prefix = prefixes[category] || "E";
 
