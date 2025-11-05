@@ -13,7 +13,7 @@ const AdminDashboard = () => {
         <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-10">
           <div>
             <h1 className="text-3xl md:text-4xl font-bold text-blue-800 mb-2">Admin Dashboard</h1>
-            <p className="text-lg text-cyan-700 font-medium">
+            <p className="text-lg text-red-700 font-medium">
               Welcome, <span className="font-bold">{username}</span> 👋
             </p>
           </div>
