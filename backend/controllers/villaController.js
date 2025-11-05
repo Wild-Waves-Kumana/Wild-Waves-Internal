@@ -29,7 +29,7 @@ export const getNextVillaId = async (req, res) => {
 
 export const createVilla = async (req, res) => {
   try {
-    let { villaId, villaName, adminId } = req.body;
+    let { villaId, villaName, description, villaLocation, hasAC, villaBasePrice, adminId } = req.body;
 
     // Fetch the admin to get the companyId
     const admin = await Admin.findById(adminId);
@@ -66,9 +66,24 @@ export const createVilla = async (req, res) => {
       }
     }
 
+    // Build villa base price object
+    const basePriceData = {};
+    if (villaBasePrice) {
+      if (villaBasePrice.withAC !== undefined && villaBasePrice.withAC !== null && villaBasePrice.withAC !== '') {
+        basePriceData.withAC = Number(villaBasePrice.withAC);
+      }
+      if (villaBasePrice.withoutAC !== undefined && villaBasePrice.withoutAC !== null && villaBasePrice.withoutAC !== '') {
+        basePriceData.withoutAC = Number(villaBasePrice.withoutAC);
+      }
+    }
+
     const newVilla = new Villa({
       villaId,
       villaName,
+      description: description || '',
+      villaLocation: villaLocation || '',
+      hasAC: hasAC !== undefined ? hasAC : false,
+      villaBasePrice: Object.keys(basePriceData).length > 0 ? basePriceData : undefined,
       adminId,
       companyId: admin.companyId, // get companyId from admin
     });
