@@ -5,7 +5,12 @@ export const BOOKING_STORAGE_KEYS = {
   CHECKOUT_DATE: 'booking_checkout_date',
   SELECTED_VILLA_ID: 'booking_selected_villa_id',
   SELECTED_ROOM_IDS: 'booking_selected_room_ids',
-  SELECTED_AC_STATUS: 'booking_ac_status', // <-- new key
+  SELECTED_AC_STATUS: 'booking_ac_status',
+  // customer keys
+  CUSTOMER_NAME: 'booking_customer_name',
+  CUSTOMER_EMAIL: 'booking_customer_email',
+  CUSTOMER_CONTACT: 'booking_customer_contact',
+  CUSTOMER_ID_NUMBER: 'booking_customer_id_number',
 };
 
 // Utility functions for booking storage
@@ -130,6 +135,55 @@ export const bookingStorage = {
     return stored === '1' ? 1 : 0;
   },
 
+  // Customer individual fields
+  saveCustomerName: (name) => {
+    if (name && name !== '') localStorage.setItem(BOOKING_STORAGE_KEYS.CUSTOMER_NAME, name);
+    else localStorage.removeItem(BOOKING_STORAGE_KEYS.CUSTOMER_NAME);
+  },
+  getCustomerName: () => {
+    return localStorage.getItem(BOOKING_STORAGE_KEYS.CUSTOMER_NAME) || '';
+  },
+
+  saveCustomerEmail: (email) => {
+    if (email && email !== '') localStorage.setItem(BOOKING_STORAGE_KEYS.CUSTOMER_EMAIL, email);
+    else localStorage.removeItem(BOOKING_STORAGE_KEYS.CUSTOMER_EMAIL);
+  },
+  getCustomerEmail: () => {
+    return localStorage.getItem(BOOKING_STORAGE_KEYS.CUSTOMER_EMAIL) || '';
+  },
+
+  saveCustomerContact: (contact) => {
+    if (contact && contact !== '') localStorage.setItem(BOOKING_STORAGE_KEYS.CUSTOMER_CONTACT, contact);
+    else localStorage.removeItem(BOOKING_STORAGE_KEYS.CUSTOMER_CONTACT);
+  },
+  getCustomerContact: () => {
+    return localStorage.getItem(BOOKING_STORAGE_KEYS.CUSTOMER_CONTACT) || '';
+  },
+
+  saveCustomerIdNumber: (idNumber) => {
+    if (idNumber && idNumber !== '') localStorage.setItem(BOOKING_STORAGE_KEYS.CUSTOMER_ID_NUMBER, idNumber);
+    else localStorage.removeItem(BOOKING_STORAGE_KEYS.CUSTOMER_ID_NUMBER);
+  },
+  getCustomerIdNumber: () => {
+    return localStorage.getItem(BOOKING_STORAGE_KEYS.CUSTOMER_ID_NUMBER) || '';
+  },
+
+  // Save/get full customer object (convenience)
+  saveCustomer: (customer = {}) => {
+    bookingStorage.saveCustomerName(customer.name || '');
+    bookingStorage.saveCustomerEmail(customer.email || '');
+    bookingStorage.saveCustomerContact(customer.contactNumber || '');
+    bookingStorage.saveCustomerIdNumber(customer.idNumber || '');
+  },
+  getCustomer: () => {
+    return {
+      name: bookingStorage.getCustomerName(),
+      email: bookingStorage.getCustomerEmail(),
+      contactNumber: bookingStorage.getCustomerContact(),
+      idNumber: bookingStorage.getCustomerIdNumber(),
+    };
+  },
+
   // Get all booking data for submission
   getBookingData: () => {
     const dates = bookingStorage.getDates();
@@ -137,7 +191,8 @@ export const bookingStorage = {
     const checkout = bookingStorage.getCheckout();
     const villaId = bookingStorage.getVillaId();
     const roomIds = bookingStorage.getRoomIds();
-    const acStatus = bookingStorage.getAcStatus(); // <-- include acStatus
+    const acStatus = bookingStorage.getAcStatus();
+    const customer = bookingStorage.getCustomer();
 
     return {
       selectedDates: dates,
@@ -145,7 +200,8 @@ export const bookingStorage = {
       checkoutDate: checkout,
       villa: villaId,
       selectedRooms: roomIds,
-      acStatus, // 1 or 0 or null
+      acStatus,
+      customer,
     };
   },
 
