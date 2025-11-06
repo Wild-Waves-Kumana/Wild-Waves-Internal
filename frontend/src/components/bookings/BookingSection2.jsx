@@ -20,13 +20,12 @@ const BookingSection2 = ({ onBack, onNext }) => {
   useEffect(() => {
     loadBookingData();
 
-    // load saved customer (if any)
+    // load saved customer (if any) via bookingStorage
     try {
-      const saved = localStorage.getItem('booking_customer');
-      if (saved) setCustomer(JSON.parse(saved));
+      const saved = bookingStorage.getCustomer();
+      if (saved) setCustomer(saved);
     } catch (e) {
       console.error('Failed to load saved customer:', e);
-      // ignore
     }
   }, []);
 
@@ -75,16 +74,22 @@ const BookingSection2 = ({ onBack, onNext }) => {
 
   const handleCustomerChange = (e) => {
     const { name, value } = e.target;
-    setCustomer(prev => ({ ...prev, [name]: value }));
+    setCustomer(prev => {
+      const updated = { ...prev, [name]: value };
+      // persist each field immediately using bookingStorage helpers
+      try {
+        bookingStorage.saveCustomer(updated);
+      } catch (err) {
+        console.error('Failed to auto-save customer via bookingStorage:', err);
+      }
+      return updated;
+    });
   };
 
   const saveCustomer = () => {
     try {
-      localStorage.setItem('booking_customer', JSON.stringify(customer));
-      // Optionally merge into booking data object
-      const current = bookingStorage.getBookingData() || {};
-      bookingStorage.saveBookingData?.({ ...current, customer }) || localStorage.setItem('booking_bookingData', JSON.stringify({ ...current, customer }));
-      alert('Customer details saved locally');
+      // ensure persisted (no alert)
+      bookingStorage.saveCustomer(customer);
     } catch (e) {
       console.error('Failed to save customer:', e);
     }
@@ -310,20 +315,14 @@ const BookingSection2 = ({ onBack, onNext }) => {
                 onClick={() => {
                   // reset
                   setCustomer({ name: '', email: '', contactNumber: '', idNumber: '' });
-                  localStorage.removeItem('booking_customer');
+                  bookingStorage.saveCustomer({ name: '', email: '', contactNumber: '', idNumber: '' });
                 }}
                 className="px-4 py-2 border rounded-md text-gray-700 hover:bg-gray-100"
               >
                 Reset
               </button>
 
-              <button
-                type="button"
-                onClick={saveCustomer}
-                className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700"
-              >
-                Save Details
-              </button>
+              {/* Save button removed — customer data is auto-saved on input and also saved when continuing */}
             </div>
           </div>
         </div>
