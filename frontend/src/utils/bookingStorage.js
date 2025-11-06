@@ -5,6 +5,7 @@ export const BOOKING_STORAGE_KEYS = {
   CHECKOUT_DATE: 'booking_checkout_date',
   SELECTED_VILLA_ID: 'booking_selected_villa_id',
   SELECTED_ROOM_IDS: 'booking_selected_room_ids',
+  SELECTED_AC_STATUS: 'booking_ac_status', // <-- new key
 };
 
 // Utility functions for booking storage
@@ -113,6 +114,22 @@ export const bookingStorage = {
     }
   },
 
+  // Save AC status (1 = AC, 0 = Non-AC)
+  saveAcStatus: (status) => {
+    if (status === 1 || status === 0) {
+      localStorage.setItem(BOOKING_STORAGE_KEYS.SELECTED_AC_STATUS, String(status));
+    } else {
+      localStorage.removeItem(BOOKING_STORAGE_KEYS.SELECTED_AC_STATUS);
+    }
+  },
+
+  // Get AC status, returns 1, 0 or null
+  getAcStatus: () => {
+    const stored = localStorage.getItem(BOOKING_STORAGE_KEYS.SELECTED_AC_STATUS);
+    if (stored === null) return null;
+    return stored === '1' ? 1 : 0;
+  },
+
   // Get all booking data for submission
   getBookingData: () => {
     const dates = bookingStorage.getDates();
@@ -120,6 +137,7 @@ export const bookingStorage = {
     const checkout = bookingStorage.getCheckout();
     const villaId = bookingStorage.getVillaId();
     const roomIds = bookingStorage.getRoomIds();
+    const acStatus = bookingStorage.getAcStatus(); // <-- include acStatus
 
     return {
       selectedDates: dates,
@@ -127,6 +145,7 @@ export const bookingStorage = {
       checkoutDate: checkout,
       villa: villaId,
       selectedRooms: roomIds,
+      acStatus, // 1 or 0 or null
     };
   },
 
