@@ -9,6 +9,7 @@ const BookingSection1 = ({ onNext }) => {
   const [selectedVilla, setSelectedVilla] = useState(null);
   const [rooms, setRooms] = useState([]);
   const [selectedRoomIds, setSelectedRoomIds] = useState([]);
+  const [acStatus, setAcStatus] = useState(null); // 1 = AC, 0 = Non-AC
   const [loading, setLoading] = useState(false);
   const [loadingRooms, setLoadingRooms] = useState(false);
 
@@ -48,17 +49,22 @@ const BookingSection1 = ({ onNext }) => {
     const storedDates = bookingStorage.getDates();
     const storedVillaId = bookingStorage.getVillaId();
     const storedRoomIds = bookingStorage.getRoomIds();
+    const storedAc = bookingStorage.getAcStatus(); // <-- load ac status
 
     if (storedDates.length > 0) {
       setSelectedDates(storedDates);
     }
-    
+
     if (storedVillaId) {
       fetchVillaById(storedVillaId);
     }
-    
+
     if (storedRoomIds.length > 0) {
       setSelectedRoomIds(storedRoomIds);
+    }
+
+    if (storedAc !== null) {
+      setAcStatus(storedAc);
     }
   }, [fetchVillaById]);
 
@@ -136,8 +142,8 @@ const BookingSection1 = ({ onNext }) => {
       setVillas([]);
       setSelectedVilla(null);
       setRooms([]);
-      setSelectedRoomIds([]);
-      bookingStorage.clearAll();
+      // DO NOT clear localStorage here — keep selected villa and room IDs persisted
+      // bookingStorage.clearAll(); <-- removed so selected rooms/villa remain until explicit clear
     }
   }, [selectedDates]);
 
@@ -172,8 +178,9 @@ const BookingSection1 = ({ onNext }) => {
     setSelectedVilla(null);
     setRooms([]);
     setSelectedRoomIds([]);
+    // keep saved room ids in localStorage until user clears storage explicitly
     bookingStorage.saveVillaId(null);
-    bookingStorage.saveRoomIds([]);
+    // bookingStorage.saveRoomIds([]); <-- removed so selected rooms remain saved in localStorage
   };
 
   const handleRoomToggle = (room) => {
@@ -200,6 +207,11 @@ const BookingSection1 = ({ onNext }) => {
 
   const getSelectedRooms = () => {
     return rooms.filter(room => selectedRoomIds.includes(room._id));
+  };
+
+  const handleAcToggle = (value) => {
+    setAcStatus(value);
+    bookingStorage.saveAcStatus(value);
   };
 
   const handleNext = () => {
@@ -318,6 +330,27 @@ const BookingSection1 = ({ onNext }) => {
                   >
                     Change Villa
                   </button>
+                </div>
+
+                {/* AC / Non-AC toggle */}
+                <div className="mt-4">
+                  <p className="text-sm font-medium text-gray-700 mb-2">AC / Non-AC</p>
+                  <div className="flex gap-2">
+                    <button
+                      type="button"
+                      onClick={() => handleAcToggle(1)}
+                      className={`px-3 py-2 rounded-md text-sm font-medium ${acStatus === 1 ? 'bg-blue-600 text-white' : 'bg-white border'}`}
+                    >
+                      AC
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleAcToggle(0)}
+                      className={`px-3 py-2 rounded-md text-sm font-medium ${acStatus === 0 ? 'bg-blue-600 text-white' : 'bg-white border'}`}
+                    >
+                      Non-AC
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>
