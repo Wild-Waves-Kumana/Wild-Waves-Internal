@@ -7,6 +7,7 @@ const BookingSection2 = ({ onBack, onNext }) => {
   const [villaDetails, setVillaDetails] = useState(null);
   const [roomsDetails, setRoomsDetails] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [acStatus, setAcStatus] = useState(null); // 1 = AC, 0 = Non-AC
 
   // Customer form state
   const [customer, setCustomer] = useState({
@@ -36,6 +37,10 @@ const BookingSection2 = ({ onBack, onNext }) => {
       const data = bookingStorage.getBookingData();
       console.log('Loaded booking data from localStorage:', data); // Debug log
       setBookingData(data);
+
+      // load acStatus from booking data or storage
+      const ac = data?.acStatus ?? bookingStorage.getAcStatus();
+      setAcStatus(ac);
 
       // Fetch villa details
       if (data.villa) {
@@ -110,6 +115,12 @@ const BookingSection2 = ({ onBack, onNext }) => {
 
   const nights = calculateNights();
 
+  const renderAcLabel = () => {
+    if (acStatus === 1) return <span className="text-sm font-medium text-green-700">AC</span>;
+    if (acStatus === 0) return <span className="text-sm font-medium text-gray-700">Non-AC</span>;
+    return <span className="text-sm text-gray-500">Not selected</span>;
+  };
+
   return (
     <div className="w-full space-y-6">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -174,11 +185,20 @@ const BookingSection2 = ({ onBack, onNext }) => {
                       <p className="text-sm text-gray-600 mt-1">📍 {villaDetails.villaLocation}</p>
                     )}
                   </div>
-                  {villaDetails.hasAC && (
-                    <span className="bg-blue-100 text-blue-800 text-xs px-3 py-1 rounded-full">
-                      AC Available
-                    </span>
-                  )}
+
+                  <div className="text-right">
+                    {/* Display AC status */}
+                    <div className="mb-2">
+                      <p className="text-xs text-gray-500">AC Preference</p>
+                      {renderAcLabel()}
+                    </div>
+
+                    {villaDetails.hasAC && (
+                      <span className="bg-blue-100 text-blue-800 text-xs px-3 py-1 rounded-full">
+                        AC Available
+                      </span>
+                    )}
+                  </div>
                 </div>
                 {villaDetails.description && (
                   <p className="text-sm text-gray-600 mt-3">{villaDetails.description}</p>
