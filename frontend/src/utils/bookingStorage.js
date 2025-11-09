@@ -11,6 +11,13 @@ export const BOOKING_STORAGE_KEYS = {
   CUSTOMER_EMAIL: 'booking_customer_email',
   CUSTOMER_CONTACT: 'booking_customer_contact',
   CUSTOMER_ID_NUMBER: 'booking_customer_id_number',
+  // price keys (new)
+  PRICE_VILLA_PER_NIGHT: 'booking_price_villa_per_night',
+  PRICE_ROOMS_PER_NIGHT: 'booking_price_rooms_per_night',
+  PRICE_PER_NIGHT_TOTAL: 'booking_price_per_night_total',
+  PRICE_NIGHTS: 'booking_price_nights',
+  PRICE_TOTAL: 'booking_price_total',
+  PRICE_ROOMS_DETAILS: 'booking_price_rooms_details' // JSON array of room price details
 };
 
 // Utility functions for booking storage
@@ -217,6 +224,85 @@ export const bookingStorage = {
     return bookingStorage.getDates().length > 0 || 
            bookingStorage.getVillaId() !== null ||
            bookingStorage.getRoomIds().length > 0;
+  },
+
+  // Prices helpers
+  saveVillaPricePerNight: (val) => {
+    if (val === null || val === undefined) localStorage.removeItem(BOOKING_STORAGE_KEYS.PRICE_VILLA_PER_NIGHT);
+    else localStorage.setItem(BOOKING_STORAGE_KEYS.PRICE_VILLA_PER_NIGHT, String(val));
+  },
+  getVillaPricePerNight: () => {
+    const v = localStorage.getItem(BOOKING_STORAGE_KEYS.PRICE_VILLA_PER_NIGHT);
+    return v !== null ? Number(v) : 0;
+  },
+
+  saveRoomsPricePerNight: (val) => {
+    if (val === null || val === undefined) localStorage.removeItem(BOOKING_STORAGE_KEYS.PRICE_ROOMS_PER_NIGHT);
+    else localStorage.setItem(BOOKING_STORAGE_KEYS.PRICE_ROOMS_PER_NIGHT, String(val));
+  },
+  getRoomsPricePerNight: () => {
+    const v = localStorage.getItem(BOOKING_STORAGE_KEYS.PRICE_ROOMS_PER_NIGHT);
+    return v !== null ? Number(v) : 0;
+  },
+
+  savePerNightTotal: (val) => {
+    if (val === null || val === undefined) localStorage.removeItem(BOOKING_STORAGE_KEYS.PRICE_PER_NIGHT_TOTAL);
+    else localStorage.setItem(BOOKING_STORAGE_KEYS.PRICE_PER_NIGHT_TOTAL, String(val));
+  },
+  getPerNightTotal: () => {
+    const v = localStorage.getItem(BOOKING_STORAGE_KEYS.PRICE_PER_NIGHT_TOTAL);
+    return v !== null ? Number(v) : 0;
+  },
+
+  saveNightsCount: (n) => {
+    if (n === null || n === undefined) localStorage.removeItem(BOOKING_STORAGE_KEYS.PRICE_NIGHTS);
+    else localStorage.setItem(BOOKING_STORAGE_KEYS.PRICE_NIGHTS, String(n));
+  },
+  getNightsCount: () => {
+    const v = localStorage.getItem(BOOKING_STORAGE_KEYS.PRICE_NIGHTS);
+    return v !== null ? Number(v) : 0;
+  },
+
+  saveTotalPrice: (val) => {
+    if (val === null || val === undefined) localStorage.removeItem(BOOKING_STORAGE_KEYS.PRICE_TOTAL);
+    else localStorage.setItem(BOOKING_STORAGE_KEYS.PRICE_TOTAL, String(val));
+  },
+  getTotalPrice: () => {
+    const v = localStorage.getItem(BOOKING_STORAGE_KEYS.PRICE_TOTAL);
+    return v !== null ? Number(v) : 0;
+  },
+
+  saveRoomsPriceDetails: (arr) => {
+    if (!arr || arr.length === 0) localStorage.removeItem(BOOKING_STORAGE_KEYS.PRICE_ROOMS_DETAILS);
+    else localStorage.setItem(BOOKING_STORAGE_KEYS.PRICE_ROOMS_DETAILS, JSON.stringify(arr));
+  },
+  getRoomsPriceDetails: () => {
+    const v = localStorage.getItem(BOOKING_STORAGE_KEYS.PRICE_ROOMS_DETAILS);
+    if (!v) return [];
+    try { return JSON.parse(v); } catch (e) { return []; }
+  },
+
+  // Save all prices at once (convenience)
+  savePrices: (prices = {}) => {
+    // expected fields: villaPricePerNight, roomsPricePerNight, perNightTotal, nights, total, roomsDetails
+    bookingStorage.saveVillaPricePerNight(prices.villaPricePerNight ?? null);
+    bookingStorage.saveRoomsPricePerNight(prices.roomsPricePerNight ?? null);
+    bookingStorage.savePerNightTotal(prices.perNightTotal ?? null);
+    bookingStorage.saveNightsCount(prices.nights ?? null);
+    bookingStorage.saveTotalPrice(prices.total ?? null);
+    bookingStorage.saveRoomsPriceDetails(prices.roomsDetails ?? []);
+  },
+
+  // Get all saved prices as object
+  getPrices: () => {
+    return {
+      villaPricePerNight: bookingStorage.getVillaPricePerNight(),
+      roomsPricePerNight: bookingStorage.getRoomsPricePerNight(),
+      perNightTotal: bookingStorage.getPerNightTotal(),
+      nights: bookingStorage.getNightsCount(),
+      total: bookingStorage.getTotalPrice(),
+      roomsDetails: bookingStorage.getRoomsPriceDetails()
+    };
   },
 };
 
