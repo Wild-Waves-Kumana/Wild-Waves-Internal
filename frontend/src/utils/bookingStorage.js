@@ -279,7 +279,13 @@ export const bookingStorage = {
   getRoomsPriceDetails: () => {
     const v = localStorage.getItem(BOOKING_STORAGE_KEYS.PRICE_ROOMS_DETAILS);
     if (!v) return [];
-    try { return JSON.parse(v); } catch (e) { return []; }
+    try { return JSON.parse(v); } 
+    catch (e) 
+    
+    {
+      console.error('Failed to parse rooms price details:', e);
+      return [];
+    }
   },
 
   // Save all prices at once (convenience)
