@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import BookingSection1 from '../../components/bookings/BookingSection1';
-import BookingSection2 from '../../components/bookings/BookingSection2';
+import BookingSection1 from '../../components/bookings/section_1/BookingSection1';
+import BookingSection2 from '../../components/bookings/section_2/BookingSection2';
 import BookingSection3 from '../../components/bookings/BookingSection3';
 
 const CreateBooking = () => {
