@@ -9,13 +9,15 @@ export const BOOKING_STORAGE_KEYS = {
   PRICES: 'prices',
   
   // Customer Section
-  CUSTOMER: 'customer'
+  CUSTOMER: 'customer',
+  
+  // Saved Booking ID (after successful creation)
+  SAVED_BOOKING_ID: 'saved_booking_id'
 };
 
 export const bookingStorage = {
   // ==================== BOOKING DATES SECTION ====================
   saveBookingDates: (data) => {
-    // data should have: checkInDate, checkOutDate, dates (array), nights
     try {
       const datesData = {
         dates: Array.isArray(data.dates) ? data.dates.map(d => new Date(d).toISOString()) : [],
@@ -48,7 +50,6 @@ export const bookingStorage = {
 
   // ==================== ROOM SELECTION SECTION ====================
   saveRoomSelection: (data) => {
-    // data should have: villaId (ObjectId), acStatus (boolean 1/0), rooms (array of {roomId, roomName, capacity})
     try {
       const roomData = {
         villaId: data.villaId || null,
@@ -78,7 +79,6 @@ export const bookingStorage = {
 
   // ==================== PRICES SECTION ====================
   savePrices: (data) => {
-    // data should have: villaPrice, roomPrices (array), nights, totalPrice
     try {
       const pricesData = {
         villaPrice: Number(data.villaPrice) || 0,
@@ -108,18 +108,30 @@ export const bookingStorage = {
   },
 
   // ==================== CUSTOMER SECTION ====================
+  // saveCustomer now merges with existing stored customer and only overwrites fields provided.
   saveCustomer: (data) => {
     try {
+      const existing = bookingStorage.getCustomer() || {};
+      const identificationFromData = data.identification || (data.nic || data.passport ? { nic: data.nic || '', passport: data.passport || '' } : {});
+      const passengersFromData = data.passengers || {};
+
       const customerData = {
-        name: data.name || '',
-        email: data.email || '',
-        contactNumber: data.contactNumber || '',
+        name: data.name ?? existing.name ?? '',
+        email: data.email ?? existing.email ?? '',
+        contactNumber: data.contactNumber ?? existing.contactNumber ?? '',
         identification: {
-          nic: data.identification?.nic || data.nic || '',
-          passport: data.identification?.passport || data.passport || ''
+          nic: identificationFromData.nic ?? existing.identification?.nic ?? '',
+          passport: identificationFromData.passport ?? existing.identification?.passport ?? ''
+        },
+        passengers: {
+          adults: Number(passengersFromData.adults ?? existing.passengers?.adults ?? 0),
+          children: Number(passengersFromData.children ?? existing.passengers?.children ?? 0)
         }
       };
+
       localStorage.setItem(BOOKING_STORAGE_KEYS.CUSTOMER, JSON.stringify(customerData));
+      // Debug: uncomment if needed
+      // console.log('Saved customer data:', customerData);
     } catch (e) {
       console.error('Failed to save customer:', e);
     }
@@ -130,21 +142,40 @@ export const bookingStorage = {
       const stored = localStorage.getItem(BOOKING_STORAGE_KEYS.CUSTOMER);
       if (!stored) return null;
       const parsed = JSON.parse(stored);
-      
-      // Handle backward compatibility with old idNumber field
+
+      // Backward compatibility: support old idNumber field
       if (parsed.idNumber && !parsed.identification) {
-        return {
-          ...parsed,
-          identification: {
-            nic: parsed.idNumber || '',
-            passport: ''
-          }
-        };
+        parsed.identification = { nic: parsed.idNumber || '', passport: '' };
       }
-      
+
+      // Ensure passengers object exists and numbers are normalized
+      parsed.passengers = {
+        adults: Number(parsed.passengers?.adults ?? 0),
+        children: Number(parsed.passengers?.children ?? 0)
+      };
+
+      // console.log('Retrieved customer data:', parsed);
       return parsed;
     } catch (e) {
       console.error('Failed to get customer:', e);
+      return null;
+    }
+  },
+
+  // ==================== SAVED BOOKING ID ====================
+  saveSavedBookingId: (bookingId) => {
+    try {
+      localStorage.setItem(BOOKING_STORAGE_KEYS.SAVED_BOOKING_ID, bookingId);
+    } catch (e) {
+      console.error('Failed to save booking ID:', e);
+    }
+  },
+
+  getSavedBookingId: () => {
+    try {
+      return localStorage.getItem(BOOKING_STORAGE_KEYS.SAVED_BOOKING_ID);
+    } catch (e) {
+      console.error('Failed to get saved booking ID:', e);
       return null;
     }
   },
@@ -159,11 +190,21 @@ export const bookingStorage = {
     };
   },
 
+  // ==================== CLEAR BOOKING DATA (keep saved booking ID) ====================
+  clearBookingData: () => {
+    localStorage.removeItem(BOOKING_STORAGE_KEYS.BOOKING_DATES);
+    localStorage.removeItem(BOOKING_STORAGE_KEYS.ROOM_SELECTION);
+    localStorage.removeItem(BOOKING_STORAGE_KEYS.PRICES);
+    localStorage.removeItem(BOOKING_STORAGE_KEYS.CUSTOMER);
+    // console.log('Booking data cleared from localStorage');
+  },
+
   // ==================== CLEAR ALL ====================
   clearAll: () => {
     Object.values(BOOKING_STORAGE_KEYS).forEach(key => {
       localStorage.removeItem(key);
     });
+    // console.log('All booking storage cleared from localStorage');
   }
 };
 
