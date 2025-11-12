@@ -13,6 +13,12 @@ const BookingSection1 = ({ onNext }) => {
   const [acStatus, setAcStatus] = useState(null); // 1 = AC, 0 = Non-AC
   const [loading, setLoading] = useState(false);
   const [loadingRooms, setLoadingRooms] = useState(false);
+  
+  // Passenger count state
+  const [passengers, setPassengers] = useState({
+    adults: 0,
+    children: 0
+  });
 
   // normalize date (zero time) - MOVED UP before use
   const normalize = (d) => {
@@ -62,6 +68,7 @@ const BookingSection1 = ({ onNext }) => {
   useEffect(() => {
     const bookingDates = bookingStorage.getBookingDates();
     const roomSelection = bookingStorage.getRoomSelection();
+    const customer = bookingStorage.getCustomer();
 
     if (bookingDates?.dates && bookingDates.dates.length > 0) {
       setSelectedDates(bookingDates.dates);
@@ -78,9 +85,17 @@ const BookingSection1 = ({ onNext }) => {
     if (roomSelection?.acStatus !== null && roomSelection?.acStatus !== undefined) {
       setAcStatus(roomSelection.acStatus);
     }
+
+    // Load passenger count
+    if (customer?.passengers) {
+      setPassengers({
+        adults: customer.passengers.adults || 0,
+        children: customer.passengers.children || 0
+      });
+    }
   }, [fetchVillaById]);
 
-  // Save dates whenever they change - NOW checkin/checkout are available
+  // Save dates whenever they change
   useEffect(() => {
     if (selectedDates.length > 0 && checkin && checkout) {
       bookingStorage.saveBookingDates({
@@ -91,6 +106,23 @@ const BookingSection1 = ({ onNext }) => {
       });
     }
   }, [selectedDates, checkin, checkout, nights]);
+
+  // Save passenger count whenever it changes
+  useEffect(() => {
+    const existingCustomer = bookingStorage.getCustomer() || {};
+    bookingStorage.saveCustomer({
+      ...existingCustomer,
+      passengers: passengers
+    });
+  }, [passengers]);
+
+  const handlePassengerChange = (type, value) => {
+    const numValue = parseInt(value) || 0;
+    setPassengers(prev => ({
+      ...prev,
+      [type]: Math.max(0, numValue) // Ensure non-negative
+    }));
+  };
 
   const handleVillaSelect = async (villa) => {
     console.log('Selected villa object:', villa);
@@ -278,19 +310,73 @@ const BookingSection1 = ({ onNext }) => {
     }
   };
 
-  // Check if all required selections are made
+  // Check if all required selections are made - UPDATED to include AC status and passenger count
   const isSelectionComplete = useMemo(() => {
+    const totalPassengers = passengers.adults + passengers.children;
     return selectedDates.length > 0 && 
            selectedVilla !== null && 
-           selectedRoomIds.length > 0;
-  }, [selectedDates, selectedVilla, selectedRoomIds]);
+           selectedRoomIds.length > 0 &&
+           acStatus !== null && // AC selection is mandatory
+           totalPassengers > 0; // At least one passenger required
+  }, [selectedDates, selectedVilla, selectedRoomIds, acStatus, passengers]);
+
+  const totalPassengers = passengers.adults + passengers.children;
 
   return (
     <div className="w-full space-y-6">
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Left Column - Date Information */}
         <div className="bg-white p-6 rounded-lg shadow-md space-y-4">
-          <h3 className="text-lg font-semibold mb-2">Booking Dates</h3>
+          <h3 className="text-lg font-semibold mb-2">Booking Details</h3>
+
+          {/* Passenger Count Section */}
+          <div className="bg-purple-50 border border-purple-200 rounded-lg p-4">
+            <h4 className="text-sm font-semibold text-gray-700 mb-3 flex items-center gap-2">
+              <svg className="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+              </svg>
+              Number of Passengers <span className="text-red-600">*</span>
+            </h4>
+            
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-xs font-medium text-gray-700 mb-1">Adults</label>
+                <input
+                  type="number"
+                  min="0"
+                  value={passengers.adults}
+                  onChange={(e) => handlePassengerChange('adults', e.target.value)}
+                  className="w-full px-3 py-2 border-2 rounded-md bg-white focus:outline-none focus:ring-2 focus:ring-purple-500"
+                  placeholder="0"
+                />
+              </div>
+              
+              <div>
+                <label className="block text-xs font-medium text-gray-700 mb-1">Children</label>
+                <input
+                  type="number"
+                  min="0"
+                  value={passengers.children}
+                  onChange={(e) => handlePassengerChange('children', e.target.value)}
+                  className="w-full px-3 py-2 border-2 rounded-md bg-white focus:outline-none focus:ring-2 focus:ring-purple-500"
+                  placeholder="0"
+                />
+              </div>
+            </div>
+            
+            <div className="mt-3 flex justify-between items-center">
+              <span className="text-sm font-medium text-gray-700">Total Passengers:</span>
+              <span className={`text-lg font-bold ${totalPassengers > 0 ? 'text-purple-600' : 'text-red-600'}`}>
+                {totalPassengers}
+              </span>
+            </div>
+            
+            {totalPassengers === 0 && (
+              <p className="text-xs text-red-600 mt-2">
+                ⚠️ Please enter the number of passengers
+              </p>
+            )}
+          </div>
 
           <div className="grid grid-cols-2 gap-4">
             <div>
@@ -391,25 +477,33 @@ const BookingSection1 = ({ onNext }) => {
                   </button>
                 </div>
 
-                {/* AC / Non-AC toggle */}
+                {/* AC / Non-AC toggle - NOW WITH MANDATORY INDICATOR */}
                 <div className="mt-4">
-                  <p className="text-sm font-medium text-gray-700 mb-2">AC / Non-AC</p>
+                  <p className="text-sm font-medium text-gray-700 mb-2">
+                    AC / Non-AC <span className="text-red-600">*</span>
+                  </p>
                   <div className="flex gap-2">
                     <button
                       type="button"
                       onClick={() => handleAcToggle(1)}
-                      className={`px-3 py-2 rounded-md text-sm font-medium ${acStatus === 1 ? 'bg-blue-600 text-white' : 'bg-white border'}`}
+                      className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${acStatus === 1 ? 'bg-blue-600 text-white' : 'bg-white border-2 border-gray-300 hover:border-blue-400'}`}
                     >
                       AC
                     </button>
                     <button
                       type="button"
                       onClick={() => handleAcToggle(0)}
-                      className={`px-3 py-2 rounded-md text-sm font-medium ${acStatus === 0 ? 'bg-blue-600 text-white' : 'bg-white border'}`}
+                      className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${acStatus === 0 ? 'bg-blue-600 text-white' : 'bg-white border-2 border-gray-300 hover:border-blue-400'}`}
                     >
                       Non-AC
                     </button>
                   </div>
+
+                  {acStatus === null && (
+                    <p className="text-xs text-red-600 mt-2">
+                      ⚠️ Please select AC or Non-AC preference to continue
+                    </p>
+                  )}
 
                   {/* Show prices and selected price highlight */}
                   <div className="mt-3 text-sm">
@@ -693,13 +787,27 @@ const BookingSection1 = ({ onNext }) => {
         </div>
       )}
 
-      {/* Next Button */}
-      {isSelectionComplete && (
+      {/* Next Button - Updated validation */}
+      {selectedDates.length > 0 && selectedVilla && selectedRoomIds.length > 0 && (
         <div className="bg-white p-6 rounded-lg shadow-md">
           <div className="flex justify-end">
             <button
               onClick={handleNext}
-              className="bg-green-600 text-white px-8 py-3 rounded-md hover:bg-green-700 transition-colors font-medium text-lg flex items-center gap-2"
+              disabled={!isSelectionComplete}
+              className={`px-8 py-3 rounded-md transition-colors font-medium text-lg flex items-center gap-2 ${
+                isSelectionComplete 
+                  ? 'bg-green-600 text-white hover:bg-green-700' 
+                  : 'bg-gray-400 text-white cursor-not-allowed'
+              }`}
+              title={
+                !isSelectionComplete 
+                  ? (acStatus === null 
+                      ? 'Please select AC preference' 
+                      : totalPassengers === 0 
+                        ? 'Please enter passenger count' 
+                        : '') 
+                  : ''
+              }
             >
               Next: Customer Details
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -707,6 +815,12 @@ const BookingSection1 = ({ onNext }) => {
               </svg>
             </button>
           </div>
+          {!isSelectionComplete && (
+            <div className="text-sm text-red-600 text-right mt-2">
+              {acStatus === null && <p>⚠️ Please select AC or Non-AC preference</p>}
+              {totalPassengers === 0 && <p>⚠️ Please enter the number of passengers</p>}
+            </div>
+          )}
         </div>
       )}
     </div>
