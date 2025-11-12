@@ -1,7 +1,7 @@
 import React, { useState, useMemo, useEffect, useCallback } from 'react';
 import axios from 'axios';
 import BookingCalendar from './BookingCalender';
-import BookingPrices from './BookingPrices'; // adjust path if necessary
+import BookingPrices from './BookingPrices';
 import { bookingStorage } from '../../../utils/bookingStorage';
 
 const BookingSection1 = ({ onNext }) => {
@@ -14,13 +14,30 @@ const BookingSection1 = ({ onNext }) => {
   const [loading, setLoading] = useState(false);
   const [loadingRooms, setLoadingRooms] = useState(false);
 
+  // normalize date (zero time) - MOVED UP before use
+  const normalize = (d) => {
+    const dt = new Date(d);
+    dt.setHours(0, 0, 0, 0);
+    return dt;
+  };
+
+  // Calculate checkin, checkout, nights - MOVED UP before useEffect
+  const { checkin, checkout, nights } = useMemo(() => {
+    if (selectedDates.length === 0) return { checkin: null, checkout: null, nights: 0 };
+    const sorted = [...selectedDates].map(normalize).sort((a, b) => a - b);
+    const chkIn = sorted[0];
+    const chkOut = sorted[sorted.length - 1];
+    const diff = Math.round((chkOut - chkIn) / (1000 * 60 * 60 * 24));
+    
+    return { checkin: chkIn, checkout: chkOut, nights: diff };
+  }, [selectedDates]);
+
   const fetchRoomsForVilla = useCallback(async (villaId) => {
     setLoadingRooms(true);
     try {
-      // Use villa_id parameter to match your backend route
       const response = await axios.get(`/api/rooms/user/${villaId}`);
       setRooms(response.data);
-      console.log('Fetched rooms:', response.data); // Debug log
+      console.log('Fetched rooms:', response.data);
     } catch (error) {
       console.error('Error fetching rooms:', error);
       setRooms([]);
@@ -31,13 +48,9 @@ const BookingSection1 = ({ onNext }) => {
 
   const fetchVillaById = useCallback(async (villaId) => {
     try {
-      // Use villa_id parameter to match your backend route
       const response = await axios.get(`/api/villas/${villaId}`);
-      console.log('Fetched villa:', response.data); // Debug log
+      console.log('Fetched villa:', response.data);
       setSelectedVilla(response.data);
-      
-      // Save the MongoDB _id to localStorage
-      bookingStorage.saveVillaId(response.data._id);
       
       await fetchRoomsForVilla(response.data._id);
     } catch (error) {
@@ -47,41 +60,135 @@ const BookingSection1 = ({ onNext }) => {
 
   // Load data from localStorage on mount
   useEffect(() => {
-    const storedDates = bookingStorage.getDates();
-    const storedVillaId = bookingStorage.getVillaId();
-    const storedRoomIds = bookingStorage.getRoomIds();
-    const storedAc = bookingStorage.getAcStatus(); // <-- load ac status
+    const bookingDates = bookingStorage.getBookingDates();
+    const roomSelection = bookingStorage.getRoomSelection();
 
-    if (storedDates.length > 0) {
-      setSelectedDates(storedDates);
+    if (bookingDates?.dates && bookingDates.dates.length > 0) {
+      setSelectedDates(bookingDates.dates);
     }
 
-    if (storedVillaId) {
-      fetchVillaById(storedVillaId);
+    if (roomSelection?.villaId) {
+      fetchVillaById(roomSelection.villaId);
     }
 
-    if (storedRoomIds.length > 0) {
-      setSelectedRoomIds(storedRoomIds);
+    if (roomSelection?.rooms && roomSelection.rooms.length > 0) {
+      setSelectedRoomIds(roomSelection.rooms.map(r => r.roomId));
     }
 
-    if (storedAc !== null) {
-      setAcStatus(storedAc);
+    if (roomSelection?.acStatus !== null && roomSelection?.acStatus !== undefined) {
+      setAcStatus(roomSelection.acStatus);
     }
   }, [fetchVillaById]);
 
-  // Check if all required selections are made
-  const isSelectionComplete = useMemo(() => {
-    return selectedDates.length > 0 && 
-           selectedVilla !== null && 
-           selectedRoomIds.length > 0;
-  }, [selectedDates, selectedVilla, selectedRoomIds]);
+  // Save dates whenever they change - NOW checkin/checkout are available
+  useEffect(() => {
+    if (selectedDates.length > 0 && checkin && checkout) {
+      bookingStorage.saveBookingDates({
+        checkInDate: checkin,
+        checkOutDate: checkout,
+        dates: selectedDates,
+        nights: nights
+      });
+    }
+  }, [selectedDates, checkin, checkout, nights]);
 
-  // normalize date (zero time)
-  const normalize = (d) => {
-    const dt = new Date(d);
-    dt.setHours(0, 0, 0, 0);
-    return dt;
+  const handleVillaSelect = async (villa) => {
+    console.log('Selected villa object:', villa);
+    setSelectedVilla(villa);
+
+    // Clear previously selected rooms
+    setSelectedRoomIds([]);
+    
+    // Save room selection with new villa
+    bookingStorage.saveRoomSelection({
+      villaId: villa._id,
+      acStatus: acStatus,
+      rooms: []
+    });
+
+    await fetchRoomsForVilla(villa._id);
   };
+
+  const handleAcToggle = (value) => {
+    setAcStatus(value);
+    
+    // Update room selection with AC status
+    const currentSelection = bookingStorage.getRoomSelection() || {};
+    bookingStorage.saveRoomSelection({
+      ...currentSelection,
+      acStatus: value
+    });
+  };
+
+  const getSelectedRooms = () => {
+    return rooms.filter(room => selectedRoomIds.includes(room._id));
+  };
+
+  const handleRoomToggle = (room) => {
+    console.log('Toggling room:', room);
+    
+    const isSelected = selectedRoomIds.includes(room._id);
+    let updatedIds;
+    
+    if (isSelected) {
+      updatedIds = selectedRoomIds.filter(id => id !== room._id);
+    } else {
+      updatedIds = [...selectedRoomIds, room._id];
+    }
+    
+    setSelectedRoomIds(updatedIds);
+
+    // Get updated rooms array with details
+    const updatedRooms = rooms
+      .filter(r => updatedIds.includes(r._id))
+      .map(r => ({
+        roomId: r._id,
+        roomName: r.roomName,
+        capacity: r.capacity || 0
+      }));
+
+    // Save room selection
+    const currentSelection = bookingStorage.getRoomSelection() || {};
+    bookingStorage.saveRoomSelection({
+      villaId: currentSelection.villaId || selectedVilla?._id,
+      acStatus: currentSelection.acStatus,
+      rooms: updatedRooms
+    });
+  };
+
+  // Save prices whenever relevant data changes
+  useEffect(() => {
+    const selectedRooms = getSelectedRooms();
+    
+    const villaPrice = (() => {
+      if (!selectedVilla?.villaBasePrice) return 0;
+      if (acStatus === 1 && selectedVilla.villaBasePrice.withAC !== undefined) {
+        return Number(selectedVilla.villaBasePrice.withAC) || 0;
+      }
+      if (acStatus === 0 && selectedVilla.villaBasePrice.withoutAC !== undefined) {
+        return Number(selectedVilla.villaBasePrice.withoutAC) || 0;
+      }
+      return Number(selectedVilla.villaBasePrice.withAC ?? selectedVilla.villaBasePrice.withoutAC ?? 0) || 0;
+    })();
+
+    const roomPrices = selectedRooms.map(r => ({
+      roomId: r._id,
+      roomName: r.roomName,
+      price: Number(r.roomBasePrice) || 0
+    }));
+
+    const roomsTotal = roomPrices.reduce((sum, rp) => sum + rp.price, 0);
+    const perNightTotal = villaPrice + roomsTotal;
+    const totalPrice = perNightTotal * Math.max(0, Number(nights) || 0);
+
+    // Save prices
+    bookingStorage.savePrices({
+      villaPrice,
+      roomPrices,
+      nights,
+      totalPrice
+    });
+  }, [selectedVilla, selectedRoomIds, nights, acStatus, rooms]); // eslint-disable-line
 
   // build continuous range between two dates (inclusive)
   const buildRange = (a, b) => {
@@ -100,41 +207,24 @@ const BookingSection1 = ({ onNext }) => {
     if (selectedDates.length === 0) {
       const newSel = [d];
       setSelectedDates(newSel);
-      bookingStorage.saveDates(newSel);
       return;
     }
 
     if (selectedDates.length === 1 && normalize(selectedDates[0]).getTime() === d.getTime()) {
       setSelectedDates([]);
-      bookingStorage.saveDates([]);
       return;
     }
 
     const anchor = normalize(selectedDates[0]);
     const range = buildRange(anchor, d);
     setSelectedDates(range);
-    bookingStorage.saveDates(range);
   };
 
   const removeDate = (date) => {
     const dt = normalize(date).getTime();
     const filtered = selectedDates.filter((s) => normalize(s).getTime() !== dt);
     setSelectedDates(filtered);
-    bookingStorage.saveDates(filtered);
   };
-
-  const { checkin, checkout, nights } = useMemo(() => {
-    if (selectedDates.length === 0) return { checkin: null, checkout: null, nights: 0 };
-    const sorted = [...selectedDates].map(normalize).sort((a, b) => a - b);
-    const chkIn = sorted[0];
-    const chkOut = sorted[sorted.length - 1];
-    const diff = Math.round((chkOut - chkIn) / (1000 * 60 * 60 * 24));
-    
-    bookingStorage.saveCheckin(chkIn);
-    bookingStorage.saveCheckout(chkOut);
-    
-    return { checkin: chkIn, checkout: chkOut, nights: diff };
-  }, [selectedDates]);
 
   useEffect(() => {
     if (selectedDates.length > 0) {
@@ -143,16 +233,15 @@ const BookingSection1 = ({ onNext }) => {
       setVillas([]);
       setSelectedVilla(null);
       setRooms([]);
-      // DO NOT clear localStorage here — keep selected villa and room IDs persisted
-      // bookingStorage.clearAll(); <-- removed so selected rooms/villa remain until explicit clear
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedDates]);
 
   const fetchVillas = async () => {
     setLoading(true);
     try {
       const response = await axios.get('/api/villas/all');
-      console.log('Fetched villas:', response.data); // Debug log
+      console.log('Fetched villas:', response.data);
       setVillas(response.data);
     } catch (error) {
       console.error('Error fetching villas:', error);
@@ -162,116 +251,39 @@ const BookingSection1 = ({ onNext }) => {
     }
   };
 
-  const handleVillaSelect = async (villa) => {
-    console.log('Selected villa object:', villa); // Debug log
-    console.log('Villa MongoDB _id:', villa._id); // Debug log
-    
-    setSelectedVilla(villa);
-    
-    // Save the MongoDB _id to localStorage
-    bookingStorage.saveVillaId(villa._id);
-    console.log('Saved villa _id to localStorage:', villa._id); // Debug log
-
-    // Clear previously selected rooms when a new villa is chosen
-    setSelectedRoomIds([]);
-    bookingStorage.saveRoomIds([]);
-    console.log('Cleared previously selected room IDs from state and localStorage');
-
-    await fetchRoomsForVilla(villa._id);
-  };
-
   const handleBackToVillas = () => {
     setSelectedVilla(null);
     setRooms([]);
     setSelectedRoomIds([]);
-    // keep saved room ids in localStorage until user clears storage explicitly
-    bookingStorage.saveVillaId(null);
-    // bookingStorage.saveRoomIds([]); <-- removed so selected rooms remain saved in localStorage
-  };
-
-  const handleRoomToggle = (room) => {
-    console.log('Toggling room:', room); // Debug log
-    console.log('Room MongoDB _id:', room._id); // Debug log
     
-    const isSelected = selectedRoomIds.includes(room._id);
-    
-    let updatedIds;
-    if (isSelected) {
-      updatedIds = selectedRoomIds.filter(id => id !== room._id);
-    } else {
-      updatedIds = [...selectedRoomIds, room._id]; // ✅ Array of IDs
-    }
-    
-    setSelectedRoomIds(updatedIds);
-    bookingStorage.saveRoomIds(updatedIds); // ✅ Saves array to localStorage
-    console.log('Updated room IDs in localStorage:', updatedIds); // Debug log
+    // Clear villa from room selection
+    const currentSelection = bookingStorage.getRoomSelection() || {};
+    bookingStorage.saveRoomSelection({
+      ...currentSelection,
+      villaId: null,
+      rooms: []
+    });
   };
 
   const isRoomSelected = (roomId) => {
     return selectedRoomIds.includes(roomId);
   };
 
-  const getSelectedRooms = () => {
-    return rooms.filter(room => selectedRoomIds.includes(room._id));
-  };
-
-  const handleAcToggle = (value) => {
-    setAcStatus(value);
-    bookingStorage.saveAcStatus(value);
-  };
-
   const handleNext = () => {
     if (isSelectionComplete && onNext) {
-      // Log final data before moving to next section
       const bookingData = bookingStorage.getBookingData();
       console.log('Final booking data:', bookingData);
-      console.log('Villa _id:', bookingData.villa);
-      console.log('Room _ids:', bookingData.selectedRooms);
       
       onNext();
     }
   };
 
-  // persist computed prices whenever relevant inputs change
-  useEffect(() => {
-    const selectedRooms = getSelectedRooms(); // uses current rooms & selectedRoomIds
-    const villaPricePerNight = (() => {
-      if (!selectedVilla?.villaBasePrice) return 0;
-      if (acStatus === 1 && selectedVilla.villaBasePrice.withAC !== undefined) {
-        return Number(selectedVilla.villaBasePrice.withAC) || 0;
-      }
-      if (acStatus === 0 && selectedVilla.villaBasePrice.withoutAC !== undefined) {
-        return Number(selectedVilla.villaBasePrice.withoutAC) || 0;
-      }
-      return Number(selectedVilla.villaBasePrice.withAC ?? selectedVilla.villaBasePrice.withoutAC ?? 0) || 0;
-    })();
-
-    const roomsPricePerNight = selectedRooms.reduce((sum, r) => sum + (Number(r.roomBasePrice) || 0), 0);
-    const perNightTotal = villaPricePerNight + roomsPricePerNight;
-    const total = perNightTotal * Math.max(0, Number(nights) || 0);
-
-    // prepare rooms details array to save
-    const roomsDetails = selectedRooms.map(r => ({
-      _id: r._id,
-      roomName: r.roomName,
-      roomId: r.roomId,
-      roomBasePrice: Number(r.roomBasePrice) || 0
-    }));
-
-    // save to bookingStorage
-    try {
-      bookingStorage.savePrices({
-        villaPricePerNight,
-        roomsPricePerNight,
-        perNightTotal,
-        nights,
-        total,
-        roomsDetails
-      });
-    } catch (e) {
-      console.error('Failed to save prices to bookingStorage:', e);
-    }
-  }, [selectedVilla, selectedRoomIds, nights, acStatus, rooms]); // eslint-disable-line
+  // Check if all required selections are made
+  const isSelectionComplete = useMemo(() => {
+    return selectedDates.length > 0 && 
+           selectedVilla !== null && 
+           selectedRoomIds.length > 0;
+  }, [selectedDates, selectedVilla, selectedRoomIds]);
 
   return (
     <div className="w-full space-y-6">
@@ -423,7 +435,6 @@ const BookingSection1 = ({ onNext }) => {
                       if (acStatus === 0 && withoutAC !== undefined) {
                         return <p className="mt-2 text-sm text-green-700">Selected price: LKR {withoutAC} / night</p>;
                       }
-                      // fallback when no preference selected
                       if (withAC !== undefined || withoutAC !== undefined) {
                         return <p className="mt-2 text-sm text-gray-600">Choose AC / Non-AC to see selected price</p>;
                       }
