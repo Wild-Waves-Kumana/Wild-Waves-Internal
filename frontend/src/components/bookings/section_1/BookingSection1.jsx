@@ -266,7 +266,6 @@ const BookingSection1 = ({ onNext }) => {
       setSelectedVilla(null);
       setRooms([]);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedDates]);
 
   const fetchVillas = async () => {
