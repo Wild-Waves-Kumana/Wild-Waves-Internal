@@ -1,315 +1,154 @@
-// Local Storage Keys
 export const BOOKING_STORAGE_KEYS = {
-  SELECTED_DATES: 'booking_selected_dates',
-  CHECKIN_DATE: 'booking_checkin_date',
-  CHECKOUT_DATE: 'booking_checkout_date',
-  SELECTED_VILLA_ID: 'booking_selected_villa_id',
-  SELECTED_ROOM_IDS: 'booking_selected_room_ids',
-  SELECTED_AC_STATUS: 'booking_ac_status',
-  // customer keys
-  CUSTOMER_NAME: 'booking_customer_name',
-  CUSTOMER_EMAIL: 'booking_customer_email',
-  CUSTOMER_CONTACT: 'booking_customer_contact',
-  CUSTOMER_ID_NUMBER: 'booking_customer_id_number',
-  // price keys (new)
-  PRICE_VILLA_PER_NIGHT: 'booking_price_villa_per_night',
-  PRICE_ROOMS_PER_NIGHT: 'booking_price_rooms_per_night',
-  PRICE_PER_NIGHT_TOTAL: 'booking_price_per_night_total',
-  PRICE_NIGHTS: 'booking_price_nights',
-  PRICE_TOTAL: 'booking_price_total',
-  PRICE_ROOMS_DETAILS: 'booking_price_rooms_details' // JSON array of room price details
+  // Booking Dates Section
+  BOOKING_DATES: 'booking_dates',
+  
+  // Room Selection Section
+  ROOM_SELECTION: 'room_selection',
+  
+  // Prices Section
+  PRICES: 'prices',
+  
+  // Customer Section
+  CUSTOMER: 'customer'
 };
 
-// Utility functions for booking storage
 export const bookingStorage = {
-  // Save selected dates
-  saveDates: (dates) => {
-    const serializedDates = dates.map(date => date.toISOString());
-    localStorage.setItem(BOOKING_STORAGE_KEYS.SELECTED_DATES, JSON.stringify(serializedDates));
+  // ==================== BOOKING DATES SECTION ====================
+  saveBookingDates: (data) => {
+    // data should have: checkInDate, checkOutDate, dates (array), nights
+    try {
+      const datesData = {
+        dates: Array.isArray(data.dates) ? data.dates.map(d => new Date(d).toISOString()) : [],
+        checkInDate: data.checkInDate ? new Date(data.checkInDate).toISOString() : null,
+        checkOutDate: data.checkOutDate ? new Date(data.checkOutDate).toISOString() : null,
+        nights: Number(data.nights) || 0
+      };
+      localStorage.setItem(BOOKING_STORAGE_KEYS.BOOKING_DATES, JSON.stringify(datesData));
+    } catch (e) {
+      console.error('Failed to save booking dates:', e);
+    }
   },
 
-  // Get selected dates
-  getDates: () => {
-    const stored = localStorage.getItem(BOOKING_STORAGE_KEYS.SELECTED_DATES);
-    if (!stored) return [];
+  getBookingDates: () => {
     try {
+      const stored = localStorage.getItem(BOOKING_STORAGE_KEYS.BOOKING_DATES);
+      if (!stored) return null;
       const parsed = JSON.parse(stored);
-      return parsed.map(dateStr => new Date(dateStr));
-    } catch (error) {
-      console.error('Error parsing dates from localStorage:', error);
-      return [];
+      return {
+        checkInDate: parsed.checkInDate ? new Date(parsed.checkInDate) : null,
+        checkOutDate: parsed.checkOutDate ? new Date(parsed.checkOutDate) : null,
+        dates: Array.isArray(parsed.dates) ? parsed.dates.map(d => new Date(d)) : [],
+        nights: Number(parsed.nights) || 0
+      };
+    } catch (e) {
+      console.error('Failed to get booking dates:', e);
+      return null;
     }
   },
 
-  // Save check-in date
-  saveCheckin: (date) => {
-    if (date) {
-      localStorage.setItem(BOOKING_STORAGE_KEYS.CHECKIN_DATE, date.toISOString());
-    }
-  },
-
-  // Get check-in date
-  getCheckin: () => {
-    const stored = localStorage.getItem(BOOKING_STORAGE_KEYS.CHECKIN_DATE);
-    return stored ? new Date(stored) : null;
-  },
-
-  // Save check-out date
-  saveCheckout: (date) => {
-    if (date) {
-      localStorage.setItem(BOOKING_STORAGE_KEYS.CHECKOUT_DATE, date.toISOString());
-    }
-  },
-
-  // Get check-out date
-  getCheckout: () => {
-    const stored = localStorage.getItem(BOOKING_STORAGE_KEYS.CHECKOUT_DATE);
-    return stored ? new Date(stored) : null;
-  },
-
-  // Save selected villa ID
-  saveVillaId: (villaId) => {
-    if (villaId) {
-      localStorage.setItem(BOOKING_STORAGE_KEYS.SELECTED_VILLA_ID, villaId);
-    } else {
-      localStorage.removeItem(BOOKING_STORAGE_KEYS.SELECTED_VILLA_ID);
-    }
-  },
-
-  // Get selected villa ID
-  getVillaId: () => {
-    return localStorage.getItem(BOOKING_STORAGE_KEYS.SELECTED_VILLA_ID) || null;
-  },
-
-  // Save selected room IDs (array)
-  saveRoomIds: (roomIds) => {
-    localStorage.setItem(BOOKING_STORAGE_KEYS.SELECTED_ROOM_IDS, JSON.stringify(roomIds));
-  },
-
-  // Get selected room IDs
-  getRoomIds: () => {
-    const stored = localStorage.getItem(BOOKING_STORAGE_KEYS.SELECTED_ROOM_IDS);
+  // ==================== ROOM SELECTION SECTION ====================
+  saveRoomSelection: (data) => {
+    // data should have: villaId (ObjectId), acStatus (boolean 1/0), rooms (array of {roomId, roomName, capacity})
     try {
-      return stored ? JSON.parse(stored) : []; // ✅ Returns array
-    } catch (error) {
-      console.error('Error parsing room IDs from localStorage:', error);
-      return [];
+      const roomData = {
+        villaId: data.villaId || null,
+        acStatus: data.acStatus === 1 || data.acStatus === 0 ? Number(data.acStatus) : null,
+        rooms: Array.isArray(data.rooms) ? data.rooms.map(r => ({
+          roomId: r.roomId || r._id,
+          roomName: r.roomName || '',
+          capacity: Number(r.capacity) || 0
+        })) : []
+      };
+      localStorage.setItem(BOOKING_STORAGE_KEYS.ROOM_SELECTION, JSON.stringify(roomData));
+    } catch (e) {
+      console.error('Failed to save room selection:', e);
     }
   },
 
-  // Add a room ID to selected rooms
-  addRoomId: (roomId) => {
-    const currentRoomIds = bookingStorage.getRoomIds();
-    if (!currentRoomIds.includes(roomId)) {
-      const updatedRoomIds = [...currentRoomIds, roomId];
-      bookingStorage.saveRoomIds(updatedRoomIds);
-      return updatedRoomIds;
-    }
-    return currentRoomIds;
-  },
-
-  // Remove a room ID from selected rooms
-  removeRoomId: (roomId) => {
-    const currentRoomIds = bookingStorage.getRoomIds();
-    const updatedRoomIds = currentRoomIds.filter(id => id !== roomId);
-    bookingStorage.saveRoomIds(updatedRoomIds);
-    return updatedRoomIds;
-  },
-
-  // Toggle room ID selection
-  toggleRoomId: (roomId) => {
-    const currentRoomIds = bookingStorage.getRoomIds();
-    if (currentRoomIds.includes(roomId)) {
-      return bookingStorage.removeRoomId(roomId);
-    } else {
-      return bookingStorage.addRoomId(roomId);
+  getRoomSelection: () => {
+    try {
+      const stored = localStorage.getItem(BOOKING_STORAGE_KEYS.ROOM_SELECTION);
+      if (!stored) return null;
+      return JSON.parse(stored);
+    } catch (e) {
+      console.error('Failed to get room selection:', e);
+      return null;
     }
   },
 
-  // Save AC status (1 = AC, 0 = Non-AC)
-  saveAcStatus: (status) => {
-    if (status === 1 || status === 0) {
-      localStorage.setItem(BOOKING_STORAGE_KEYS.SELECTED_AC_STATUS, String(status));
-    } else {
-      localStorage.removeItem(BOOKING_STORAGE_KEYS.SELECTED_AC_STATUS);
+  // ==================== PRICES SECTION ====================
+  savePrices: (data) => {
+    // data should have: villaPrice, roomPrices (array), nights, totalPrice
+    try {
+      const pricesData = {
+        villaPrice: Number(data.villaPrice) || 0,
+        roomPrices: Array.isArray(data.roomPrices) ? data.roomPrices.map(rp => ({
+          roomId: rp.roomId || rp._id,
+          roomName: rp.roomName || '',
+          price: Number(rp.price || rp.roomBasePrice) || 0
+        })) : [],
+        nights: Number(data.nights) || 0,
+        totalPrice: Number(data.totalPrice) || 0
+      };
+      localStorage.setItem(BOOKING_STORAGE_KEYS.PRICES, JSON.stringify(pricesData));
+    } catch (e) {
+      console.error('Failed to save prices:', e);
     }
   },
 
-  // Get AC status, returns 1, 0 or null
-  getAcStatus: () => {
-    const stored = localStorage.getItem(BOOKING_STORAGE_KEYS.SELECTED_AC_STATUS);
-    if (stored === null) return null;
-    return stored === '1' ? 1 : 0;
+  getPrices: () => {
+    try {
+      const stored = localStorage.getItem(BOOKING_STORAGE_KEYS.PRICES);
+      if (!stored) return null;
+      return JSON.parse(stored);
+    } catch (e) {
+      console.error('Failed to get prices:', e);
+      return null;
+    }
   },
 
-  // Customer individual fields
-  saveCustomerName: (name) => {
-    if (name && name !== '') localStorage.setItem(BOOKING_STORAGE_KEYS.CUSTOMER_NAME, name);
-    else localStorage.removeItem(BOOKING_STORAGE_KEYS.CUSTOMER_NAME);
-  },
-  getCustomerName: () => {
-    return localStorage.getItem(BOOKING_STORAGE_KEYS.CUSTOMER_NAME) || '';
-  },
-
-  saveCustomerEmail: (email) => {
-    if (email && email !== '') localStorage.setItem(BOOKING_STORAGE_KEYS.CUSTOMER_EMAIL, email);
-    else localStorage.removeItem(BOOKING_STORAGE_KEYS.CUSTOMER_EMAIL);
-  },
-  getCustomerEmail: () => {
-    return localStorage.getItem(BOOKING_STORAGE_KEYS.CUSTOMER_EMAIL) || '';
+  // ==================== CUSTOMER SECTION ====================
+  saveCustomer: (data) => {
+    try {
+      const customerData = {
+        name: data.name || '',
+        email: data.email || '',
+        contactNumber: data.contactNumber || '',
+        idNumber: data.idNumber || ''
+      };
+      localStorage.setItem(BOOKING_STORAGE_KEYS.CUSTOMER, JSON.stringify(customerData));
+    } catch (e) {
+      console.error('Failed to save customer:', e);
+    }
   },
 
-  saveCustomerContact: (contact) => {
-    if (contact && contact !== '') localStorage.setItem(BOOKING_STORAGE_KEYS.CUSTOMER_CONTACT, contact);
-    else localStorage.removeItem(BOOKING_STORAGE_KEYS.CUSTOMER_CONTACT);
-  },
-  getCustomerContact: () => {
-    return localStorage.getItem(BOOKING_STORAGE_KEYS.CUSTOMER_CONTACT) || '';
-  },
-
-  saveCustomerIdNumber: (idNumber) => {
-    if (idNumber && idNumber !== '') localStorage.setItem(BOOKING_STORAGE_KEYS.CUSTOMER_ID_NUMBER, idNumber);
-    else localStorage.removeItem(BOOKING_STORAGE_KEYS.CUSTOMER_ID_NUMBER);
-  },
-  getCustomerIdNumber: () => {
-    return localStorage.getItem(BOOKING_STORAGE_KEYS.CUSTOMER_ID_NUMBER) || '';
-  },
-
-  // Save/get full customer object (convenience)
-  saveCustomer: (customer = {}) => {
-    bookingStorage.saveCustomerName(customer.name || '');
-    bookingStorage.saveCustomerEmail(customer.email || '');
-    bookingStorage.saveCustomerContact(customer.contactNumber || '');
-    bookingStorage.saveCustomerIdNumber(customer.idNumber || '');
-  },
   getCustomer: () => {
-    return {
-      name: bookingStorage.getCustomerName(),
-      email: bookingStorage.getCustomerEmail(),
-      contactNumber: bookingStorage.getCustomerContact(),
-      idNumber: bookingStorage.getCustomerIdNumber(),
-    };
+    try {
+      const stored = localStorage.getItem(BOOKING_STORAGE_KEYS.CUSTOMER);
+      if (!stored) return null;
+      return JSON.parse(stored);
+    } catch (e) {
+      console.error('Failed to get customer:', e);
+      return null;
+    }
   },
 
-  // Get all booking data for submission
+  // ==================== GET ALL BOOKING DATA ====================
   getBookingData: () => {
-    const dates = bookingStorage.getDates();
-    const checkin = bookingStorage.getCheckin();
-    const checkout = bookingStorage.getCheckout();
-    const villaId = bookingStorage.getVillaId();
-    const roomIds = bookingStorage.getRoomIds();
-    const acStatus = bookingStorage.getAcStatus();
-    const customer = bookingStorage.getCustomer();
-
     return {
-      selectedDates: dates,
-      checkinDate: checkin,
-      checkoutDate: checkout,
-      villa: villaId,
-      selectedRooms: roomIds,
-      acStatus,
-      customer,
+      bookingDates: bookingStorage.getBookingDates(),
+      roomSelection: bookingStorage.getRoomSelection(),
+      prices: bookingStorage.getPrices(),
+      customer: bookingStorage.getCustomer()
     };
   },
 
-  // Clear all booking data
+  // ==================== CLEAR ALL ====================
   clearAll: () => {
     Object.values(BOOKING_STORAGE_KEYS).forEach(key => {
       localStorage.removeItem(key);
     });
-  },
-
-  // Check if booking data exists
-  hasBookingData: () => {
-    return bookingStorage.getDates().length > 0 || 
-           bookingStorage.getVillaId() !== null ||
-           bookingStorage.getRoomIds().length > 0;
-  },
-
-  // Prices helpers
-  saveVillaPricePerNight: (val) => {
-    if (val === null || val === undefined) localStorage.removeItem(BOOKING_STORAGE_KEYS.PRICE_VILLA_PER_NIGHT);
-    else localStorage.setItem(BOOKING_STORAGE_KEYS.PRICE_VILLA_PER_NIGHT, String(val));
-  },
-  getVillaPricePerNight: () => {
-    const v = localStorage.getItem(BOOKING_STORAGE_KEYS.PRICE_VILLA_PER_NIGHT);
-    return v !== null ? Number(v) : 0;
-  },
-
-  saveRoomsPricePerNight: (val) => {
-    if (val === null || val === undefined) localStorage.removeItem(BOOKING_STORAGE_KEYS.PRICE_ROOMS_PER_NIGHT);
-    else localStorage.setItem(BOOKING_STORAGE_KEYS.PRICE_ROOMS_PER_NIGHT, String(val));
-  },
-  getRoomsPricePerNight: () => {
-    const v = localStorage.getItem(BOOKING_STORAGE_KEYS.PRICE_ROOMS_PER_NIGHT);
-    return v !== null ? Number(v) : 0;
-  },
-
-  savePerNightTotal: (val) => {
-    if (val === null || val === undefined) localStorage.removeItem(BOOKING_STORAGE_KEYS.PRICE_PER_NIGHT_TOTAL);
-    else localStorage.setItem(BOOKING_STORAGE_KEYS.PRICE_PER_NIGHT_TOTAL, String(val));
-  },
-  getPerNightTotal: () => {
-    const v = localStorage.getItem(BOOKING_STORAGE_KEYS.PRICE_PER_NIGHT_TOTAL);
-    return v !== null ? Number(v) : 0;
-  },
-
-  saveNightsCount: (n) => {
-    if (n === null || n === undefined) localStorage.removeItem(BOOKING_STORAGE_KEYS.PRICE_NIGHTS);
-    else localStorage.setItem(BOOKING_STORAGE_KEYS.PRICE_NIGHTS, String(n));
-  },
-  getNightsCount: () => {
-    const v = localStorage.getItem(BOOKING_STORAGE_KEYS.PRICE_NIGHTS);
-    return v !== null ? Number(v) : 0;
-  },
-
-  saveTotalPrice: (val) => {
-    if (val === null || val === undefined) localStorage.removeItem(BOOKING_STORAGE_KEYS.PRICE_TOTAL);
-    else localStorage.setItem(BOOKING_STORAGE_KEYS.PRICE_TOTAL, String(val));
-  },
-  getTotalPrice: () => {
-    const v = localStorage.getItem(BOOKING_STORAGE_KEYS.PRICE_TOTAL);
-    return v !== null ? Number(v) : 0;
-  },
-
-  saveRoomsPriceDetails: (arr) => {
-    if (!arr || arr.length === 0) localStorage.removeItem(BOOKING_STORAGE_KEYS.PRICE_ROOMS_DETAILS);
-    else localStorage.setItem(BOOKING_STORAGE_KEYS.PRICE_ROOMS_DETAILS, JSON.stringify(arr));
-  },
-  getRoomsPriceDetails: () => {
-    const v = localStorage.getItem(BOOKING_STORAGE_KEYS.PRICE_ROOMS_DETAILS);
-    if (!v) return [];
-    try { return JSON.parse(v); } 
-    catch (e) 
-    
-    {
-      console.error('Failed to parse rooms price details:', e);
-      return [];
-    }
-  },
-
-  // Save all prices at once (convenience)
-  savePrices: (prices = {}) => {
-    // expected fields: villaPricePerNight, roomsPricePerNight, perNightTotal, nights, total, roomsDetails
-    bookingStorage.saveVillaPricePerNight(prices.villaPricePerNight ?? null);
-    bookingStorage.saveRoomsPricePerNight(prices.roomsPricePerNight ?? null);
-    bookingStorage.savePerNightTotal(prices.perNightTotal ?? null);
-    bookingStorage.saveNightsCount(prices.nights ?? null);
-    bookingStorage.saveTotalPrice(prices.total ?? null);
-    bookingStorage.saveRoomsPriceDetails(prices.roomsDetails ?? []);
-  },
-
-  // Get all saved prices as object
-  getPrices: () => {
-    return {
-      villaPricePerNight: bookingStorage.getVillaPricePerNight(),
-      roomsPricePerNight: bookingStorage.getRoomsPricePerNight(),
-      perNightTotal: bookingStorage.getPerNightTotal(),
-      nights: bookingStorage.getNightsCount(),
-      total: bookingStorage.getTotalPrice(),
-      roomsDetails: bookingStorage.getRoomsPriceDetails()
-    };
-  },
+  }
 };
 
 export default bookingStorage;
