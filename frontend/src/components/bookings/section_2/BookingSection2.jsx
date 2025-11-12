@@ -1,21 +1,24 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { bookingStorage } from '../../../utils/bookingStorage';
-import PricesBill from './PricesBill'; // <-- added import
+import PricesBill from './PricesBill';
 
 const BookingSection2 = ({ onBack, onNext }) => {
   const [bookingData, setBookingData] = useState(null);
   const [villaDetails, setVillaDetails] = useState(null);
   const [roomsDetails, setRoomsDetails] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [acStatus, setAcStatus] = useState(null); // 1 = AC, 0 = Non-AC
+  const [acStatus, setAcStatus] = useState(null);
 
-  // Customer form state
+  // Customer form state with separate NIC and Passport
   const [customer, setCustomer] = useState({
     name: '',
     email: '',
     contactNumber: '',
-    idNumber: '' // NIC or passport
+    identification: {
+      nic: '',
+      passport: ''
+    }
   });
 
   useEffect(() => {
@@ -24,7 +27,17 @@ const BookingSection2 = ({ onBack, onNext }) => {
     // load saved customer (if any) via bookingStorage
     try {
       const saved = bookingStorage.getCustomer();
-      if (saved) setCustomer(saved);
+      if (saved) {
+        setCustomer({
+          name: saved.name || '',
+          email: saved.email || '',
+          contactNumber: saved.contactNumber || '',
+          identification: {
+            nic: saved.identification?.nic || '',
+            passport: saved.identification?.passport || ''
+          }
+        });
+      }
     } catch (e) {
       console.error('Failed to load saved customer:', e);
     }
@@ -33,63 +46,76 @@ const BookingSection2 = ({ onBack, onNext }) => {
   const loadBookingData = async () => {
     setLoading(true);
     try {
-      // Get data from localStorage
       const data = bookingStorage.getBookingData();
-      console.log('Loaded booking data from localStorage:', data); // Debug log
+      console.log('Loaded booking data from localStorage:', data);
       setBookingData(data);
 
-      // load acStatus from booking data or storage
-      const ac = data?.acStatus ?? bookingStorage.getAcStatus();
-      setAcStatus(ac);
+      const roomSelection = data.roomSelection;
+      setAcStatus(roomSelection?.acStatus ?? null);
 
       // Fetch villa details
-      if (data.villa) {
-        console.log('Fetching villa with ID:', data.villa); // Debug log
-        const villaResponse = await axios.get(`/api/villas/${data.villa}`);
-        console.log('Villa details:', villaResponse.data); // Debug log
+      if (roomSelection?.villaId) {
+        console.log('Fetching villa with ID:', roomSelection.villaId);
+        const villaResponse = await axios.get(`/api/villas/${roomSelection.villaId}`);
+        console.log('Villa details:', villaResponse.data);
         setVillaDetails(villaResponse.data);
       }
 
       // Fetch room details
-      if (data.selectedRooms && data.selectedRooms.length > 0) {
-        const roomPromises = data.selectedRooms.map(roomId =>
-          axios.get(`/api/rooms/${roomId}`)
+      if (roomSelection?.rooms && roomSelection.rooms.length > 0) {
+        const roomPromises = roomSelection.rooms.map(room =>
+          axios.get(`/api/rooms/${room.roomId}`)
         );
         const roomResponses = await Promise.all(roomPromises);
         const roomsData = roomResponses.map(res => res.data);
-        setRoomsDetails(roomsData); // ✅ Sets room details
+        setRoomsDetails(roomsData);
       }
     } catch (error) {
       console.error('Error loading booking data:', error);
-      console.error('Error details:', error.response?.data); // More detailed error log
+      console.error('Error details:', error.response?.data);
     } finally {
       setLoading(false);
     }
   };
 
   const calculateNights = () => {
-    if (!bookingData?.checkinDate || !bookingData?.checkoutDate) return 0;
-    const diff = new Date(bookingData.checkoutDate) - new Date(bookingData.checkinDate);
+    if (!bookingData?.bookingDates?.checkInDate || !bookingData?.bookingDates?.checkOutDate) return 0;
+    const diff = new Date(bookingData.bookingDates.checkOutDate) - new Date(bookingData.bookingDates.checkInDate);
     return Math.round(diff / (1000 * 60 * 60 * 24));
   };
 
   const handleCustomerChange = (e) => {
     const { name, value } = e.target;
+    
     setCustomer(prev => {
-      const updated = { ...prev, [name]: value };
-      // persist each field immediately using bookingStorage helpers
+      let updated;
+      
+      // Handle nested identification fields
+      if (name === 'nic' || name === 'passport') {
+        updated = {
+          ...prev,
+          identification: {
+            ...prev.identification,
+            [name]: value
+          }
+        };
+      } else {
+        updated = { ...prev, [name]: value };
+      }
+      
+      // Auto-save to localStorage
       try {
         bookingStorage.saveCustomer(updated);
       } catch (err) {
         console.error('Failed to auto-save customer via bookingStorage:', err);
       }
+      
       return updated;
     });
   };
 
   const saveCustomer = () => {
     try {
-      // ensure persisted (no alert)
       bookingStorage.saveCustomer(customer);
     } catch (e) {
       console.error('Failed to save customer:', e);
@@ -105,7 +131,7 @@ const BookingSection2 = ({ onBack, onNext }) => {
     );
   }
 
-  if (!bookingData) {
+  if (!bookingData || !bookingData.bookingDates) {
     return (
       <div className="bg-white p-6 rounded-lg shadow-md text-center">
         <p className="text-gray-600">No booking data found. Please start from the beginning.</p>
@@ -149,7 +175,7 @@ const BookingSection2 = ({ onBack, onNext }) => {
               <div className="bg-blue-50 p-4 rounded-lg">
                 <p className="text-sm text-gray-600 mb-1">Check-in</p>
                 <p className="text-lg font-semibold text-blue-900">
-                  {new Date(bookingData.checkinDate).toLocaleDateString('en-US', {
+                  {new Date(bookingData.bookingDates.checkInDate).toLocaleDateString('en-US', {
                     weekday: 'short',
                     month: 'short',
                     day: 'numeric',
@@ -160,7 +186,7 @@ const BookingSection2 = ({ onBack, onNext }) => {
               <div className="bg-blue-50 p-4 rounded-lg">
                 <p className="text-sm text-gray-600 mb-1">Check-out</p>
                 <p className="text-lg font-semibold text-blue-900">
-                  {new Date(bookingData.checkoutDate).toLocaleDateString('en-US', {
+                  {new Date(bookingData.bookingDates.checkOutDate).toLocaleDateString('en-US', {
                     weekday: 'short',
                     month: 'short',
                     day: 'numeric',
@@ -193,7 +219,6 @@ const BookingSection2 = ({ onBack, onNext }) => {
                   </div>
 
                   <div className="text-right">
-                    {/* Display AC status */}
                     <div className="mb-2">
                       <p className="text-xs text-gray-500">AC Preference</p>
                       {renderAcLabel()}
@@ -211,12 +236,12 @@ const BookingSection2 = ({ onBack, onNext }) => {
                 )}
               </div>
             </div>
-          ) : bookingData.villa ? (
+          ) : bookingData.roomSelection?.villaId ? (
             <div className="mb-6 pb-6 border-b">
               <h4 className="font-semibold text-gray-700 mb-3">Selected Villa</h4>
               <div className="bg-yellow-50 border border-yellow-200 p-4 rounded-lg">
                 <p className="text-sm text-yellow-800">
-                  ⚠️ Villa details could not be loaded. Villa ID: {bookingData.villa}
+                  ⚠️ Villa details could not be loaded. Villa ID: {bookingData.roomSelection.villaId}
                 </p>
               </div>
             </div>
@@ -245,18 +270,18 @@ const BookingSection2 = ({ onBack, onNext }) => {
                 ))}
               </div>
             </div>
-          ) : bookingData.selectedRooms && bookingData.selectedRooms.length > 0 ? (
+          ) : bookingData.roomSelection?.rooms && bookingData.roomSelection.rooms.length > 0 ? (
             <div className="mb-6">
               <h4 className="font-semibold text-gray-700 mb-3">Selected Rooms</h4>
               <div className="bg-yellow-50 border border-yellow-200 p-4 rounded-lg">
                 <p className="text-sm text-yellow-800">
-                  ⚠️ Room details could not be loaded. {bookingData.selectedRooms.length} room(s) selected.
+                  ⚠️ Room details could not be loaded. {bookingData.roomSelection.rooms.length} room(s) selected.
                 </p>
               </div>
             </div>
           ) : null}
 
-          {/* Prices bill (read from bookingStorage) */}
+          {/* Prices bill */}
           <div className="mt-4">
             <PricesBill />
           </div>
@@ -268,73 +293,105 @@ const BookingSection2 = ({ onBack, onNext }) => {
 
           <div className="space-y-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Full Name</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Full Name *</label>
               <input
                 name="name"
                 value={customer.name}
                 onChange={handleCustomerChange}
                 type="text"
                 placeholder="John Doe"
-                className="w-full px-4 py-2 border rounded-md bg-gray-50"
+                className="w-full px-4 py-2 border rounded-md bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                required
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Email *</label>
               <input
                 name="email"
                 value={customer.email}
                 onChange={handleCustomerChange}
                 type="email"
                 placeholder="name@example.com"
-                className="w-full px-4 py-2 border rounded-md bg-gray-50"
+                className="w-full px-4 py-2 border rounded-md bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                required
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Contact Number</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Contact Number *</label>
               <input
                 name="contactNumber"
                 value={customer.contactNumber}
                 onChange={handleCustomerChange}
                 type="tel"
                 placeholder="+94 77 123 4567"
-                className="w-full px-4 py-2 border rounded-md bg-gray-50"
+                className="w-full px-4 py-2 border rounded-md bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                required
               />
             </div>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">NIC / Passport Number</label>
-              <input
-                name="idNumber"
-                value={customer.idNumber}
-                onChange={handleCustomerChange}
-                type="text"
-                placeholder="NIC or Passport"
-                className="w-full px-4 py-2 border rounded-md bg-gray-50"
-              />
+            <div className="border-t pt-4 mt-4">
+              <h4 className="text-sm font-semibold text-gray-700 mb-3">Identification</h4>
+              
+              <div className="space-y-3">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">NIC Number</label>
+                  <input
+                    name="nic"
+                    value={customer.identification.nic}
+                    onChange={handleCustomerChange}
+                    type="text"
+                    placeholder="200012345678 or 991234567V"
+                    className="w-full px-4 py-2 border rounded-md bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                  <p className="text-xs text-gray-500 mt-1">Sri Lankan National Identity Card</p>
+                </div>
+
+                <div className="text-center text-xs text-gray-500 font-medium">OR</div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Passport Number</label>
+                  <input
+                    name="passport"
+                    value={customer.identification.passport}
+                    onChange={handleCustomerChange}
+                    type="text"
+                    placeholder="N1234567"
+                    className="w-full px-4 py-2 border rounded-md bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                  <p className="text-xs text-gray-500 mt-1">For international guests</p>
+                </div>
+              </div>
+
+              <p className="text-xs text-gray-600 mt-3 bg-blue-50 p-2 rounded">
+                ℹ️ Please provide either NIC or Passport number for identification
+              </p>
             </div>
 
-            <div className="flex gap-3 justify-end mt-2">
+            <div className="flex gap-3 justify-end mt-6 pt-4 border-t">
               <button
                 type="button"
                 onClick={() => {
-                  // reset
-                  setCustomer({ name: '', email: '', contactNumber: '', idNumber: '' });
-                  bookingStorage.saveCustomer({ name: '', email: '', contactNumber: '', idNumber: '' });
+                  const emptyCustomer = {
+                    name: '',
+                    email: '',
+                    contactNumber: '',
+                    identification: { nic: '', passport: '' }
+                  };
+                  setCustomer(emptyCustomer);
+                  bookingStorage.saveCustomer(emptyCustomer);
                 }}
-                className="px-4 py-2 border rounded-md text-gray-700 hover:bg-gray-100"
+                className="px-4 py-2 border rounded-md text-gray-700 hover:bg-gray-100 transition-colors"
               >
                 Reset
               </button>
-
-              {/* Save button removed — customer data is auto-saved on input and also saved when continuing */}
             </div>
           </div>
         </div>
       </div>
 
-      {/* Action Buttons (full width) */}
+      {/* Action Buttons */}
       <div className="bg-white p-6 rounded-lg shadow-md">
         <div className="flex justify-between">
           <button
@@ -348,9 +405,10 @@ const BookingSection2 = ({ onBack, onNext }) => {
               saveCustomer();
               onNext();
             }}
-            className="bg-green-600 text-white px-8 py-3 rounded-md hover:bg-green-700 transition-colors font-medium flex items-center gap-2"
+            disabled={!customer.name || !customer.email || !customer.contactNumber || (!customer.identification.nic && !customer.identification.passport)}
+            className="bg-green-600 text-white px-8 py-3 rounded-md hover:bg-green-700 transition-colors font-medium flex items-center gap-2 disabled:bg-gray-400 disabled:cursor-not-allowed"
           >
-            Continue to Payment
+            Continue to Summary
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
             </svg>
