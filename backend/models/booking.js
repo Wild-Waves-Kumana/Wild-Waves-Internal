@@ -110,6 +110,20 @@ const bookingSchema = new mongoose.Schema({
         type: String,
         default: ''
       }
+    },
+    passengers: {
+      adults: {
+        type: Number,
+        required: true,
+        default: 0,
+        min: 0
+      },
+      children: {
+        type: Number,
+        required: true,
+        default: 0,
+        min: 0
+      }
     }
   },
 
