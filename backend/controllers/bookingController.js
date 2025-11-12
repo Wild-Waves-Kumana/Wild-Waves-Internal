@@ -39,3 +39,253 @@ export const getNextBookingId = async (req, res) => {
   }
 };
 
+// Create booking - saves copy of incoming booking data plus bookingId
+export const createBooking = async (req, res) => {
+  try {
+    const {
+      bookingId,
+      dates,
+      checkInDate,
+      checkOutDate,
+      nights,
+      villa,
+      selectedRooms,
+      acStatus,
+      customer,
+      prices,
+      bookingData
+    } = req.body;
+
+    // Validate required fields
+    if (!bookingId) {
+      return res.status(400).json({ message: 'Booking ID is required' });
+    }
+
+    if (!checkInDate || !checkOutDate) {
+      return res.status(400).json({ message: 'Check-in and check-out dates are required' });
+    }
+
+    if (!villa) {
+      return res.status(400).json({ message: 'Villa selection is required' });
+    }
+
+    if (!selectedRooms || selectedRooms.length === 0) {
+      return res.status(400).json({ message: 'At least one room must be selected' });
+    }
+
+    if (!customer || !customer.name || !customer.email || !customer.contactNumber) {
+      return res.status(400).json({ message: 'Customer details are incomplete' });
+    }
+
+    // Check if at least one identification is provided
+    if (!customer.identification?.nic && !customer.identification?.passport) {
+      return res.status(400).json({ message: 'Customer identification (NIC or Passport) is required' });
+    }
+
+    // Check if booking ID already exists
+    const existingBooking = await Booking.findOne({ bookingId });
+    if (existingBooking) {
+      return res.status(409).json({ message: 'Booking ID already exists. Please refresh and try again.' });
+    }
+
+    // Create new booking document
+    const newBooking = new Booking({
+      bookingId,
+      
+      // Booking Dates
+      bookingDates: {
+        dates: dates || [],
+        checkInDate: new Date(checkInDate),
+        checkOutDate: new Date(checkOutDate),
+        nights: nights || 0
+      },
+
+      // Room Selection
+      roomSelection: {
+        villaId: villa,
+        acStatus: acStatus !== null && acStatus !== undefined ? Number(acStatus) : null,
+        rooms: bookingData?.roomSelection?.rooms || []
+      },
+
+      // Prices
+      prices: {
+        villaPrice: prices?.villaPrice || 0,
+        roomPrices: prices?.roomPrices || [],
+        nights: prices?.nights || nights || 0,
+        totalPrice: prices?.totalPrice || 0
+      },
+
+      // Customer
+      customer: {
+        name: customer.name,
+        email: customer.email,
+        contactNumber: customer.contactNumber,
+        identification: {
+          nic: customer.identification?.nic || '',
+          passport: customer.identification?.passport || ''
+        }
+      },
+
+      // Status
+      status: 'pending',
+      paymentStatus: 'pending',
+
+      // Store raw booking data for reference
+      rawBookingData: bookingData || req.body
+    });
+
+    // Save to database
+    const savedBooking = await newBooking.save();
+
+    console.log('Booking created successfully:', savedBooking.bookingId);
+
+    res.status(201).json({
+      success: true,
+      message: 'Booking created successfully',
+      booking: {
+        bookingId: savedBooking.bookingId,
+        _id: savedBooking._id,
+        checkInDate: savedBooking.bookingDates.checkInDate,
+        checkOutDate: savedBooking.bookingDates.checkOutDate,
+        nights: savedBooking.bookingDates.nights,
+        totalPrice: savedBooking.prices.totalPrice,
+        status: savedBooking.status,
+        paymentStatus: savedBooking.paymentStatus,
+        createdAt: savedBooking.createdAt
+      }
+    });
+
+  } catch (error) {
+    console.error('Error creating booking:', error);
+    
+    // Handle validation errors
+    if (error.name === 'ValidationError') {
+      const errors = Object.values(error.errors).map(err => err.message);
+      return res.status(400).json({ 
+        message: 'Validation error', 
+        errors 
+      });
+    }
+
+    // Handle duplicate key error
+    if (error.code === 11000) {
+      return res.status(409).json({ 
+        message: 'Booking with this ID already exists' 
+      });
+    }
+
+    res.status(500).json({ 
+      message: 'Failed to create booking', 
+      error: error.message 
+    });
+  }
+};
+
+// Get all bookings
+export const getAllBookings = async (req, res) => {
+  try {
+    const bookings = await Booking.find()
+      .populate('roomSelection.villaId', 'villaName villaId villaLocation')
+      .populate('roomSelection.rooms.roomId', 'roomName roomId type')
+      .sort({ createdAt: -1 });
+
+    res.status(200).json({
+      success: true,
+      count: bookings.length,
+      bookings
+    });
+  } catch (error) {
+    console.error('Error fetching bookings:', error);
+    res.status(500).json({ 
+      message: 'Failed to fetch bookings', 
+      error: error.message 
+    });
+  }
+};
+
+// Get booking by ID
+export const getBookingById = async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    const booking = await Booking.findOne({ bookingId: id })
+      .populate('roomSelection.villaId')
+      .populate('roomSelection.rooms.roomId');
+
+    if (!booking) {
+      return res.status(404).json({ message: 'Booking not found' });
+    }
+
+    res.status(200).json({
+      success: true,
+      booking
+    });
+  } catch (error) {
+    console.error('Error fetching booking:', error);
+    res.status(500).json({ 
+      message: 'Failed to fetch booking', 
+      error: error.message 
+    });
+  }
+};
+
+// Get booking by MongoDB _id
+export const getBookingByMongoId = async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    const booking = await Booking.findById(id)
+      .populate('roomSelection.villaId')
+      .populate('roomSelection.rooms.roomId');
+
+    if (!booking) {
+      return res.status(404).json({ message: 'Booking not found' });
+    }
+
+    res.status(200).json({
+      success: true,
+      booking
+    });
+  } catch (error) {
+    console.error('Error fetching booking:', error);
+    res.status(500).json({ 
+      message: 'Failed to fetch booking', 
+      error: error.message 
+    });
+  }
+};
+
+// Update booking status
+export const updateBookingStatus = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { status, paymentStatus } = req.body;
+
+    const updateData = {};
+    if (status) updateData.status = status;
+    if (paymentStatus) updateData.paymentStatus = paymentStatus;
+
+    const booking = await Booking.findByIdAndUpdate(
+      id,
+      updateData,
+      { new: true, runValidators: true }
+    );
+
+    if (!booking) {
+      return res.status(404).json({ message: 'Booking not found' });
+    }
+
+    res.status(200).json({
+      success: true,
+      message: 'Booking updated successfully',
+      booking
+    });
+  } catch (error) {
+    console.error('Error updating booking:', error);
+    res.status(500).json({ 
+      message: 'Failed to update booking', 
+      error: error.message 
+    });
+  }
+};
+
