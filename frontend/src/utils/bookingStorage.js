@@ -35,9 +35,9 @@ export const bookingStorage = {
       if (!stored) return null;
       const parsed = JSON.parse(stored);
       return {
+        dates: Array.isArray(parsed.dates) ? parsed.dates.map(d => new Date(d)) : [],
         checkInDate: parsed.checkInDate ? new Date(parsed.checkInDate) : null,
         checkOutDate: parsed.checkOutDate ? new Date(parsed.checkOutDate) : null,
-        dates: Array.isArray(parsed.dates) ? parsed.dates.map(d => new Date(d)) : [],
         nights: Number(parsed.nights) || 0
       };
     } catch (e) {
@@ -114,7 +114,10 @@ export const bookingStorage = {
         name: data.name || '',
         email: data.email || '',
         contactNumber: data.contactNumber || '',
-        idNumber: data.idNumber || ''
+        identification: {
+          nic: data.identification?.nic || data.nic || '',
+          passport: data.identification?.passport || data.passport || ''
+        }
       };
       localStorage.setItem(BOOKING_STORAGE_KEYS.CUSTOMER, JSON.stringify(customerData));
     } catch (e) {
@@ -126,7 +129,20 @@ export const bookingStorage = {
     try {
       const stored = localStorage.getItem(BOOKING_STORAGE_KEYS.CUSTOMER);
       if (!stored) return null;
-      return JSON.parse(stored);
+      const parsed = JSON.parse(stored);
+      
+      // Handle backward compatibility with old idNumber field
+      if (parsed.idNumber && !parsed.identification) {
+        return {
+          ...parsed,
+          identification: {
+            nic: parsed.idNumber || '',
+            passport: ''
+          }
+        };
+      }
+      
+      return parsed;
     } catch (e) {
       console.error('Failed to get customer:', e);
       return null;
