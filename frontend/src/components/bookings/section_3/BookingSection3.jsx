@@ -79,6 +79,9 @@ const BookingSection3 = ({ onBack, onNext }) => {
       const prices = data.prices;
       const customer = data.customer;
 
+      // Log customer data to debug
+      console.log('Customer data from localStorage:', customer);
+
       const payload = {
         bookingId,
         // Dates
@@ -92,12 +95,16 @@ const BookingSection3 = ({ onBack, onNext }) => {
         selectedRooms: roomSelection?.rooms?.map(r => r.roomId) || [],
         acStatus: roomSelection?.acStatus ?? null,
         
-        // Customer
+        // Customer (including passengers)
         customer: {
           name: customer?.name || '',
           email: customer?.email || '',
           contactNumber: customer?.contactNumber || '',
-          identification: customer?.identification || { nic: '', passport: '' }
+          identification: customer?.identification || { nic: '', passport: '' },
+          passengers: {
+            adults: Number(customer?.passengers?.adults) || 0,
+            children: Number(customer?.passengers?.children) || 0
+          }
         },
         email: customer?.email || '',
         contactNumber: customer?.contactNumber || '',
@@ -119,9 +126,9 @@ const BookingSection3 = ({ onBack, onNext }) => {
       const res = await axios.post('/api/bookings/create', payload);
       console.log('Booking created:', res.data);
 
-      // Optionally clear localStorage after successful save
-      // bookingStorage.clearAll();
-
+      // Save the booking ID for reference before clearing
+      bookingStorage.saveSavedBookingId(bookingId);
+      
       // Proceed to payment section
       if (typeof onNext === 'function') {
         onNext();
@@ -343,6 +350,28 @@ const BookingSection3 = ({ onBack, onNext }) => {
                     )}
                     {!customerData.identification?.nic && !customerData.identification?.passport && (
                       <p className="text-sm text-gray-500">Not provided</p>
+                    )}
+                  </div>
+                  <div className="pt-2 border-t border-purple-300">
+                    <p className="text-xs text-gray-600 mb-1">Passengers</p>
+                    {customerData.passengers && (
+                      <div className="flex gap-3">
+                        <div className="bg-white px-3 py-1.5 rounded border border-purple-200">
+                          <span className="text-xs text-gray-500">Adults:</span>{' '}
+                          <span className="font-semibold text-purple-700">{customerData.passengers.adults || 0}</span>
+                        </div>
+                        <div className="bg-white px-3 py-1.5 rounded border border-purple-200">
+                          <span className="text-xs text-gray-500">Children:</span>{' '}
+                          <span className="font-semibold text-purple-700">{customerData.passengers.children || 0}</span>
+                        </div>
+                      </div>
+                    )}
+                    {customerData.passengers && (
+                      <p className="text-xs text-gray-600 mt-1">
+                        Total: <span className="font-semibold text-purple-600">
+                          {(customerData.passengers.adults || 0) + (customerData.passengers.children || 0)} passengers
+                        </span>
+                      </p>
                     )}
                   </div>
                 </div>
