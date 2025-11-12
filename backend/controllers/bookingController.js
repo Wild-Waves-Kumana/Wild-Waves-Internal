@@ -82,6 +82,15 @@ export const createBooking = async (req, res) => {
       return res.status(400).json({ message: 'Customer identification (NIC or Passport) is required' });
     }
 
+    // Validate passenger count
+    const adults = Number(customer.passengers?.adults) || 0;
+    const children = Number(customer.passengers?.children) || 0;
+    const totalPassengers = adults + children;
+
+    if (totalPassengers === 0) {
+      return res.status(400).json({ message: 'At least one passenger is required' });
+    }
+
     // Check if booking ID already exists
     const existingBooking = await Booking.findOne({ bookingId });
     if (existingBooking) {
@@ -115,7 +124,7 @@ export const createBooking = async (req, res) => {
         totalPrice: prices?.totalPrice || 0
       },
 
-      // Customer
+      // Customer (including passengers)
       customer: {
         name: customer.name,
         email: customer.email,
@@ -123,6 +132,10 @@ export const createBooking = async (req, res) => {
         identification: {
           nic: customer.identification?.nic || '',
           passport: customer.identification?.passport || ''
+        },
+        passengers: {
+          adults: adults,
+          children: children
         }
       },
 
@@ -149,6 +162,7 @@ export const createBooking = async (req, res) => {
         checkOutDate: savedBooking.bookingDates.checkOutDate,
         nights: savedBooking.bookingDates.nights,
         totalPrice: savedBooking.prices.totalPrice,
+        passengers: savedBooking.customer.passengers,
         status: savedBooking.status,
         paymentStatus: savedBooking.paymentStatus,
         createdAt: savedBooking.createdAt
