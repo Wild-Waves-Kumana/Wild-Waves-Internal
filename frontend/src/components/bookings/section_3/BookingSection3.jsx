@@ -79,7 +79,6 @@ const BookingSection3 = ({ onBack, onNext }) => {
       const prices = data.prices;
       const customer = data.customer;
 
-      // Log customer data to debug
       console.log('Customer data from localStorage:', customer);
 
       const payload = {
@@ -90,7 +89,8 @@ const BookingSection3 = ({ onBack, onNext }) => {
         checkOutDate: bookingDates?.checkOutDate ? new Date(bookingDates.checkOutDate).toISOString() : null,
         nights: bookingDates?.nights || 0,
         
-        // Room Selection
+        // Room Selection (including company)
+        company: roomSelection?.companyId || null,
         villa: roomSelection?.villaId || null,
         selectedRooms: roomSelection?.rooms?.map(r => r.roomId) || [],
         acStatus: roomSelection?.acStatus ?? null,
@@ -126,10 +126,8 @@ const BookingSection3 = ({ onBack, onNext }) => {
       const res = await axios.post('/api/bookings/create', payload);
       console.log('Booking created:', res.data);
 
-      // Save the booking ID for reference before clearing
       bookingStorage.saveSavedBookingId(bookingId);
       
-      // Proceed to payment section
       if (typeof onNext === 'function') {
         onNext();
       }
