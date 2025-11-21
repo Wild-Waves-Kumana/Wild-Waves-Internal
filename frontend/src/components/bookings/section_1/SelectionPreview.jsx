@@ -207,7 +207,7 @@ const SelectionPreview = ({
             </div>
           ) : (
             <div className="rounded-md p-4 text-center">
-              <Folder className="w-12 h-12 text-yellow-500 mx-auto mb-2" />
+              <Folder className="w-10 h-10 text-yellow-500 mx-auto mb-2" />
               <p className="text-sm text-yellow-700 font-medium">No villa selected</p>
               <p className="text-xs text-yellow-600 mt-1">
                 Please select a villa from the available options below
