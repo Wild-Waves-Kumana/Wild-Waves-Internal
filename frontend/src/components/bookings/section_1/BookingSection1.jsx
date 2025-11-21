@@ -410,7 +410,7 @@ const BookingSection1 = ({ onNext }) => {
               </div>
             </div>
 
-            <div className="mt-4 flex justify-between items-center border-t border-gray-100 pt-3">
+            <div className="mt-4 flex justify-between items-center border-gray-100 pt-3">
               <span className="text-sm text-gray-700">Total Passengers</span>
               <span className={`text-base font-semibold ${totalPassengers > 0 ? 'text-purple-600' : 'text-gray-500'}`}>
                 {totalPassengers}
@@ -418,111 +418,144 @@ const BookingSection1 = ({ onNext }) => {
             </div>
             </div>
 
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 bg-white p-4 rounded-lg border border-slate-400">
+
+          {/* LEFT COLUMN — Villa + AC/Non AC + Prices */}
+          <div>
             {selectedVilla && (
-              <div className="border-t pt-4 mt-4">
-                <label className="block text-sm font-medium text-gray-700 mb-2">Selected Villa</label>
-                <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Selected Villa
+                </label>
+
+                <div className="bg-blue-50 border border-blue-200 rounded-md p-3">
                   <div className="flex justify-between items-center">
                     <div>
                       <p className="font-semibold text-blue-900">{selectedVilla.villaName}</p>
                       <p className="text-xs text-blue-600">{selectedVilla.villaId}</p>
-                      <p className="text-xs text-gray-500 mt-1">MongoDB ID: {selectedVilla._id}</p>
                     </div>
+
                     <button
                       onClick={handleBackToVillas}
-                      className="text-xs text-blue-600 hover:text-blue-800 underline"
+                      className="text-xs text-blue-600 hover:underline"
                     >
                       Change Villa
                     </button>
                   </div>
 
-                        {/* AC / Non-AC toggle - NOW WITH MANDATORY INDICATOR */}
-                <div className="mt-4">
-                  <p className="text-sm font-medium text-gray-700 mb-2">
-                    AC / Non-AC <span className="text-red-600">*</span>
-                  </p>
-                  <div className="flex gap-2">
-                    <button
-                      type="button"
-                      onClick={() => handleAcToggle(1)}
-                      className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${acStatus === 1 ? 'bg-blue-600 text-white' : 'bg-white border-2 border-gray-300 hover:border-blue-400'}`}
-                    >
-                      AC
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => handleAcToggle(0)}
-                      className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${acStatus === 0 ? 'bg-blue-600 text-white' : 'bg-white border-2 border-gray-300 hover:border-blue-400'}`}
-                    >
-                      Non-AC
-                    </button>
-                  </div>
+    
+                  
+                    {/* Price List — now also the selector */}
+                    <div className="mt-4">
+                      <p className="text-sm text-gray-700 font-medium mb-1">
+                        Room Type <span className="text-red-600">*</span>
+                      </p>
 
-                  {acStatus === null && (
-                    <p className="text-xs text-red-600 mt-2">
-                      ⚠️ Please select AC or Non-AC preference to continue
-                    </p>
-                  )}
+                      <ul className="space-y-1 text-sm">
+                        {selectedVilla?.villaBasePrice?.withAC !== undefined && (
+                          <li
+                            onClick={() => handleAcToggle(1)}
+                            className={`p-2 rounded-md border flex justify-between cursor-pointer transition 
+                              ${
+                                acStatus === 1
+                                  ? "bg-blue-600 text-white border-blue-600"
+                                  : "bg-white text-gray-800 border-gray-200 hover:border-blue-400"
+                              }`}
+                          >
+                            <span>AC</span>
+                            <span className={`font-semibold ${acStatus === 1 ? "text-white" : "text-gray-700"}`}>
+                              LKR {selectedVilla.villaBasePrice.withAC}
+                            </span>
+                          </li>
+                        )}
 
-                  {/* Show prices and selected price highlight */}
-                  <div className="mt-3 text-sm">
-                    <div className="flex gap-2 items-center">
-                      {selectedVilla?.villaBasePrice?.withAC !== undefined && (
-                        <span className={`px-2 py-1 rounded text-sm ${acStatus === 1 ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-700'}`}>
-                          AC: LKR {selectedVilla.villaBasePrice.withAC}
-                        </span>
+                        {selectedVilla?.villaBasePrice?.withoutAC !== undefined && (
+                          <li
+                            onClick={() => handleAcToggle(0)}
+                            className={`p-2 rounded-md border flex justify-between cursor-pointer transition 
+                              ${
+                                acStatus === 0
+                                  ? "bg-blue-600 text-white border-blue-600"
+                                  : "bg-white text-gray-800 border-gray-200 hover:border-blue-400"
+                              }`}
+                          >
+                            <span>Non-AC</span>
+                            <span className={`font-semibold ${acStatus === 0 ? "text-white" : "text-gray-700"}`}>
+                              LKR {selectedVilla.villaBasePrice.withoutAC}
+                            </span>
+                          </li>
+                        )}
+                      </ul>
+
+                      {/* Warning if nothing selected */}
+                      {acStatus === null && (
+                        <p className="text-xs text-red-500 mt-2">
+                          Please select a room type to continue
+                        </p>
                       )}
-                      {selectedVilla?.villaBasePrice?.withoutAC !== undefined && (
-                        <span className={`px-2 py-1 rounded text-sm ${acStatus === 0 ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-700'}`}>
-                          Non-AC: LKR {selectedVilla.villaBasePrice.withoutAC}
-                        </span>
+
+                      {/* Selected Price */}
+                      {acStatus !== null && (
+                        <p className="mt-2 text-sm text-green-700">
+                          Selected price: LKR{" "}
+                          {acStatus === 1
+                            ? selectedVilla.villaBasePrice.withAC
+                            : selectedVilla.villaBasePrice.withoutAC}{" "}
+                          / night
+                        </p>
                       )}
+
+                      {acStatus === null && (
+                        <p className="mt-2 text-sm text-gray-500">
+                          Choose AC / Non-AC to view the final price
+                        </p>
+                      )}
+                    
+
+
+                    <div>
+
+                      
                     </div>
-
-                    {(() => {
-                      const withAC = selectedVilla?.villaBasePrice?.withAC;
-                      const withoutAC = selectedVilla?.villaBasePrice?.withoutAC;
-                      if (acStatus === 1 && withAC !== undefined) {
-                        return <p className="mt-2 text-sm text-green-700">Selected price: LKR {withAC} / night</p>;
-                      }
-                      if (acStatus === 0 && withoutAC !== undefined) {
-                        return <p className="mt-2 text-sm text-green-700">Selected price: LKR {withoutAC} / night</p>;
-                      }
-                      if (withAC !== undefined || withoutAC !== undefined) {
-                        return <p className="mt-2 text-sm text-gray-600">Choose AC / Non-AC to see selected price</p>;
-                      }
-                      return null;
-                    })()}
                   </div>
                 </div>
               </div>
-            </div>
-          )}
+            )}
+          </div>
 
-          {selectedRoomIds.length > 0 && (
-            <div className="border-t pt-4 mt-4">
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Selected Rooms ({selectedRoomIds.length})
-              </label>
-              <div className="space-y-2">
-                {getSelectedRooms().map((room) => (
-                  <div key={room._id} className="bg-green-50 border border-green-200 rounded-lg p-2 flex justify-between items-center">
-                    <div>
-                      <p className="text-sm font-medium text-green-900">{room.roomName}</p>
-                      <p className="text-xs text-green-600">{room.roomId}</p>
-                      <p className="text-xs text-gray-500">MongoDB ID: {room._id}</p>
-                    </div>
-                    <button
-                      onClick={() => handleRoomToggle(room)}
-                      className="text-xs text-red-600 hover:text-red-800"
+          {/* RIGHT COLUMN — Selected Rooms */}
+          <div>
+            {selectedRoomIds.length > 0 && (
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Selected Rooms ({selectedRoomIds.length})
+                </label>
+
+                <div className="space-y-2">
+                  {getSelectedRooms().map((room) => (
+                    <div
+                      key={room._id}
+                      className="bg-green-50 border border-green-200 rounded-lg p-2 flex justify-between items-center"
                     >
-                      Remove
-                    </button>
-                  </div>
-                ))}
+                      <div>
+                        <p className="text-sm font-medium text-green-900">{room.roomName}</p>
+                        <p className="text-xs text-green-600">{room.roomId}</p>
+                      </div>
+                      <button
+                        onClick={() => handleRoomToggle(room)}
+                        className="text-xs text-red-600 hover:text-red-800"
+                      >
+                        Remove
+                      </button>
+                    </div>
+                  ))}
+                </div>
               </div>
-            </div>
-          )}
+            )}
+          </div>
+        </div>
+
+
         </div>
 
         <div>
