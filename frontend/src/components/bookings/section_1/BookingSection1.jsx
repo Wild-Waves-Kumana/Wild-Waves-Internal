@@ -8,6 +8,8 @@ import { bookingStorage } from '../../../utils/bookingStorage';
 
 const BookingSection1 = ({ onNext }) => {
   const [selectedDates, setSelectedDates] = useState([]);
+  const [companies, setCompanies] = useState([]);
+  const [selectedCompany, setSelectedCompany] = useState(null);
   const [villas, setVillas] = useState([]);
   const [selectedVilla, setSelectedVilla] = useState(null);
   const [rooms, setRooms] = useState([]);
@@ -15,6 +17,7 @@ const BookingSection1 = ({ onNext }) => {
   const [acStatus, setAcStatus] = useState(null);
   const [loading, setLoading] = useState(false);
   const [loadingRooms, setLoadingRooms] = useState(false);
+  const [loadingCompanies, setLoadingCompanies] = useState(false);
   
   const [passengers, setPassengers] = useState({
     adults: 0,
@@ -37,19 +40,62 @@ const BookingSection1 = ({ onNext }) => {
     return { checkin: chkIn, checkout: chkOut, nights: diff };
   }, [selectedDates]);
 
+  // Fetch companies on mount
+  useEffect(() => {
+    fetchCompanies();
+  }, []);
+
+  const fetchCompanies = async () => {
+    setLoadingCompanies(true);
+    try {
+      const response = await axios.get('/api/company/all');
+      console.log('Fetched companies:', response.data);
+      setCompanies(response.data);
+    } catch (error) {
+      console.error('Error fetching companies:', error);
+      setCompanies([]);
+    } finally {
+      setLoadingCompanies(false);
+    }
+  };
+
+  const handleCompanyChange = (companyId) => {
+    setSelectedCompany(companyId || null);
+    
+    // Reset villa and room selections when company changes
+    setSelectedVilla(null);
+    setRooms([]);
+    setSelectedRoomIds([]);
+    setVillas([]);
+    
+    // Clear storage
+    bookingStorage.saveRoomSelection({
+      villaId: null,
+      acStatus: acStatus,
+      rooms: []
+    });
+  };
+
   const fetchRoomsForVilla = useCallback(async (villaId) => {
     setLoadingRooms(true);
     try {
       const response = await axios.get(`/api/rooms/user/${villaId}`);
-      setRooms(response.data);
-      console.log('Fetched rooms:', response.data);
+      const allRooms = response.data;
+      
+      // Filter rooms by selected company if a company is selected
+      const filteredRooms = selectedCompany 
+        ? allRooms.filter(room => room.companyId === selectedCompany)
+        : allRooms;
+      
+      setRooms(filteredRooms);
+      console.log('Fetched rooms:', filteredRooms);
     } catch (error) {
       console.error('Error fetching rooms:', error);
       setRooms([]);
     } finally {
       setLoadingRooms(false);
     }
-  }, []);
+  }, [selectedCompany]);
 
   const fetchVillaById = useCallback(async (villaId) => {
     try {
@@ -119,18 +165,15 @@ const BookingSection1 = ({ onNext }) => {
     const numValue = parseInt(value) || 0;
     setPassengers(prev => ({
       ...prev,
-      [type]: Math.max(0, numValue) // Ensure non-negative
+      [type]: Math.max(0, numValue)
     }));
   };
 
   const handleVillaSelect = async (villa) => {
     console.log('Selected villa object:', villa);
     setSelectedVilla(villa);
-
-    // Clear previously selected rooms
     setSelectedRoomIds([]);
     
-    // Save room selection with new villa
     bookingStorage.saveRoomSelection({
       villaId: villa._id,
       acStatus: acStatus,
@@ -143,7 +186,6 @@ const BookingSection1 = ({ onNext }) => {
   const handleAcToggle = (value) => {
     setAcStatus(value);
     
-    // Update room selection with AC status
     const currentSelection = bookingStorage.getRoomSelection() || {};
     bookingStorage.saveRoomSelection({
       ...currentSelection,
@@ -169,7 +211,6 @@ const BookingSection1 = ({ onNext }) => {
     
     setSelectedRoomIds(updatedIds);
 
-    // Get updated rooms array with details
     const updatedRooms = rooms
       .filter(r => updatedIds.includes(r._id))
       .map(r => ({
@@ -178,7 +219,6 @@ const BookingSection1 = ({ onNext }) => {
         capacity: r.capacity || 0
       }));
 
-    // Save room selection
     const currentSelection = bookingStorage.getRoomSelection() || {};
     bookingStorage.saveRoomSelection({
       villaId: currentSelection.villaId || selectedVilla?._id,
@@ -187,7 +227,6 @@ const BookingSection1 = ({ onNext }) => {
     });
   };
 
-  // Save prices whenever relevant data changes
   useEffect(() => {
     const selectedRooms = getSelectedRooms();
     
@@ -212,7 +251,6 @@ const BookingSection1 = ({ onNext }) => {
     const perNightTotal = villaPrice + roomsTotal;
     const totalPrice = perNightTotal * Math.max(0, Number(nights) || 0);
 
-    // Save prices
     bookingStorage.savePrices({
       villaPrice,
       roomPrices,
@@ -221,7 +259,6 @@ const BookingSection1 = ({ onNext }) => {
     });
   }, [selectedVilla, selectedRoomIds, nights, acStatus, rooms]); // eslint-disable-line
 
-  // build continuous range between two dates (inclusive)
   const buildRange = (a, b) => {
     const start = new Date(Math.min(a, b));
     const end = new Date(Math.max(a, b));
@@ -251,24 +288,30 @@ const BookingSection1 = ({ onNext }) => {
     setSelectedDates(range);
   };
 
- 
-
+  // Fetch villas when dates and company are selected
   useEffect(() => {
-    if (selectedDates.length > 0) {
+    if (selectedDates.length > 0 && selectedCompany) {
       fetchVillas();
     } else {
       setVillas([]);
       setSelectedVilla(null);
       setRooms([]);
     }
-  }, [selectedDates]);
+  }, [selectedDates, selectedCompany]); // eslint-disable-line
 
   const fetchVillas = async () => {
     setLoading(true);
     try {
       const response = await axios.get('/api/villas/all');
-      console.log('Fetched villas:', response.data);
-      setVillas(response.data);
+      console.log('Fetched all villas:', response.data);
+      
+      // Filter villas by selected company
+      const filteredVillas = selectedCompany
+        ? response.data.filter(villa => villa.companyId === selectedCompany)
+        : response.data;
+      
+      console.log('Filtered villas for company:', filteredVillas);
+      setVillas(filteredVillas);
     } catch (error) {
       console.error('Error fetching villas:', error);
       setVillas([]);
@@ -282,7 +325,6 @@ const BookingSection1 = ({ onNext }) => {
     setRooms([]);
     setSelectedRoomIds([]);
     
-    // Clear villa from room selection
     const currentSelection = bookingStorage.getRoomSelection() || {};
     bookingStorage.saveRoomSelection({
       ...currentSelection,
@@ -304,15 +346,15 @@ const BookingSection1 = ({ onNext }) => {
     }
   };
 
-  // Check if all required selections are made - UPDATED to include AC status and passenger count
   const isSelectionComplete = useMemo(() => {
     const totalPassengers = passengers.adults + passengers.children;
-    return selectedDates.length > 0 && 
+    return selectedCompany !== null &&
+           selectedDates.length > 0 && 
            selectedVilla !== null && 
            selectedRoomIds.length > 0 &&
-           acStatus !== null && // AC selection is mandatory
-           totalPassengers > 0; // At least one passenger required
-  }, [selectedDates, selectedVilla, selectedRoomIds, acStatus, passengers]);
+           acStatus !== null &&
+           totalPassengers > 0;
+  }, [selectedCompany, selectedDates, selectedVilla, selectedRoomIds, acStatus, passengers]);
 
   const totalPassengers = passengers.adults + passengers.children;
 
@@ -333,6 +375,10 @@ const BookingSection1 = ({ onNext }) => {
           selectedRoomIds={selectedRoomIds}
           getSelectedRooms={getSelectedRooms}
           handleRoomToggle={handleRoomToggle}
+          companies={companies}
+          selectedCompany={selectedCompany}
+          handleCompanyChange={handleCompanyChange}
+          loadingCompanies={loadingCompanies}
         />
 
         {/* Right Column - Calendar and Prices */}
@@ -356,6 +402,7 @@ const BookingSection1 = ({ onNext }) => {
       {/* Villa and Room Selection Section */}
       <VillaRoomSelection
         selectedDates={selectedDates}
+        selectedCompany={selectedCompany}
         selectedVilla={selectedVilla}
         loading={loading}
         villas={villas}
@@ -382,7 +429,9 @@ const BookingSection1 = ({ onNext }) => {
               }`}
               title={
                 !isSelectionComplete 
-                  ? (acStatus === null 
+                  ? (!selectedCompany
+                      ? 'Please select a company'
+                      : acStatus === null 
                       ? 'Please select AC preference' 
                       : totalPassengers === 0 
                         ? 'Please enter passenger count' 
@@ -398,6 +447,7 @@ const BookingSection1 = ({ onNext }) => {
           </div>
           {!isSelectionComplete && (
             <div className="text-sm text-red-600 text-right mt-2">
+              {!selectedCompany && <p>⚠️ Please select a company</p>}
               {acStatus === null && <p>⚠️ Please select AC or Non-AC preference</p>}
               {totalPassengers === 0 && <p>⚠️ Please enter the number of passengers</p>}
             </div>
