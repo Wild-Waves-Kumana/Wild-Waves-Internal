@@ -36,7 +36,7 @@ const VillaRoomSelection = ({
                     <div>
                       <h4 className="font-semibold text-lg">{villa.villaName}</h4>
                       <p className="text-sm text-gray-500">{villa.villaId}</p>
-                      <p className="text-xs text-gray-400">ID: {villa._id}</p>
+                      
                     </div>
                     {villa.hasAC && (
                       <span className="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded">
