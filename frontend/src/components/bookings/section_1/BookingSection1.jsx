@@ -310,8 +310,36 @@ const BookingSection1 = ({ onNext }) => {
         ? response.data.filter(villa => villa.companyId === selectedCompany)
         : response.data;
       
-      console.log('Filtered villas for company:', filteredVillas);
-      setVillas(filteredVillas);
+      // Fetch room capacities for each villa
+      const villasWithCapacity = await Promise.all(
+        filteredVillas.map(async (villa) => {
+          try {
+            const roomsResponse = await axios.get(`/api/rooms/user/${villa._id}`);
+            const villaRooms = selectedCompany
+              ? roomsResponse.data.filter(room => room.companyId === selectedCompany)
+              : roomsResponse.data;
+            
+            // Calculate total capacity from bedrooms only
+            const totalCapacity = villaRooms
+              .filter(room => room.type === 'bedroom' && room.capacity)
+              .reduce((sum, room) => sum + (room.capacity || 0), 0);
+            
+            return {
+              ...villa,
+              maxCapacity: totalCapacity
+            };
+          } catch (error) {
+            console.error(`Error fetching rooms for villa ${villa._id}:`, error);
+            return {
+              ...villa,
+              maxCapacity: 0
+            };
+          }
+        })
+      );
+      
+      console.log('Filtered villas with capacity:', villasWithCapacity);
+      setVillas(villasWithCapacity);
     } catch (error) {
       console.error('Error fetching villas:', error);
       setVillas([]);
