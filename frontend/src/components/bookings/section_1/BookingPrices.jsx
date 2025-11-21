@@ -1,12 +1,5 @@
 import React from 'react';
 
-/**
- * Props:
- * - selectedVilla: villa object (may contain villaBasePrice.withAC / withoutAC)
- * - selectedRooms: array of selected room objects (each may have roomBasePrice)
- * - nights: number
- * - acStatus: 1 | 0 | null
- */
 const BookingPrices = ({ selectedVilla, selectedRooms = [], nights = 0, acStatus = null }) => {
   const villaPricePerNight = (() => {
     if (!selectedVilla?.villaBasePrice) return 0;
