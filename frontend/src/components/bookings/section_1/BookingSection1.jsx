@@ -4,6 +4,7 @@ import BookingCalendar from './BookingCalender';
 import BookingPrices from './BookingPrices';
 import { bookingStorage } from '../../../utils/bookingStorage';
 import { FaUserFriends } from 'react-icons/fa';
+import { Folder } from 'lucide-react';
 
 const BookingSection1 = ({ onNext }) => {
   const [selectedDates, setSelectedDates] = useState([]);
@@ -422,146 +423,151 @@ const BookingSection1 = ({ onNext }) => {
 
           {/* LEFT COLUMN — Villa + AC/Non AC + Prices */}
           <div>
-            {selectedVilla && (
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Selected Villa
-                </label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Selected Villa
+            </label>
 
-                <div className="bg-blue-50 border border-blue-200 rounded-md p-3">
-                  <div className="flex justify-between items-center">
-                    <div>
-                      <p className="font-semibold text-blue-900">{selectedVilla.villaName}</p>
-                      <p className="text-xs text-blue-600">{selectedVilla.villaId}</p>
-                    </div>
-
-                    <button
-                      onClick={handleBackToVillas}
-                      className="text-xs text-blue-600 hover:underline"
-                    >
-                      Change Villa
-                    </button>
+            {selectedVilla ? (
+              <div className="bg-blue-50 border border-blue-200 rounded-md p-3">
+                <div className="flex justify-between items-center">
+                  <div>
+                    <p className="font-semibold text-blue-900">{selectedVilla.villaName}</p>
+                    <p className="text-xs text-blue-600">{selectedVilla.villaId}</p>
                   </div>
 
-    
-                  
-                    {/* Price List — now also the selector */}
-                    <div className="mt-4">
-                      <p className="text-sm text-gray-700 font-medium mb-1">
-                        Room Type <span className="text-red-600">*</span>
-                      </p>
-
-                      <ul className="space-y-1 text-sm">
-                        {selectedVilla?.villaBasePrice?.withAC !== undefined && (
-                          <li
-                            onClick={() => handleAcToggle(1)}
-                            className={`p-2 rounded-md border flex justify-between cursor-pointer transition 
-                              ${
-                                acStatus === 1
-                                  ? "bg-blue-600 text-white border-blue-600"
-                                  : "bg-white text-gray-800 border-gray-200 hover:border-blue-400"
-                              }`}
-                          >
-                            <span>AC</span>
-                            <span className={`font-semibold ${acStatus === 1 ? "text-white" : "text-gray-700"}`}>
-                              LKR {selectedVilla.villaBasePrice.withAC}
-                            </span>
-                          </li>
-                        )}
-
-                        {selectedVilla?.villaBasePrice?.withoutAC !== undefined && (
-                          <li
-                            onClick={() => handleAcToggle(0)}
-                            className={`p-2 rounded-md border flex justify-between cursor-pointer transition 
-                              ${
-                                acStatus === 0
-                                  ? "bg-blue-600 text-white border-blue-600"
-                                  : "bg-white text-gray-800 border-gray-200 hover:border-blue-400"
-                              }`}
-                          >
-                            <span>Non-AC</span>
-                            <span className={`font-semibold ${acStatus === 0 ? "text-white" : "text-gray-700"}`}>
-                              LKR {selectedVilla.villaBasePrice.withoutAC}
-                            </span>
-                          </li>
-                        )}
-                      </ul>
-
-                      {/* Warning if nothing selected */}
-                      {acStatus === null && (
-                        <p className="text-xs text-red-500 mt-2">
-                          Please select a room type to continue
-                        </p>
-                      )}
-
-                      {/* Selected Price */}
-                      {acStatus !== null && (
-                        <p className="mt-2 text-sm text-green-700">
-                          Selected price: LKR{" "}
-                          {acStatus === 1
-                            ? selectedVilla.villaBasePrice.withAC
-                            : selectedVilla.villaBasePrice.withoutAC}{" "}
-                          / night
-                        </p>
-                      )}
-
-                      {acStatus === null && (
-                        <p className="mt-2 text-sm text-gray-500">
-                          Choose AC / Non-AC to view the final price
-                        </p>
-                      )}
-                    
-
-
-                    <div>
-
-                      
-                    </div>
-                  </div>
+                  <button
+                    onClick={handleBackToVillas}
+                    className="text-xs text-blue-600 hover:underline"
+                  >
+                    Change Villa
+                  </button>
                 </div>
-              </div>
-            )}
-          </div>
 
-          {/* RIGHT COLUMN — Selected Rooms */}
-          <div>
-            {selectedRoomIds.length > 0 && (
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Selected Rooms ({selectedRoomIds.length})
-                </label>
+                {/* Price List — now also the selector */}
+                <div className="mt-4">
+                  <p className="text-sm text-gray-700 font-medium mb-1">
+                    Room Type <span className="text-red-600">*</span>
+                  </p>
 
-                <div className="space-y-2">
-                  {getSelectedRooms().map((room) => (
-                    <div
-                      key={room._id}
-                      className="bg-green-50 border border-green-200 rounded-lg p-2 flex justify-between items-center"
-                    >
-                      <div>
-                        <p className="text-sm font-medium text-green-900">{room.roomName}</p>
-                        <p className="text-xs text-green-600">{room.roomId}</p>
-                      </div>
-                      <button
-                        onClick={() => handleRoomToggle(room)}
-                        className="text-xs text-red-600 hover:text-red-800"
+                  <ul className="space-y-1 text-sm">
+                    {selectedVilla?.villaBasePrice?.withAC !== undefined && (
+                      <li
+                        onClick={() => handleAcToggle(1)}
+                        className={`p-2 rounded-md border flex justify-between cursor-pointer transition 
+                          ${
+                            acStatus === 1
+                              ? "bg-blue-600 text-white border-blue-600"
+                              : "bg-white text-gray-800 border-gray-200 hover:border-blue-400"
+                          }`}
                       >
-                        Remove
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
+                        <span>AC</span>
+                        <span className={`font-semibold ${acStatus === 1 ? "text-white" : "text-gray-700"}`}>
+                          LKR {selectedVilla.villaBasePrice.withAC}
+                        </span>
+                      </li>
+                    )}
+
+                    {selectedVilla?.villaBasePrice?.withoutAC !== undefined && (
+                      <li
+                        onClick={() => handleAcToggle(0)}
+                        className={`p-2 rounded-md border flex justify-between cursor-pointer transition 
+                          ${
+                            acStatus === 0
+                              ? "bg-blue-600 text-white border-blue-600"
+                              : "bg-white text-gray-800 border-gray-200 hover:border-blue-400"
+                          }`}
+                      >
+                        <span>Non-AC</span>
+                        <span className={`font-semibold ${acStatus === 0 ? "text-white" : "text-gray-700"}`}>
+                          LKR {selectedVilla.villaBasePrice.withoutAC}
+                        </span>
+                      </li>
+                    )}
+                  </ul>
+
+                  {/* Warning if nothing selected */}
+                  {acStatus === null && (
+                    <p className="text-xs text-red-500 mt-2">
+                      Please select a room type to continue
+                    </p>
+                  )}
+
+                  
+          {acStatus !== null && (
+          <p className="mt-2 text-sm text-green-700">
+            Selected price: LKR{" "}
+            {acStatus === 1
+            ? selectedVilla.villaBasePrice.withAC
+            : selectedVilla.villaBasePrice.withoutAC}{" "}
+            / night
+          </p>
+          )}
+
+          {acStatus === null && (
+          <p className="mt-2 text-sm text-gray-500">
+            Choose AC / Non-AC to view the final price
+          </p>
+          )}
+        </div>
+        </div>
+      ) : (
+        <div className=" rounded-md p-4 text-center">
+        <Folder className="w-12 h-12 text-yellow-500 mx-auto mb-2" />
+        <p className="text-sm text-yellow-700 font-medium">No villa selected</p>
+        <p className="text-xs text-yellow-600 mt-1">
+          Please select a villa from the available options below
+        </p>
+        </div>
+      )}
+      </div>
+
+      
+        <div>
+        <label className="block text-sm font-medium text-gray-700 mb-1">
+          Selected Rooms ({selectedRoomIds.length})
+        </label>
+
+        {selectedRoomIds.length > 0 ? (
+          <div className="space-y-2">
+          {getSelectedRooms().map((room) => (
+          <div
+          key={room._id}
+          className="bg-green-50 border border-green-200 rounded-lg p-2 flex justify-between items-center"
+          >
+          <div>
+            <p className="text-sm font-medium text-green-900">{room.roomName}</p>
+            <p className="text-xs text-green-600">{room.roomId}</p>
           </div>
+          <button
+            onClick={() => handleRoomToggle(room)}
+            className="text-xs text-red-600 hover:text-red-800"
+          >
+            Remove
+          </button>
+          </div>
+          ))}
+          </div>
+        ) : (
+          <div className=" rounded-md p-4 text-center  flex items-center justify-center">
+          <div>
+          <Folder className="w-10 h-10 text-gray-400 mx-auto mb-2" />
+          <p className="text-sm text-gray-500">No rooms selected</p>
+          <p className="text-xs text-gray-400 mt-1">
+          {selectedVilla ? 'Select rooms from below' : 'Select a villa first'}
+          </p>
+          </div>
+          </div>
+        )}
+        </div>
         </div>
 
 
         </div>
 
         <div>
-          <BookingCalendar
-          selectedDates={selectedDates}
-          onDateToggle={toggleDateSelection}
+        <BookingCalendar
+        selectedDates={selectedDates}
+        onDateToggle={toggleDateSelection}
         />
 
         {/* Price summary shown under calendar */}
@@ -772,7 +778,7 @@ const BookingSection1 = ({ onNext }) => {
               })}
             </div>
           ) : (
-            <div className="text-center py-8 text-gray-500">
+            <div className="text-center text-gray-500">
               <p>No rooms available in this villa</p>
             </div>
           )}
