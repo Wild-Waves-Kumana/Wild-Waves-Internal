@@ -1,5 +1,5 @@
 import React from 'react';
-import { FaUserFriends } from 'react-icons/fa';
+import { FaUserFriends, FaBuilding } from 'react-icons/fa';
 import { Folder } from 'lucide-react';
 
 const SelectionPreview = ({
@@ -14,13 +14,19 @@ const SelectionPreview = ({
   handleBackToVillas,
   selectedRoomIds,
   getSelectedRooms,
-  handleRoomToggle
+  handleRoomToggle,
+  companies,
+  selectedCompany,
+  handleCompanyChange,
+  loadingCompanies
 }) => {
   const totalPassengers = passengers.adults + passengers.children;
 
   return (
     <div className="bg-white p-6 rounded-lg shadow-md space-y-4">
       <h3 className="text-lg font-semibold mb-2">Booking Details</h3>
+
+      
 
       {/* Dates Section */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -72,6 +78,40 @@ const SelectionPreview = ({
             </div>
           </div>
         </div>
+      </div>
+
+      {/* Company Selection Section */}
+      <div className="bg-white border border-slate-400 rounded-xl p-4">
+        <h4 className="text-sm font-semibold text-gray-800 mb-4 flex items-center gap-2">
+          <FaBuilding className="w-5 h-5 text-blue-500" />
+          Select Company <span className="text-red-500">*</span>
+        </h4>
+
+        {loadingCompanies ? (
+          <div className="flex items-center justify-center py-4">
+            <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
+            <span className="ml-2 text-sm text-gray-600">Loading companies...</span>
+          </div>
+        ) : (
+          <select
+            value={selectedCompany || ''}
+            onChange={(e) => handleCompanyChange(e.target.value)}
+            className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none transition"
+          >
+            <option value="">-- Select a Company --</option>
+            {companies.map((company) => (
+              <option key={company._id} value={company._id}>
+                {company.companyName} ({company.companyId})
+              </option>
+            ))}
+          </select>
+        )}
+
+        {selectedCompany && (
+          <div className="mt-2 text-xs text-green-600">
+            ✓ Company selected
+          </div>
+        )}
       </div>
 
       {/* Passengers Section */}
@@ -210,7 +250,7 @@ const SelectionPreview = ({
               <Folder className="w-10 h-10 text-yellow-500 mx-auto mb-2" />
               <p className="text-sm text-yellow-700 font-medium">No villa selected</p>
               <p className="text-xs text-yellow-600 mt-1">
-                Please select a villa from the available options below
+                {selectedCompany ? 'Please select a villa from the available options below' : 'Please select a company first'}
               </p>
             </div>
           )}
