@@ -48,6 +48,7 @@ export const createBooking = async (req, res) => {
       checkInDate,
       checkOutDate,
       nights,
+      company,
       villa,
       selectedRooms,
       acStatus,
@@ -63,6 +64,10 @@ export const createBooking = async (req, res) => {
 
     if (!checkInDate || !checkOutDate) {
       return res.status(400).json({ message: 'Check-in and check-out dates are required' });
+    }
+
+    if (!company) {
+      return res.status(400).json({ message: 'Company selection is required' });
     }
 
     if (!villa) {
@@ -111,6 +116,7 @@ export const createBooking = async (req, res) => {
 
       // Room Selection
       roomSelection: {
+        companyId: company,
         villaId: villa,
         acStatus: acStatus !== null && acStatus !== undefined ? Number(acStatus) : null,
         rooms: bookingData?.roomSelection?.rooms || []
@@ -158,6 +164,7 @@ export const createBooking = async (req, res) => {
       booking: {
         bookingId: savedBooking.bookingId,
         _id: savedBooking._id,
+        companyId: savedBooking.roomSelection.companyId,
         checkInDate: savedBooking.bookingDates.checkInDate,
         checkOutDate: savedBooking.bookingDates.checkOutDate,
         nights: savedBooking.bookingDates.nights,
@@ -199,6 +206,7 @@ export const createBooking = async (req, res) => {
 export const getAllBookings = async (req, res) => {
   try {
     const bookings = await Booking.find()
+      .populate('roomSelection.companyId', 'companyName companyId')
       .populate('roomSelection.villaId', 'villaName villaId villaLocation')
       .populate('roomSelection.rooms.roomId', 'roomName roomId type')
       .sort({ createdAt: -1 });
@@ -223,6 +231,7 @@ export const getBookingById = async (req, res) => {
     const { id } = req.params;
     
     const booking = await Booking.findOne({ bookingId: id })
+      .populate('roomSelection.companyId')
       .populate('roomSelection.villaId')
       .populate('roomSelection.rooms.roomId');
 
@@ -249,6 +258,7 @@ export const getBookingByMongoId = async (req, res) => {
     const { id } = req.params;
     
     const booking = await Booking.findById(id)
+      .populate('roomSelection.companyId')
       .populate('roomSelection.villaId')
       .populate('roomSelection.rooms.roomId');
 

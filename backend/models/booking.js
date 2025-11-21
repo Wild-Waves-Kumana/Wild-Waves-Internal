@@ -31,6 +31,11 @@ const bookingSchema = new mongoose.Schema({
 
   // Room Selection Section
   roomSelection: {
+    companyId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Company',
+      required: true
+    },
     villaId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'Villa',
@@ -152,6 +157,7 @@ const bookingSchema = new mongoose.Schema({
 
 // Indexes for better query performance
 bookingSchema.index({ 'bookingDates.checkInDate': 1, 'bookingDates.checkOutDate': 1 });
+bookingSchema.index({ 'roomSelection.companyId': 1 });
 bookingSchema.index({ 'customer.email': 1 });
 bookingSchema.index({ status: 1 });
 bookingSchema.index({ createdAt: -1 });
