@@ -68,10 +68,12 @@ const BookingSection1 = ({ onNext }) => {
     setSelectedRoomIds([]);
     setVillas([]);
     
-    // Clear storage
+    // Save company selection in storage
+    const currentSelection = bookingStorage.getRoomSelection() || {};
     bookingStorage.saveRoomSelection({
+      ...currentSelection,
+      companyId: companyId || null,
       villaId: null,
-      acStatus: acStatus,
       rooms: []
     });
   };
@@ -115,18 +117,28 @@ const BookingSection1 = ({ onNext }) => {
     const roomSelection = bookingStorage.getRoomSelection();
     const customer = bookingStorage.getCustomer();
 
+    // Load booking dates
     if (bookingDates?.dates && bookingDates.dates.length > 0) {
       setSelectedDates(bookingDates.dates);
     }
 
+    // Load company selection
+    if (roomSelection?.companyId) {
+      setSelectedCompany(roomSelection.companyId);
+      console.log('Restored company from localStorage:', roomSelection.companyId);
+    }
+
+    // Load villa selection
     if (roomSelection?.villaId) {
       fetchVillaById(roomSelection.villaId);
     }
 
+    // Load room selections
     if (roomSelection?.rooms && roomSelection.rooms.length > 0) {
       setSelectedRoomIds(roomSelection.rooms.map(r => r.roomId));
     }
 
+    // Load AC status
     if (roomSelection?.acStatus !== null && roomSelection?.acStatus !== undefined) {
       setAcStatus(roomSelection.acStatus);
     }
@@ -175,6 +187,7 @@ const BookingSection1 = ({ onNext }) => {
     setSelectedRoomIds([]);
     
     bookingStorage.saveRoomSelection({
+      companyId: selectedCompany,
       villaId: villa._id,
       acStatus: acStatus,
       rooms: []
@@ -189,6 +202,7 @@ const BookingSection1 = ({ onNext }) => {
     const currentSelection = bookingStorage.getRoomSelection() || {};
     bookingStorage.saveRoomSelection({
       ...currentSelection,
+      companyId: selectedCompany,
       acStatus: value
     });
   };
@@ -221,6 +235,7 @@ const BookingSection1 = ({ onNext }) => {
 
     const currentSelection = bookingStorage.getRoomSelection() || {};
     bookingStorage.saveRoomSelection({
+      companyId: selectedCompany,
       villaId: currentSelection.villaId || selectedVilla?._id,
       acStatus: currentSelection.acStatus,
       rooms: updatedRooms
@@ -294,8 +309,11 @@ const BookingSection1 = ({ onNext }) => {
       fetchVillas();
     } else {
       setVillas([]);
-      setSelectedVilla(null);
-      setRooms([]);
+      // Don't clear selectedVilla here if we're loading from localStorage
+      if (!selectedCompany) {
+        setSelectedVilla(null);
+        setRooms([]);
+      }
     }
   }, [selectedDates, selectedCompany]); // eslint-disable-line
 
@@ -355,8 +373,9 @@ const BookingSection1 = ({ onNext }) => {
     
     const currentSelection = bookingStorage.getRoomSelection() || {};
     bookingStorage.saveRoomSelection({
-      ...currentSelection,
+      companyId: selectedCompany,
       villaId: null,
+      acStatus: currentSelection.acStatus,
       rooms: []
     });
   };
