@@ -52,6 +52,7 @@ export const bookingStorage = {
   saveRoomSelection: (data) => {
     try {
       const roomData = {
+        companyId: data.companyId || null,
         villaId: data.villaId || null,
         acStatus: data.acStatus === 1 || data.acStatus === 0 ? Number(data.acStatus) : null,
         rooms: Array.isArray(data.rooms) ? data.rooms.map(r => ({
@@ -108,7 +109,6 @@ export const bookingStorage = {
   },
 
   // ==================== CUSTOMER SECTION ====================
-  // saveCustomer now merges with existing stored customer and only overwrites fields provided.
   saveCustomer: (data) => {
     try {
       const existing = bookingStorage.getCustomer() || {};
@@ -130,8 +130,6 @@ export const bookingStorage = {
       };
 
       localStorage.setItem(BOOKING_STORAGE_KEYS.CUSTOMER, JSON.stringify(customerData));
-      // Debug: uncomment if needed
-      // console.log('Saved customer data:', customerData);
     } catch (e) {
       console.error('Failed to save customer:', e);
     }
@@ -154,7 +152,6 @@ export const bookingStorage = {
         children: Number(parsed.passengers?.children ?? 0)
       };
 
-      // console.log('Retrieved customer data:', parsed);
       return parsed;
     } catch (e) {
       console.error('Failed to get customer:', e);
@@ -196,7 +193,6 @@ export const bookingStorage = {
     localStorage.removeItem(BOOKING_STORAGE_KEYS.ROOM_SELECTION);
     localStorage.removeItem(BOOKING_STORAGE_KEYS.PRICES);
     localStorage.removeItem(BOOKING_STORAGE_KEYS.CUSTOMER);
-    // console.log('Booking data cleared from localStorage');
   },
 
   // ==================== CLEAR ALL ====================
@@ -204,7 +200,6 @@ export const bookingStorage = {
     Object.values(BOOKING_STORAGE_KEYS).forEach(key => {
       localStorage.removeItem(key);
     });
-    // console.log('All booking storage cleared from localStorage');
   }
 };
 
