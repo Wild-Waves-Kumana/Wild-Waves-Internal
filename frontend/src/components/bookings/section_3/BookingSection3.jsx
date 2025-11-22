@@ -7,9 +7,7 @@ const BookingSection3 = ({ onBack, onNext }) => {
   const [bookingData, setBookingData] = useState(null);
   const [villaDetails, setVillaDetails] = useState(null);
   const [roomsDetails, setRoomsDetails] = useState([]);
-  // Removed unused customer state
   const [loading, setLoading] = useState(true);
-  const [bookingId, setBookingId] = useState(null);
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState(null);
 
@@ -19,9 +17,6 @@ const BookingSection3 = ({ onBack, onNext }) => {
       const data = bookingStorage.getBookingData();
       console.log('Loaded booking data:', data);
       setBookingData(data);
-
-      // Load customer via bookingStorage
-      // Removed unused customer state assignment
 
       // Fetch villa details from roomSelection
       if (data?.roomSelection?.villaId) {
@@ -48,15 +43,6 @@ const BookingSection3 = ({ onBack, onNext }) => {
         }
       }
 
-      // Fetch next available booking id
-      try {
-        const resId = await axios.get('/api/bookings/next-id');
-        setBookingId(resId.data?.nextBookingId ?? null);
-      } catch (err) {
-        console.error('Error fetching next booking id:', err);
-        setBookingId(null);
-      }
-
       setLoading(false);
     };
 
@@ -64,11 +50,6 @@ const BookingSection3 = ({ onBack, onNext }) => {
   }, []);
 
   const handleConfirm = async () => {
-    if (!bookingId) {
-      setSaveError('Missing booking ID.');
-      return;
-    }
-
     setSaveError(null);
     setSaving(true);
 
@@ -81,6 +62,17 @@ const BookingSection3 = ({ onBack, onNext }) => {
 
       console.log('Customer data from localStorage:', customer);
 
+      // Step 1: Generate new booking ID
+      const resId = await axios.get('/api/bookings/next-id');
+      const bookingId = resId.data?.nextBookingId;
+
+      if (!bookingId) {
+        throw new Error('Failed to generate booking ID');
+      }
+
+      console.log('Generated booking ID:', bookingId);
+
+      // Step 2: Prepare payload with generated booking ID
       const payload = {
         bookingId,
         // Dates
@@ -123,11 +115,15 @@ const BookingSection3 = ({ onBack, onNext }) => {
 
       console.log('Submitting booking payload:', payload);
 
+      // Step 3: Save to MongoDB
       const res = await axios.post('/api/bookings/create', payload);
-      console.log('Booking created:', res.data);
+      console.log('Booking created in MongoDB:', res.data);
 
+      // Step 4: Save booking ID to localStorage
       bookingStorage.saveSavedBookingId(bookingId);
+      console.log('Booking ID saved to localStorage:', bookingId);
       
+      // Step 5: Proceed to next step
       if (typeof onNext === 'function') {
         onNext();
       }
@@ -172,19 +168,12 @@ const BookingSection3 = ({ onBack, onNext }) => {
       <div className="bg-white p-6 rounded-lg shadow-md">
         <div className="flex justify-between items-center mb-6">
           <h3 className="text-2xl font-semibold text-gray-800">Booking Summary</h3>
-          <div className="flex items-center gap-3">
-            {bookingId && (
-              <span className="text-sm px-3 py-1.5 bg-blue-100 border border-blue-300 rounded-md text-blue-800 font-medium">
-                Booking ID: {bookingId}
-              </span>
-            )}
-            <button 
-              onClick={onBack} 
-              className="text-blue-600 hover:text-blue-800 underline text-sm font-medium"
-            >
-              ← Edit Details
-            </button>
-          </div>
+          <button 
+            onClick={onBack} 
+            className="text-blue-600 hover:text-blue-800 underline text-sm font-medium"
+          >
+            ← Edit Details
+          </button>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -407,7 +396,7 @@ const BookingSection3 = ({ onBack, onNext }) => {
               {saving ? (
                 <>
                   <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                  Saving...
+                  Creating Booking...
                 </>
               ) : (
                 <>
