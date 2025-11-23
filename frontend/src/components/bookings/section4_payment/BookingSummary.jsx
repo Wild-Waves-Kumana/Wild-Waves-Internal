@@ -5,8 +5,10 @@ import axios from 'axios';
 const BookingSummary = ({ bookingData, savedBookingId }) => {
   const [companyDetails, setCompanyDetails] = useState(null);
   const [villaDetails, setVillaDetails] = useState(null);
+  const [roomsDetails, setRoomsDetails] = useState([]);
   const [loadingCompany, setLoadingCompany] = useState(false);
   const [loadingVilla, setLoadingVilla] = useState(false);
+  const [loadingRooms, setLoadingRooms] = useState(false);
 
   useEffect(() => {
     const fetchCompanyDetails = async () => {
@@ -60,6 +62,50 @@ const BookingSummary = ({ bookingData, savedBookingId }) => {
     fetchVillaDetails();
   }, [bookingData]);
 
+  useEffect(() => {
+    const fetchRoomsDetails = async () => {
+      if (!bookingData?.roomSelection?.rooms || bookingData.roomSelection.rooms.length === 0) {
+        return;
+      }
+
+      setLoadingRooms(true);
+      try {
+        const roomIds = bookingData.roomSelection.rooms.map(room => {
+          // Check if room.roomId is already populated (object) or just an ID (string)
+          if (typeof room.roomId === 'object' && room.roomId !== null) {
+            return room.roomId._id;
+          }
+          return room.roomId;
+        });
+
+        console.log('Fetching room details for IDs:', roomIds);
+
+        // Fetch each room individually
+        const roomPromises = roomIds.map(roomId => 
+          axios.get(`/api/rooms/${roomId}`)
+            .then(response => response.data)
+            .catch(error => {
+              console.error(`Error fetching room ${roomId}:`, error);
+              return null;
+            })
+        );
+
+        const rooms = await Promise.all(roomPromises);
+        const validRooms = rooms.filter(room => room !== null);
+        
+        console.log('Fetched room details:', validRooms);
+        setRoomsDetails(validRooms);
+      } catch (error) {
+        console.error('Error fetching rooms details:', error);
+        setRoomsDetails([]);
+      } finally {
+        setLoadingRooms(false);
+      }
+    };
+
+    fetchRoomsDetails();
+  }, [bookingData]);
+
   if (!bookingData) {
     return (
       <div className="bg-white p-6 rounded-lg shadow-md">
@@ -69,9 +115,6 @@ const BookingSummary = ({ bookingData, savedBookingId }) => {
   }
 
   const { bookingDates, roomSelection, customer } = bookingData;
-
-  // Extract populated data
-  const roomsDetails = roomSelection?.rooms?.map(r => r.roomId).filter(Boolean) || [];
 
   return (
     <div className="bg-white p-6 rounded-lg shadow-md">
@@ -215,43 +258,74 @@ const BookingSummary = ({ bookingData, savedBookingId }) => {
         </div>
       </div>
 
-      {/* Rooms Section */}
-      {roomsDetails.length > 0 && (
+      {/* Rooms Section - Single Row with Horizontal Scroll */}
+      {(loadingRooms || roomsDetails.length > 0) && (
         <div className="mb-6">
-          <h4 className="text-sm font-semibold text-gray-700 mb-3 flex items-center gap-2">
-            <Home className="w-4 h-4 text-green-500" />
-            Selected Rooms
-          </h4>
-          <div className="text-xs text-gray-600 mb-2">
-            {roomsDetails.length} {roomsDetails.length === 1 ? 'Room' : 'Rooms'}
+          <div className="flex items-center justify-between mb-3">
+            <h4 className="text-sm font-semibold text-gray-700 flex items-center gap-2">
+              <Home className="w-4 h-4 text-green-500" />
+              Selected Rooms
+            </h4>
+            {!loadingRooms && roomsDetails.length > 0 && (
+              <span className="text-xs text-gray-600 bg-green-100 px-2 py-1 rounded-full">
+                {roomsDetails.length} {roomsDetails.length === 1 ? 'Room' : 'Rooms'}
+              </span>
+            )}
           </div>
-          <div className="space-y-2">
-            {roomsDetails.map((room, idx) => (
-              <div 
-                key={idx} 
-                className="bg-green-50 border border-green-200 rounded-md p-2 text-sm"
-              >
-                <div className="font-medium text-gray-800">{room.roomName}</div>
-                <div className="text-xs text-gray-500">{room.roomId}</div>
-                {room.capacity > 0 && (
-                  <div className="text-xs text-gray-600">
-                    Capacity: {room.capacity} {room.capacity === 1 ? 'person' : 'persons'}
+          
+          {loadingRooms ? (
+            <div className="bg-green-50 border border-green-200 rounded-md p-3">
+              <p className="text-sm text-gray-500 italic">Loading room details...</p>
+            </div>
+          ) : roomsDetails.length > 0 ? (
+            <div className="overflow-x-auto">
+              <div className="flex gap-3 pb-2">
+                {roomsDetails.map((room, idx) => (
+                  <div 
+                    key={room._id || idx} 
+                    className="bg-green-50 border border-green-200 rounded-md p-3 text-sm w-1/3 flex-shrink-0"
+                  >
+                    <div className="font-medium text-gray-800 mb-1">{room.roomName}</div>
+                    <div className="space-y-1">
+                      {room.capacity > 0 && (
+                        <div className="text-xs text-gray-600 flex items-center gap-1">
+                          <Users className="w-3 h-3" />
+                          <span>{room.capacity} {room.capacity === 1 ? 'person' : 'persons'}</span>
+                        </div>
+                      )}
+                      {room.type && (
+                        <div className="text-xs text-gray-600 capitalize">
+                          Type: {room.type}
+                        </div>
+                      )}
+                    </div>
                   </div>
-                )}
+                ))}
               </div>
-            ))}
-          </div>
+            </div>
+          ) : (
+            <p className="text-sm text-gray-400">No rooms available</p>
+          )}
         </div>
       )}
 
       {/* Customer Details */}
       <div className="mb-6">
+        <div className="flex items-center justify-between">
         <h4 className="text-sm font-semibold text-gray-700 mb-3 flex items-center gap-2">
           <Users className="w-4 h-4 text-orange-500" />
           Customer Details
         </h4>
-        <div className="bg-orange-50 border border-orange-200 rounded-md p-3 text-sm space-y-2">
-          <div>
+        {/* Right-aligned Edit Button */}
+        <div className="flex justify-end items-baseline mb-1">
+            <button className="border border-orange-300 bg-white rounded-md px-2 py-1 flex items-center gap-2">
+                <span className="text-xs text-gray-600">Edit</span>
+            </button>
+        </div>
+        </div>
+        <div className="bg-orange-50 border border-orange-200 rounded-md p-3 text-sm space-y-2 grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div >
+            <div>
             <span className="text-xs text-gray-600">Name:</span>
             <p className="font-medium text-gray-900">{customer?.name || '—'}</p>
           </div>
@@ -263,17 +337,26 @@ const BookingSummary = ({ bookingData, savedBookingId }) => {
             <span className="text-xs text-gray-600">Contact:</span>
             <p className="font-medium text-gray-700">{customer?.contactNumber || '—'}</p>
           </div>
+          </div>
+
           {(customer?.identification?.nic || customer?.identification?.passport) && (
-            <div className="pt-2 border-t border-orange-300">
-              <span className="text-xs text-gray-600">Identification:</span>
+            <div >
+            
+              <div className="text-xs text-gray-600">Identification:</div>
               {customer?.identification?.nic && (
                 <p className="text-xs text-gray-700">NIC: {customer.identification.nic}</p>
               )}
               {customer?.identification?.passport && (
                 <p className="text-xs text-gray-700">Passport: {customer.identification.passport}</p>
               )}
+
             </div>
+
+            
+
+            
           )}
+          
         </div>
       </div>
     </div>
