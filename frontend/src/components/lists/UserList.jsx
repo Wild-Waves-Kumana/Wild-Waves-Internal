@@ -28,7 +28,7 @@ const UserList = () => {
         // Fetch all users, companies, and villas
         const [usersRes, companiesRes, villasRes] = await Promise.all([
           axios.get('/api/users'),
-          axios.get('/api/company/all'),
+          axios.get('/api/companies/all'),
           axios.get('/api/villas/all')
         ]);
         setCompanies(companiesRes.data);

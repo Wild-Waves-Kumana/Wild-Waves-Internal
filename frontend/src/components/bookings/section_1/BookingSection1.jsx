@@ -48,7 +48,7 @@ const BookingSection1 = ({ onNext }) => {
   const fetchCompanies = async () => {
     setLoadingCompanies(true);
     try {
-      const response = await axios.get('/api/company/all');
+      const response = await axios.get('/api/companies/all');
       console.log('Fetched companies:', response.data);
       setCompanies(response.data);
     } catch (error) {

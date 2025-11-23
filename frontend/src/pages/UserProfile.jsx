@@ -63,7 +63,7 @@ const UserProfile = () => {
       try {
         const [userRes, companiesRes, villasRes, roomsRes] = await Promise.all([
           axios.get(`/api/users/${userId}`),
-          axios.get('/api/company/all'),
+          axios.get('/api/companies/all'),
           axios.get('/api/villas/all'),
           axios.get('/api/rooms/all')
         ]);

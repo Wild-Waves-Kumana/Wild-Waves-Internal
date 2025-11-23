@@ -49,7 +49,7 @@ const SuperAdminProfile = () => {
         const [adminRes, adminsRes, companiesRes, usersRes] = await Promise.all([
           axios.get(`/api/admin/${adminId}`),
           axios.get("/api/admin/all"),
-          axios.get("/api/company/all"),
+          axios.get("/api/companies/all"),
           axios.get("/api/users/")
         ]);
 

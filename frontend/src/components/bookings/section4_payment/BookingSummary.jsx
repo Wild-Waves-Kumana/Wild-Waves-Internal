@@ -18,7 +18,7 @@ const BookingSummary = ({ bookingData, savedBookingId }) => {
       try {
         const companyId = bookingData.roomSelection.companyId;
         
-        const response = await axios.get(`/api/company/${companyId}`);
+        const response = await axios.get(`/api/companies/${companyId}`);
         console.log('Fetched company details:', response.data);
         setCompanyDetails(response.data);
       } catch (error) {
