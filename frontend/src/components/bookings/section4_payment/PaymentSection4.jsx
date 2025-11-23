@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { bookingStorage } from '../../../utils/bookingStorage';
+import axios from 'axios';
 
 const formatLKR = (val) => {
   if (val === null || val === undefined) return '0';
@@ -8,42 +9,134 @@ const formatLKR = (val) => {
 
 const PaymentSection4 = ({ onBack }) => {
   const [savedBookingId, setSavedBookingId] = useState(null);
-  const [prices, setPrices] = useState(null);
-  const [customer, setCustomer] = useState(null);
+  const [bookingData, setBookingData] = useState(null);
   const [method, setMethod] = useState('card');
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [loadingPayment, setLoadingPayment] = useState(false);
   const [paid, setPaid] = useState(false);
   const [confirmation, setConfirmation] = useState(null);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
-    // Get data before clearing
-    const bookingId = bookingStorage.getSavedBookingId();
-    const pricesData = bookingStorage.getPrices();
-    const customerData = bookingStorage.getCustomer();
-    
-    setSavedBookingId(bookingId);
-    setPrices(pricesData);
-    setCustomer(customerData);
+    const fetchBookingData = async () => {
+      setLoading(true);
+      setError(null);
 
-    // Clear booking data from localStorage (keep saved booking ID)
-    bookingStorage.clearBookingData();
-    
-    console.log('Payment section loaded - booking data cleared from localStorage');
-    console.log('Saved Booking ID:', bookingId);
+      try {
+        // Get booking ID from localStorage
+        const bookingId = bookingStorage.getSavedBookingId();
+        
+        if (!bookingId) {
+          setError('No booking ID found. Please complete the booking process.');
+          setLoading(false);
+          return;
+        }
+
+        setSavedBookingId(bookingId);
+        console.log('Fetching booking data for ID:', bookingId);
+
+        // Fetch booking data from MongoDB (already populated)
+        const response = await axios.get(`/api/bookings/id/${bookingId}`);
+        console.log('Fetched booking data from MongoDB:', response.data);
+
+        if (!response.data.success || !response.data.booking) {
+          throw new Error('Invalid booking data received');
+        }
+
+        const booking = response.data.booking;
+        setBookingData(booking);
+
+        // Clear all booking data from localStorage EXCEPT booking ID
+        bookingStorage.clearBookingData();
+        console.log('✓ Booking data cleared from localStorage (kept booking ID)');
+
+      } catch (err) {
+        console.error('Error fetching booking data:', err);
+        setError(err.response?.data?.message || err.message || 'Failed to load booking data');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchBookingData();
   }, []);
 
   const handlePayNow = async () => {
-    setLoading(true);
+    setLoadingPayment(true);
     // simulate payment delay
     await new Promise(r => setTimeout(r, 1200));
-    setLoading(false);
-    const ref = `PAY${Date.now().toString().slice(-8)}`;
-    setConfirmation(ref);
-    setPaid(true);
     
-    // After successful payment, you could clear the saved booking ID too
-    // bookingStorage.clearAll();
+    try {
+      // Update booking status to confirmed and payment to paid
+      await axios.patch(`/api/bookings/${bookingData._id}/status`, {
+        status: 'confirmed',
+        paymentStatus: 'paid'
+      });
+
+      const ref = `PAY${Date.now().toString().slice(-8)}`;
+      setConfirmation(ref);
+      setPaid(true);
+      
+      console.log('Payment successful!');
+      console.log('Payment Reference:', ref);
+      console.log('Booking ID:', savedBookingId);
+      
+      // After successful payment, you could clear everything including booking ID
+      // bookingStorage.clearAll();
+    } catch (err) {
+      console.error('Error updating booking status:', err);
+      setError('Payment processed but failed to update booking status');
+    } finally {
+      setLoadingPayment(false);
+    }
   };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+        <span className="ml-3 text-gray-600">Loading payment details...</span>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="bg-white p-6 rounded-lg shadow-md">
+        <div className="text-center text-red-600">
+          <svg className="w-12 h-12 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+          <p className="text-lg font-semibold mb-2">Error Loading Payment</p>
+          <p className="text-sm">{error}</p>
+          <button 
+            onClick={onBack} 
+            className="mt-4 px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+          >
+            Go Back
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  if (!bookingData) {
+    return (
+      <div className="bg-white p-6 rounded-lg shadow-md text-center">
+        <p className="text-gray-600">No booking data found. Please start from the beginning.</p>
+        <button onClick={onBack} className="mt-4 bg-blue-600 text-white px-6 py-2 rounded-md hover:bg-blue-700">
+          Go Back
+        </button>
+      </div>
+    );
+  }
+
+  const { bookingDates, roomSelection, customer, prices } = bookingData;
+
+  // Extract populated data (backend already populates these)
+  const companyDetails = roomSelection?.companyId;
+  const villaDetails = roomSelection?.villaId;
+  const roomsDetails = roomSelection?.rooms?.map(r => r.roomId).filter(Boolean) || [];
 
   // Calculate per night total
   const perNightTotal = (prices?.villaPrice || 0) + 
@@ -60,11 +153,19 @@ const PaymentSection4 = ({ onBack }) => {
                 Booking ID: <span className="font-mono font-medium text-blue-600">{savedBookingId}</span>
               </p>
             )}
+            {bookingData.status && (
+              <p className="text-xs text-gray-500 mt-1">
+                Status: <span className="capitalize font-medium">{bookingData.status}</span>
+                {' | '}
+                Payment: <span className="capitalize font-medium">{bookingData.paymentStatus}</span>
+              </p>
+            )}
           </div>
           <button onClick={onBack} className="text-blue-600 underline text-sm">← Back</button>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {/* Left Column - Payment Details */}
           <div className="space-y-4">
             <h4 className="font-semibold">Payable Amount</h4>
             <div className="bg-gray-50 p-4 rounded border">
@@ -98,7 +199,7 @@ const PaymentSection4 = ({ onBack }) => {
 
               <div className="flex justify-between mt-2">
                 <span>Nights</span>
-                <span className="font-medium">{prices?.nights || 0}</span>
+                <span className="font-medium">{prices?.nights || bookingDates?.nights || 0}</span>
               </div>
 
               <div className="border-t pt-3 mt-3 flex justify-between items-center">
@@ -108,6 +209,65 @@ const PaymentSection4 = ({ onBack }) => {
                 </span>
               </div>
             </div>
+
+            {/* Booking Summary */}
+            {bookingDates && (
+              <div>
+                <h4 className="font-semibold">Booking Details</h4>
+                <div className="bg-gray-50 p-4 rounded border text-sm space-y-2">
+                  {companyDetails && (
+                    <div className="pb-2 border-b border-gray-300">
+                      <span className="text-xs text-gray-600">Company:</span>
+                      <p className="font-medium">{companyDetails.companyName}</p>
+                      <p className="text-xs text-gray-500">{companyDetails.companyId}</p>
+                    </div>
+                  )}
+                  
+                  {villaDetails && (
+                    <div className="pb-2 border-b border-gray-300">
+                      <span className="text-xs text-gray-600">Villa:</span>
+                      <p className="font-medium">{villaDetails.villaName}</p>
+                      <p className="text-xs text-gray-500">{villaDetails.villaId}</p>
+                      {villaDetails.villaLocation && (
+                        <p className="text-xs text-gray-500">📍 {villaDetails.villaLocation}</p>
+                      )}
+                      <p className="text-xs text-gray-500 mt-1">
+                        {roomSelection?.acStatus === 1 ? 'AC' : roomSelection?.acStatus === 0 ? 'Non-AC' : 'AC preference not specified'}
+                      </p>
+                    </div>
+                  )}
+
+                  {roomsDetails.length > 0 && (
+                    <div className="pb-2 border-b border-gray-300">
+                      <span className="text-xs text-gray-600">Rooms ({roomsDetails.length}):</span>
+                      {roomsDetails.map((room, idx) => (
+                        <div key={idx} className="mt-1">
+                          <p className="font-medium text-sm">{room.roomName}</p>
+                          <p className="text-xs text-gray-500">{room.roomId}</p>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                  
+                  <div className="flex justify-between">
+                    <span className="text-gray-600">Check-in:</span>
+                    <span className="font-medium">
+                      {bookingDates.checkInDate ? new Date(bookingDates.checkInDate).toLocaleDateString() : '—'}
+                    </span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-600">Check-out:</span>
+                    <span className="font-medium">
+                      {bookingDates.checkOutDate ? new Date(bookingDates.checkOutDate).toLocaleDateString() : '—'}
+                    </span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-600">Nights:</span>
+                    <span className="font-medium">{bookingDates.nights || 0}</span>
+                  </div>
+                </div>
+              </div>
+            )}
 
             <h4 className="font-semibold">Customer</h4>
             <div className="bg-gray-50 p-4 rounded border text-sm">
@@ -120,9 +280,20 @@ const PaymentSection4 = ({ onBack }) => {
               {customer?.identification?.passport && (
                 <p className="text-xs text-gray-600">Passport: {customer.identification.passport}</p>
               )}
+              {customer?.passengers && (
+                <div className="mt-2 pt-2 border-t border-gray-300">
+                  <p className="text-xs text-gray-600">
+                    Passengers: {customer.passengers.adults || 0} Adult(s), {customer.passengers.children || 0} Child(ren)
+                  </p>
+                  <p className="text-xs font-semibold text-gray-700">
+                    Total: {(customer.passengers.adults || 0) + (customer.passengers.children || 0)} passengers
+                  </p>
+                </div>
+              )}
             </div>
           </div>
 
+          {/* Right Column - Payment Method */}
           <div className="space-y-4">
             <h4 className="font-semibold">Payment Method</h4>
             <div className="bg-gray-50 p-4 rounded border space-y-3">
@@ -132,7 +303,8 @@ const PaymentSection4 = ({ onBack }) => {
                   name="method" 
                   value="card" 
                   checked={method === 'card'} 
-                  onChange={() => setMethod('card')} 
+                  onChange={() => setMethod('card')}
+                  disabled={paid}
                 />
                 <span>Card (dummy)</span>
               </label>
@@ -143,7 +315,8 @@ const PaymentSection4 = ({ onBack }) => {
                   name="method" 
                   value="bank" 
                   checked={method === 'bank'} 
-                  onChange={() => setMethod('bank')} 
+                  onChange={() => setMethod('bank')}
+                  disabled={paid}
                 />
                 <span>Bank Transfer (dummy)</span>
               </label>
@@ -155,12 +328,12 @@ const PaymentSection4 = ({ onBack }) => {
               <div>
                 <button
                   onClick={handlePayNow}
-                  disabled={loading || paid}
+                  disabled={loadingPayment || paid}
                   className={`w-full px-4 py-2 rounded-md text-white font-medium ${
                     paid ? 'bg-gray-400 cursor-not-allowed' : 'bg-green-600 hover:bg-green-700'
                   }`}
                 >
-                  {loading ? 'Processing...' : paid ? '✓ Paid' : `Pay LKR ${formatLKR(prices?.totalPrice)}`}
+                  {loadingPayment ? 'Processing...' : paid ? '✓ Paid' : `Pay LKR ${formatLKR(prices?.totalPrice)}`}
                 </button>
               </div>
 

@@ -3,9 +3,18 @@ import BookingSection1 from '../../components/bookings/section_1/BookingSection1
 import BookingSection2 from '../../components/bookings/section_2/BookingSection2';
 import BookingSection3 from '../../components/bookings/section_3/BookingSection3';
 import PaymentSection4 from '../../components/bookings/section4_payment/PaymentSection4';
+import { bookingStorage } from '../../utils/bookingStorage'; // added import
 
 const CreateBooking = () => {
-  const [currentSection, setCurrentSection] = useState(1);
+  // initialize section from saved booking id so refresh stays on payment
+  const [currentSection, setCurrentSection] = useState(() => {
+    try {
+      return bookingStorage.getSavedBookingId() ? 4 : 1;
+    } catch (e) {
+      console.error('Error accessing booking storage:', e);
+      return 1;
+    }
+  });
 
   const handleNext = () => {
     setCurrentSection(2);
