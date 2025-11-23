@@ -8,6 +8,9 @@ const BookingSection4 = ({ onBack }) => {
   const [savedBookingId, setSavedBookingId] = useState(null);
   const [mongoId, setMongoId] = useState(null);
   const [bookingData, setBookingData] = useState(null);
+  const [companyDetails, setCompanyDetails] = useState(null);
+  const [villaDetails, setVillaDetails] = useState(null);
+  const [roomsDetails, setRoomsDetails] = useState([]);
   const [method, setMethod] = useState('card');
   const [loading, setLoading] = useState(true);
   const [loadingPayment, setLoadingPayment] = useState(false);
@@ -48,6 +51,9 @@ const BookingSection4 = ({ onBack }) => {
         setMongoId(booking._id);
         console.log('MongoDB ObjectId for QR:', booking._id);
 
+        // Fetch additional details
+        await fetchAdditionalDetails(booking);
+
         // Clear all booking data from localStorage EXCEPT booking ID
         bookingStorage.clearBookingData();
         console.log('✓ Booking data cleared from localStorage (kept booking ID)');
@@ -57,6 +63,58 @@ const BookingSection4 = ({ onBack }) => {
         setError(err.response?.data?.message || err.message || 'Failed to load booking data');
       } finally {
         setLoading(false);
+      }
+    };
+
+    const fetchAdditionalDetails = async (booking) => {
+      try {
+        // Fetch company details
+        if (booking.roomSelection?.companyId) {
+          const companyId = typeof booking.roomSelection.companyId === 'object'
+            ? booking.roomSelection.companyId._id
+            : booking.roomSelection.companyId;
+          
+          const companyRes = await axios.get(`/api/companies/${companyId}`);
+          setCompanyDetails(companyRes.data);
+          console.log('Fetched company details:', companyRes.data);
+        }
+
+        // Fetch villa details
+        if (booking.roomSelection?.villaId) {
+          const villaId = typeof booking.roomSelection.villaId === 'object'
+            ? booking.roomSelection.villaId._id
+            : booking.roomSelection.villaId;
+          
+          const villaRes = await axios.get(`/api/villas/${villaId}`);
+          setVillaDetails(villaRes.data);
+          console.log('Fetched villa details:', villaRes.data);
+        }
+
+        // Fetch rooms details
+        if (booking.roomSelection?.rooms && booking.roomSelection.rooms.length > 0) {
+          const roomIds = booking.roomSelection.rooms.map(room => {
+            if (typeof room.roomId === 'object' && room.roomId !== null) {
+              return room.roomId._id;
+            }
+            return room.roomId;
+          });
+
+          const roomPromises = roomIds.map(roomId => 
+            axios.get(`/api/rooms/${roomId}`)
+              .then(response => response.data)
+              .catch(error => {
+                console.error(`Error fetching room ${roomId}:`, error);
+                return null;
+              })
+          );
+
+          const rooms = await Promise.all(roomPromises);
+          const validRooms = rooms.filter(room => room !== null);
+          setRoomsDetails(validRooms);
+          console.log('Fetched rooms details:', validRooms);
+        }
+      } catch (err) {
+        console.error('Error fetching additional details:', err);
       }
     };
 
@@ -155,6 +213,10 @@ const BookingSection4 = ({ onBack }) => {
           confirmation={confirmation}
           savedBookingId={savedBookingId}
           mongoId={mongoId}
+          bookingData={bookingData}
+          companyDetails={companyDetails}
+          villaDetails={villaDetails}
+          roomsDetails={roomsDetails}
           onPayNow={handlePayNow}
         />
       </div>
