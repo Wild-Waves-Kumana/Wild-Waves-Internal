@@ -2,7 +2,10 @@ import express from 'express';
 import { 
   getNextBookingId, 
   createBooking,
-  getBookingByBookingId // added
+  getAllBookings,
+  getBookingById,
+  getBookingByMongoId,
+  updateBookingStatus
 } from '../controllers/bookingController.js';
 
 const router = express.Router();
@@ -13,8 +16,16 @@ router.get('/next-id', getNextBookingId);
 // Create new booking
 router.post('/create', createBooking);
 
-// Get booking by bookingId
-router.get('/id/:bookingId', getBookingByBookingId);
+// Get all bookings
+router.get('/all', getAllBookings);
 
+// Get booking by booking ID (BDDMMYYXXXX format) - must come before /:id
+router.get('/id/:id', getBookingById);
+
+// Get booking by MongoDB _id
+router.get('/:id', getBookingByMongoId);
+
+// Update booking status
+router.patch('/:id/status', updateBookingStatus);
 
 export default router;

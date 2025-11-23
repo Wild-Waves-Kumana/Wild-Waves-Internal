@@ -202,26 +202,151 @@ export const createBooking = async (req, res) => {
   }
 };
 
-export const getBookingByBookingId = async (req, res) => {
+// Get booking by booking ID (BDDMMYYXXXX format)
+export const getBookingById = async (req, res) => {
   try {
-    const { bookingId } = req.params;
-    if (!bookingId) {
-      return res.status(400).json({ message: 'Booking ID is required' });
-    }
-
-    const booking = await Booking.findOne({ bookingId });
+    const { id } = req.params;
+    
+    console.log('Fetching booking with ID:', id);
+    
+    const booking = await Booking.findOne({ bookingId: id });
 
     if (!booking) {
-      return res.status(404).json({ message: 'Booking not found' });
+      return res.status(404).json({ 
+        success: false,
+        message: 'Booking not found' 
+      });
     }
 
-    res.status(200).json({ success: true, booking });
+    console.log('Booking found:', booking.bookingId);
+
+    res.status(200).json({
+      success: true,
+      booking
+    });
   } catch (error) {
-    console.error('getBookingByBookingId error:', error);
-    res.status(500).json({ message: 'Failed to fetch booking', error: error.message });
+    console.error('Error fetching booking by ID:', error);
+    res.status(500).json({ 
+      success: false,
+      message: 'Failed to fetch booking', 
+      error: error.message 
+    });
   }
 };
 
+// Get all bookings
+export const getAllBookings = async (req, res) => {
+  try {
+    const bookings = await Booking.find()
+      .populate('roomSelection.companyId', 'companyName companyId')
+      .populate('roomSelection.villaId', 'villaName villaId villaLocation')
+      .populate('roomSelection.rooms.roomId', 'roomName roomId type')
+      .sort({ createdAt: -1 })
+      .lean();
 
+    res.status(200).json({
+      success: true,
+      count: bookings.length,
+      bookings
+    });
+  } catch (error) {
+    console.error('Error fetching bookings:', error);
+    res.status(500).json({ 
+      success: false,
+      message: 'Failed to fetch bookings', 
+      error: error.message 
+    });
+  }
+};
+
+// Get booking by MongoDB _id
+export const getBookingByMongoId = async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    const booking = await Booking.findById(id)
+      .populate('roomSelection.companyId', 'companyName companyId')
+      .populate('roomSelection.villaId', 'villaName villaId villaLocation villaBasePrice')
+      .populate('roomSelection.rooms.roomId', 'roomName roomId type capacity roomBasePrice')
+      .lean();
+
+    if (!booking) {
+      return res.status(404).json({ 
+        success: false,
+        message: 'Booking not found' 
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      booking
+    });
+  } catch (error) {
+    console.error('Error fetching booking by MongoDB ID:', error);
+    res.status(500).json({ 
+      success: false,
+      message: 'Failed to fetch booking', 
+      error: error.message 
+    });
+  }
+};
+
+// Update booking status
+export const updateBookingStatus = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { status, paymentStatus } = req.body;
+
+    // Validate status values
+    const validStatuses = ['pending', 'confirmed', 'cancelled', 'completed'];
+    const validPaymentStatuses = ['pending', 'partial', 'paid', 'refunded'];
+
+    if (status && !validStatuses.includes(status)) {
+      return res.status(400).json({ 
+        success: false,
+        message: `Invalid status. Must be one of: ${validStatuses.join(', ')}` 
+      });
+    }
+
+    if (paymentStatus && !validPaymentStatuses.includes(paymentStatus)) {
+      return res.status(400).json({ 
+        success: false,
+        message: `Invalid payment status. Must be one of: ${validPaymentStatuses.join(', ')}` 
+      });
+    }
+
+    const updateData = {};
+    if (status) updateData.status = status;
+    if (paymentStatus) updateData.paymentStatus = paymentStatus;
+
+    const booking = await Booking.findByIdAndUpdate(
+      id,
+      updateData,
+      { new: true, runValidators: true }
+    ).lean();
+
+    if (!booking) {
+      return res.status(404).json({ 
+        success: false,
+        message: 'Booking not found' 
+      });
+    }
+
+    console.log('Booking status updated:', booking.bookingId);
+
+    res.status(200).json({
+      success: true,
+      message: 'Booking status updated successfully',
+      booking
+    });
+  } catch (error) {
+    console.error('Error updating booking status:', error);
+    res.status(500).json({ 
+      success: false,
+      message: 'Failed to update booking status', 
+      error: error.message 
+    });
+  }
+};
 
 
