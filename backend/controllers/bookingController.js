@@ -202,114 +202,26 @@ export const createBooking = async (req, res) => {
   }
 };
 
-// Get all bookings
-export const getAllBookings = async (req, res) => {
+export const getBookingByBookingId = async (req, res) => {
   try {
-    const bookings = await Booking.find()
-      .populate('roomSelection.companyId', 'companyName companyId')
-      .populate('roomSelection.villaId', 'villaName villaId villaLocation')
-      .populate('roomSelection.rooms.roomId', 'roomName roomId type')
-      .sort({ createdAt: -1 });
+    const { bookingId } = req.params;
+    if (!bookingId) {
+      return res.status(400).json({ message: 'Booking ID is required' });
+    }
 
-    res.status(200).json({
-      success: true,
-      count: bookings.length,
-      bookings
-    });
-  } catch (error) {
-    console.error('Error fetching bookings:', error);
-    res.status(500).json({ 
-      message: 'Failed to fetch bookings', 
-      error: error.message 
-    });
-  }
-};
-
-// Get booking by ID
-export const getBookingById = async (req, res) => {
-  try {
-    const { id } = req.params;
-    
-    const booking = await Booking.findOne({ bookingId: id })
-      .populate('roomSelection.companyId')
-      .populate('roomSelection.villaId')
-      .populate('roomSelection.rooms.roomId');
+    const booking = await Booking.findOne({ bookingId });
 
     if (!booking) {
       return res.status(404).json({ message: 'Booking not found' });
     }
 
-    res.status(200).json({
-      success: true,
-      booking
-    });
+    res.status(200).json({ success: true, booking });
   } catch (error) {
-    console.error('Error fetching booking:', error);
-    res.status(500).json({ 
-      message: 'Failed to fetch booking', 
-      error: error.message 
-    });
+    console.error('getBookingByBookingId error:', error);
+    res.status(500).json({ message: 'Failed to fetch booking', error: error.message });
   }
 };
 
-// Get booking by MongoDB _id
-export const getBookingByMongoId = async (req, res) => {
-  try {
-    const { id } = req.params;
-    
-    const booking = await Booking.findById(id)
-      .populate('roomSelection.companyId')
-      .populate('roomSelection.villaId')
-      .populate('roomSelection.rooms.roomId');
 
-    if (!booking) {
-      return res.status(404).json({ message: 'Booking not found' });
-    }
 
-    res.status(200).json({
-      success: true,
-      booking
-    });
-  } catch (error) {
-    console.error('Error fetching booking:', error);
-    res.status(500).json({ 
-      message: 'Failed to fetch booking', 
-      error: error.message 
-    });
-  }
-};
-
-// Update booking status
-export const updateBookingStatus = async (req, res) => {
-  try {
-    const { id } = req.params;
-    const { status, paymentStatus } = req.body;
-
-    const updateData = {};
-    if (status) updateData.status = status;
-    if (paymentStatus) updateData.paymentStatus = paymentStatus;
-
-    const booking = await Booking.findByIdAndUpdate(
-      id,
-      updateData,
-      { new: true, runValidators: true }
-    );
-
-    if (!booking) {
-      return res.status(404).json({ message: 'Booking not found' });
-    }
-
-    res.status(200).json({
-      success: true,
-      message: 'Booking updated successfully',
-      booking
-    });
-  } catch (error) {
-    console.error('Error updating booking:', error);
-    res.status(500).json({ 
-      message: 'Failed to update booking', 
-      error: error.message 
-    });
-  }
-};
 
