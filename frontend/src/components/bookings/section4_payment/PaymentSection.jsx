@@ -18,6 +18,10 @@ const PaymentSection = ({
   confirmation, 
   savedBookingId,
   mongoId,
+  bookingData,
+  companyDetails,
+  villaDetails,
+  roomsDetails,
   onPayNow 
 }) => {
   const [showQRModal, setShowQRModal] = useState(false);
@@ -218,6 +222,12 @@ const PaymentSection = ({
         onClose={() => setShowQRModal(false)}
         bookingId={savedBookingId}
         mongoId={mongoId}
+        bookingData={bookingData}
+        companyDetails={companyDetails}
+        villaDetails={villaDetails}
+        roomsDetails={roomsDetails}
+        prices={prices}
+        confirmation={confirmation}
       />
     </>
   );
