@@ -3,8 +3,8 @@ import Modal from '../../common/Modal';
 import QRGenerator from '../../common/QRGenerator';
 import { Download, QrCode, CheckCircle, FileText } from 'lucide-react';
 import html2canvas from 'html2canvas';
-import { downloadPDF } from '../../../utils/pdfUtils';
-import BookingPDFTemplate from './BookingPDFTemplate';
+import { generateBookingPDF } from '../../../utils/generateBookingPDF';
+import QRCode from 'qrcode';
 
 const BookingQRModal = ({ 
   isOpen, 
@@ -40,11 +40,33 @@ const BookingQRModal = ({
 
   const handleDownloadPDF = async () => {
     try {
-      // Wait for QR code to render
-      await new Promise(resolve => setTimeout(resolve, 500));
-      await downloadPDF('booking-pdf-template', `booking-${bookingId}.pdf`);
+      // Generate QR code as data URL
+      const qrDataUrl = await QRCode.toDataURL(mongoId || bookingId, {
+        width: 512,
+        margin: 2,
+        color: {
+          dark: '#000000',
+          light: '#FFFFFF'
+        },
+        errorCorrectionLevel: 'H'
+      });
+
+      await generateBookingPDF(
+        bookingData,
+        bookingId,
+        mongoId,
+        companyDetails,
+        villaDetails,
+        roomsDetails,
+        prices,
+        confirmation,
+        qrDataUrl
+      );
+      
+      console.log('PDF downloaded successfully');
     } catch (error) {
       console.error('Error downloading PDF:', error);
+      alert('Failed to download PDF. Please try again.');
     }
   };
 
@@ -135,22 +157,6 @@ const BookingQRModal = ({
           </p>
         </div>
       </Modal>
-
-      {/* Hidden PDF Template */}
-      {isOpen && (
-        <div style={{ position: 'absolute', left: '-9999px', top: 0 }}>
-          <BookingPDFTemplate
-            bookingData={bookingData}
-            savedBookingId={bookingId}
-            mongoId={mongoId}
-            companyDetails={companyDetails}
-            villaDetails={villaDetails}
-            roomsDetails={roomsDetails}
-            prices={prices}
-            confirmation={confirmation}
-          />
-        </div>
-      )}
     </>
   );
 };
