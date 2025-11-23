@@ -6,6 +6,7 @@ import PaymentSection from './PaymentSection';
 
 const BookingSection4 = ({ onBack }) => {
   const [savedBookingId, setSavedBookingId] = useState(null);
+  const [mongoId, setMongoId] = useState(null);
   const [bookingData, setBookingData] = useState(null);
   const [method, setMethod] = useState('card');
   const [loading, setLoading] = useState(true);
@@ -42,6 +43,10 @@ const BookingSection4 = ({ onBack }) => {
 
         const booking = response.data.booking;
         setBookingData(booking);
+        
+        // Set MongoDB ObjectId for QR code generation
+        setMongoId(booking._id);
+        console.log('MongoDB ObjectId for QR:', booking._id);
 
         // Clear all booking data from localStorage EXCEPT booking ID
         bookingStorage.clearBookingData();
@@ -77,6 +82,7 @@ const BookingSection4 = ({ onBack }) => {
       console.log('Payment successful!');
       console.log('Payment Reference:', ref);
       console.log('Booking ID:', savedBookingId);
+      console.log('MongoDB ObjectId:', mongoId);
       
       // After successful payment, you could clear everything including booking ID
       // bookingStorage.clearAll();
@@ -148,6 +154,7 @@ const BookingSection4 = ({ onBack }) => {
           paid={paid}
           confirmation={confirmation}
           savedBookingId={savedBookingId}
+          mongoId={mongoId}
           onPayNow={handlePayNow}
         />
       </div>
