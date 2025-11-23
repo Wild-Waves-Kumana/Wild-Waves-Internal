@@ -1,0 +1,301 @@
+import React, { useState, useEffect } from 'react';
+import { Calendar, Home, Users, DollarSign, Building2 } from 'lucide-react';
+import axios from 'axios';
+
+const formatLKR = (val) => {
+  if (val === null || val === undefined) return '0';
+  return Number(val).toLocaleString('en-US');
+};
+
+const BookingSummary = ({ bookingData, savedBookingId }) => {
+  const [companyDetails, setCompanyDetails] = useState(null);
+  const [loadingCompany, setLoadingCompany] = useState(false);
+
+  useEffect(() => {
+    const fetchCompanyDetails = async () => {
+      if (!bookingData?.roomSelection?.companyId) {
+        return;
+      }
+
+      setLoadingCompany(true);
+      try {
+        // Check if companyId is already populated (object) or just an ID (string)
+        const companyId = typeof bookingData.roomSelection.companyId === 'object' 
+          ? bookingData.roomSelection.companyId._id 
+          : bookingData.roomSelection.companyId;
+
+        console.log('Fetching company details for ID:', companyId);
+        
+        const response = await axios.get(`/api/company/${companyId}`);
+        console.log('Fetched company details:', response.data);
+        setCompanyDetails(response.data);
+      } catch (error) {
+        console.error('Error fetching company details:', error);
+        setCompanyDetails(null);
+      } finally {
+        setLoadingCompany(false);
+      }
+    };
+
+    fetchCompanyDetails();
+  }, [bookingData]);
+
+  if (!bookingData) {
+    return (
+      <div className="bg-white p-6 rounded-lg shadow-md">
+        <p className="text-gray-500 text-center">No booking data available</p>
+      </div>
+    );
+  }
+
+  const { bookingDates, roomSelection, customer, prices } = bookingData;
+
+  // Extract populated data (use fetched companyDetails instead of roomSelection.companyId)
+  const villaDetails = roomSelection?.villaId;
+  const roomsDetails = roomSelection?.rooms?.map(r => r.roomId).filter(Boolean) || [];
+
+  // Calculate per night total
+  const perNightTotal = (prices?.villaPrice || 0) + 
+    (prices?.roomPrices?.reduce((sum, rp) => sum + (rp.price || 0), 0) || 0);
+
+  return (
+    <div className="bg-white p-6 rounded-lg shadow-md">
+      <h3 className="text-xl font-semibold mb-6 text-gray-800">Booking Summary</h3>
+
+      {/* Booking ID Badge */}
+      {savedBookingId && (
+        <div className="mb-6 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+          <div className="text-xs text-blue-600 mb-1">Booking ID</div>
+          <div className="font-mono font-semibold text-blue-800 text-lg">{savedBookingId}</div>
+          {bookingData.status && (
+            <div className="text-xs text-gray-600 mt-2 flex gap-3">
+              <span>Status: <span className="capitalize font-medium text-gray-800">{bookingData.status}</span></span>
+              <span>Payment: <span className="capitalize font-medium text-gray-800">{bookingData.paymentStatus}</span></span>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Company Section */}
+      {(loadingCompany || companyDetails) && (
+        <div className="mb-6">
+          <h4 className="text-sm font-semibold text-gray-700 mb-3 flex items-center gap-2">
+            <Building2 className="w-4 h-4 text-indigo-500" />
+            Company
+          </h4>
+          {loadingCompany ? (
+            <div className="bg-indigo-50 border border-indigo-200 rounded-md p-3">
+              <div className="text-sm text-gray-500 italic">Loading company details...</div>
+            </div>
+          ) : companyDetails ? (
+            <div className="bg-indigo-50 border border-indigo-200 rounded-md p-3">
+              <p className="font-semibold text-gray-900">{companyDetails.companyName}</p>
+            </div>
+          ) : null}
+        </div>
+      )}
+
+      {/* Dates Section */}
+      <div className="mb-6">
+        <h4 className="text-sm font-semibold text-gray-700 mb-3 flex items-center gap-2">
+          <Calendar className="w-4 h-4 text-blue-500" />
+          Booking Dates
+        </h4>
+        <div className="space-y-2 text-sm">
+          <div className="flex justify-between">
+            <span className="text-gray-600">Check-in:</span>
+            <span className="font-medium text-gray-800">
+              {bookingDates?.checkInDate 
+                ? new Date(bookingDates.checkInDate).toLocaleDateString('en-US', { 
+                    weekday: 'short', 
+                    month: 'short', 
+                    day: 'numeric', 
+                    year: 'numeric' 
+                  })
+                : '—'}
+            </span>
+          </div>
+          <div className="flex justify-between">
+            <span className="text-gray-600">Check-out:</span>
+            <span className="font-medium text-gray-800">
+              {bookingDates?.checkOutDate 
+                ? new Date(bookingDates.checkOutDate).toLocaleDateString('en-US', { 
+                    weekday: 'short', 
+                    month: 'short', 
+                    day: 'numeric', 
+                    year: 'numeric' 
+                  })
+                : '—'}
+            </span>
+          </div>
+          <div className="flex justify-between pt-2 border-t border-gray-200">
+            <span className="text-gray-600">Total Nights:</span>
+            <span className="font-semibold text-blue-600">
+              {bookingDates?.nights || 0} {bookingDates?.nights === 1 ? 'Night' : 'Nights'}
+            </span>
+          </div>
+        </div>
+      </div>
+
+      {/* Passengers Section */}
+      <div className="mb-6">
+        <h4 className="text-sm font-semibold text-gray-700 mb-3 flex items-center gap-2">
+          <Users className="w-4 h-4 text-purple-500" />
+          Passengers
+        </h4>
+        <div className="space-y-2 text-sm">
+          <div className="flex justify-between">
+            <span className="text-gray-600">Adults:</span>
+            <span className="font-medium text-gray-800">{customer?.passengers?.adults || 0}</span>
+          </div>
+          <div className="flex justify-between">
+            <span className="text-gray-600">Children:</span>
+            <span className="font-medium text-gray-800">{customer?.passengers?.children || 0}</span>
+          </div>
+          <div className="flex justify-between pt-2 border-t border-gray-200">
+            <span className="text-gray-600">Total:</span>
+            <span className="font-semibold text-purple-600">
+              {(customer?.passengers?.adults || 0) + (customer?.passengers?.children || 0)} Passengers
+            </span>
+          </div>
+        </div>
+      </div>
+
+      {/* Villa & Rooms Section */}
+      <div className="mb-6">
+        <h4 className="text-sm font-semibold text-gray-700 mb-3 flex items-center gap-2">
+          <Home className="w-4 h-4 text-green-500" />
+          Accommodation
+        </h4>
+        <div className="space-y-3">
+          {/* Villa */}
+          {villaDetails && (
+            <div className="bg-blue-50 border border-blue-200 rounded-md p-3">
+              <div className="text-xs text-blue-600 mb-1">Villa</div>
+              <div className="font-semibold text-gray-900">{villaDetails.villaName}</div>
+              <div className="text-xs text-gray-500 mt-1">{villaDetails.villaId}</div>
+              {villaDetails.villaLocation && (
+                <div className="text-xs text-gray-600 mt-1">📍 {villaDetails.villaLocation}</div>
+              )}
+              <div className="text-xs text-gray-600 mt-1">
+                {roomSelection?.acStatus === 1 ? 'AC' : roomSelection?.acStatus === 0 ? 'Non-AC' : 'Not specified'}
+              </div>
+            </div>
+          )}
+
+          {/* Rooms */}
+          {roomsDetails.length > 0 && (
+            <div>
+              <div className="text-xs text-gray-600 mb-2">
+                Selected Rooms ({roomsDetails.length})
+              </div>
+              <div className="space-y-2">
+                {roomsDetails.map((room, idx) => (
+                  <div 
+                    key={idx} 
+                    className="bg-green-50 border border-green-200 rounded-md p-2 text-sm"
+                  >
+                    <div className="font-medium text-gray-800">{room.roomName}</div>
+                    <div className="text-xs text-gray-500">{room.roomId}</div>
+                    {room.capacity > 0 && (
+                      <div className="text-xs text-gray-600">
+                        Capacity: {room.capacity} {room.capacity === 1 ? 'person' : 'persons'}
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Customer Details */}
+      <div className="mb-6">
+        <h4 className="text-sm font-semibold text-gray-700 mb-3 flex items-center gap-2">
+          <Users className="w-4 h-4 text-orange-500" />
+          Customer Details
+        </h4>
+        <div className="bg-orange-50 border border-orange-200 rounded-md p-3 text-sm space-y-2">
+          <div>
+            <span className="text-xs text-gray-600">Name:</span>
+            <p className="font-medium text-gray-900">{customer?.name || '—'}</p>
+          </div>
+          <div>
+            <span className="text-xs text-gray-600">Email:</span>
+            <p className="font-medium text-gray-700">{customer?.email || '—'}</p>
+          </div>
+          <div>
+            <span className="text-xs text-gray-600">Contact:</span>
+            <p className="font-medium text-gray-700">{customer?.contactNumber || '—'}</p>
+          </div>
+          {(customer?.identification?.nic || customer?.identification?.passport) && (
+            <div className="pt-2 border-t border-orange-300">
+              <span className="text-xs text-gray-600">Identification:</span>
+              {customer?.identification?.nic && (
+                <p className="text-xs text-gray-700">NIC: {customer.identification.nic}</p>
+              )}
+              {customer?.identification?.passport && (
+                <p className="text-xs text-gray-700">Passport: {customer.identification.passport}</p>
+              )}
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Pricing Section */}
+      <div className="border-t border-gray-300 pt-4">
+        <h4 className="text-sm font-semibold text-gray-700 mb-3 flex items-center gap-2">
+          <DollarSign className="w-4 h-4 text-green-500" />
+          Pricing
+        </h4>
+        <div className="space-y-2 text-sm">
+          <div className="flex justify-between">
+            <span className="text-gray-600">Villa (per night):</span>
+            <span className="font-medium text-gray-800">
+              LKR {formatLKR(prices?.villaPrice)}
+            </span>
+          </div>
+          
+          {prices?.roomPrices && prices.roomPrices.length > 0 && (
+            <>
+              <div className="flex justify-between">
+                <span className="text-gray-600">Rooms (per night):</span>
+                <span className="font-medium text-gray-800">
+                  LKR {formatLKR(prices.roomPrices.reduce((sum, r) => sum + (r.price || 0), 0))}
+                </span>
+              </div>
+              <div className="ml-4 text-xs text-gray-600">
+                {prices.roomPrices.map((rp, idx) => (
+                  <div key={idx} className="flex justify-between">
+                    <span>• {rp.roomName}</span>
+                    <span>LKR {formatLKR(rp.price)}</span>
+                  </div>
+                ))}
+              </div>
+            </>
+          )}
+
+          <div className="border-t pt-2 flex justify-between">
+            <span className="text-gray-600">Per night total:</span>
+            <span className="font-medium text-gray-800">LKR {formatLKR(perNightTotal)}</span>
+          </div>
+
+          <div className="flex justify-between">
+            <span className="text-gray-600">Number of nights:</span>
+            <span className="font-medium text-gray-800">{prices?.nights || bookingDates?.nights || 0}</span>
+          </div>
+
+          <div className="flex justify-between pt-3 border-t border-gray-300">
+            <span className="text-base font-semibold text-gray-800">Total Amount:</span>
+            <span className="text-lg font-bold text-green-600">
+              LKR {formatLKR(prices?.totalPrice)}
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default BookingSummary;

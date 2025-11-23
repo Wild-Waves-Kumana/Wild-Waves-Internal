@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import BookingSection1 from '../../components/bookings/section_1/BookingSection1';
 import BookingSection2 from '../../components/bookings/section_2/BookingSection2';
 import BookingSection3 from '../../components/bookings/section_3/BookingSection3';
-import PaymentSection4 from '../../components/bookings/section4_payment/PaymentSection4';
+import BookingSection4 from '../../components/bookings/section4_payment/BookingSection4';
 import { bookingStorage } from '../../utils/bookingStorage'; // added import
 
 const CreateBooking = () => {
@@ -106,7 +106,7 @@ const CreateBooking = () => {
         {currentSection === 1 && <BookingSection1 onNext={handleNext} />}
         {currentSection === 2 && <BookingSection2 onBack={handleBack} onNext={handleContinue} />}
         {currentSection === 3 && <BookingSection3 onBack={handleBackFrom3} onNext={handleConfirmFinal} />}
-        {currentSection === 4 && <PaymentSection4 onBack={handleBackFrom4} />}
+        {currentSection === 4 && <BookingSection4 onBack={handleBackFrom4} />}
       </div>
     </div>
   );
