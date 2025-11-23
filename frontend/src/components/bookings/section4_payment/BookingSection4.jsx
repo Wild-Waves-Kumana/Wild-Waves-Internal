@@ -142,6 +142,8 @@ const BookingSection4 = ({ onBack }) => {
           method={method}
           setMethod={setMethod}
           totalAmount={bookingData.prices?.totalPrice}
+          prices={bookingData.prices}
+          nights={bookingData.bookingDates?.nights}
           loading={loadingPayment}
           paid={paid}
           confirmation={confirmation}
