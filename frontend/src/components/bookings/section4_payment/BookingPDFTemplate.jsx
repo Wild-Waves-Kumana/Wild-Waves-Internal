@@ -29,20 +29,37 @@ const BookingPDFTemplate = ({
       const canvas = canvasRef.current;
       const ctx = canvas.getContext('2d');
       
-      canvas.width = 180;
-      canvas.height = 180;
+      // Increase resolution for better quality
+      const scaleFactor = 4; // 4x resolution for sharp QR code
+      const displaySize = 180;
+      const actualSize = displaySize * scaleFactor;
+      
+      canvas.width = actualSize;
+      canvas.height = actualSize;
+      canvas.style.width = displaySize + 'px';
+      canvas.style.height = displaySize + 'px';
 
+      // Create image from SVG with higher resolution
       const svgData = new XMLSerializer().serializeToString(svg);
       const img = new Image();
       const svgBlob = new Blob([svgData], { type: 'image/svg+xml;charset=utf-8' });
       const url = URL.createObjectURL(svgBlob);
 
       img.onload = () => {
+        // Enable image smoothing for better quality
+        ctx.imageSmoothingEnabled = true;
+        ctx.imageSmoothingQuality = 'high';
+        
+        // Fill with white background
         ctx.fillStyle = '#FFFFFF';
-        ctx.fillRect(0, 0, 180, 180);
-        ctx.drawImage(img, 0, 0, 180, 180);
+        ctx.fillRect(0, 0, actualSize, actualSize);
+        
+        // Draw the image at higher resolution
+        ctx.drawImage(img, 0, 0, actualSize, actualSize);
+        
         URL.revokeObjectURL(url);
         
+        // Hide SVG, show canvas
         if (qrRef.current) {
           qrRef.current.style.display = 'none';
         }
@@ -52,7 +69,8 @@ const BookingPDFTemplate = ({
       img.src = url;
     };
 
-    const timer = setTimeout(convertSvgToCanvas, 100);
+    // Increased delay to ensure QR code is fully rendered
+    const timer = setTimeout(convertSvgToCanvas, 200);
     return () => clearTimeout(timer);
   }, [mongoId, savedBookingId]);
 
@@ -137,17 +155,22 @@ const BookingPDFTemplate = ({
         {/* QR Code */}
         <div style={{ flex: '0 0 auto' }}>
           <div style={{ backgroundColor: '#ffffff', padding: '10px', borderRadius: '6px', boxShadow: '0 2px 4px rgba(0,0,0,0.1)' }}>
+            {/* High-resolution SVG QR Code */}
             <div ref={qrRef} style={{ height: '180px', width: '180px' }}>
               <QRCode
                 value={mongoId || savedBookingId}
-                size={180}
-                level="H"
+                size={256} // Increased from 180 to 256 for better quality
+                level="H" // Highest error correction level
                 style={{ height: '100%', width: '100%' }}
                 fgColor="#000000"
                 bgColor="#FFFFFF"
               />
             </div>
-            <canvas ref={canvasRef} width={180} height={180} style={{ display: 'none' }} />
+            {/* High-resolution Canvas */}
+            <canvas 
+              ref={canvasRef}
+              style={{ display: 'none', imageRendering: 'crisp-edges' }}
+            />
           </div>
           <p style={{ fontSize: '8px', color: '#6b7280', textAlign: 'center', marginTop: '6px', margin: '6px 0 0 0' }}>Scan at Check-in</p>
         </div>
