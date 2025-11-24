@@ -92,7 +92,7 @@ export const generateBookingPDF = async (
   doc.setFontSize(18);
   doc.setFont('helvetica', 'bold');
   doc.setTextColor(31, 41, 55);
-  doc.text('Wild Waves Resort', pageWidth / 2, yPos, { align: 'center' });
+  doc.text(companyDetails?.companyName || 'N/A', pageWidth / 2, yPos, { align: 'center' });
   
   // Subtitle
   doc.setFontSize(11);
@@ -335,13 +335,13 @@ export const generateBookingPDF = async (
   doc.setFontSize(6.5);
   doc.setFont('helvetica', 'normal');
   doc.setTextColor(107, 114, 128);
-  doc.text('Location', villa2X + 2, villaY);
+  doc.text('Location', villa2X + 2, villaY + 1.5);
   
   doc.setFontSize(7);
   doc.setFont('helvetica', 'normal');
   doc.setTextColor(75, 85, 99);
   const locationLines = doc.splitTextToSize(villaDetails?.villaLocation || '—', col2Width * 0.95);
-  doc.text(locationLines, villa2X + 2, villaY + 3.5);
+  doc.text(locationLines, villa2X + 2, villaY + 4.5);
   
   // AC Status Badge
   const acType = roomSelection?.acStatus === 1 ? 'Air Conditioned' : roomSelection?.acStatus === 0 ? 'Non-AC' : 'Standard';
@@ -465,15 +465,16 @@ export const generateBookingPDF = async (
 
   payY += 7;
   // Grand total section
-  doc.setFillColor(0, 153, 77);
+  doc.setFillColor(230, 255, 230);
   doc.roundedRect(margin + 2, payY - 4, pageWidth - 2 * margin - 4, 11, 1.5, 1.5, 'F');
   
   doc.setFontSize(11);
   doc.setFont('helvetica', 'bold');
-  doc.setTextColor(255, 255, 255);
+  doc.setTextColor(0, 0, 0);
   doc.text('GRAND TOTAL', margin + 5, payY + 2.5);
   
   doc.setFontSize(15);
+  doc.setTextColor(0, 179, 0);
   doc.text(`LKR ${formatLKR(prices?.totalPrice)}`, pageWidth - margin - 5, payY + 2.5, { align: 'right' });
 
   if (confirmation) {
