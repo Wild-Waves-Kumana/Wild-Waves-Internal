@@ -129,10 +129,15 @@ const BookingSection4 = ({ onBack }) => {
       setConfirmation(ref);
       setPaid(true);
       
+      // Save payment status and clear all booking data
+      bookingStorage.savePaymentStatus(true);
+      bookingStorage.clearAll();
+      
       console.log('Payment successful!');
       console.log('Payment Reference:', ref);
       console.log('Booking ID:', savedBookingId);
       console.log('MongoDB ObjectId:', mongoId);
+      console.log('✓ All booking data cleared from localStorage');
       
     } catch (err) {
       console.error('Error updating booking status:', err);

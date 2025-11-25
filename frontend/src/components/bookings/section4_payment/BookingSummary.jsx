@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Calendar, Home, Users, Building2 } from 'lucide-react';
 import axios from 'axios';
-import PricingDetails from './PricingDetails';
+import PricingSummary from '../PricingSummary';
 
 const BookingSummary = ({ bookingData, savedBookingId , paid  }) => {
   const [companyDetails, setCompanyDetails] = useState(null);
@@ -360,7 +360,7 @@ const BookingSummary = ({ bookingData, savedBookingId , paid  }) => {
       </div>
 
       {paid && (
-        <PricingDetails 
+        <PricingSummary 
           prices={bookingData.prices}
           nights={bookingData.bookingDates?.nights}
           totalAmount={bookingData.prices?.totalPrice}

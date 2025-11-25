@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import { Calendar, Home, Users, Building2 } from 'lucide-react';
 import { bookingStorage } from '../../../utils/bookingStorage';
-import PricesBill from '../section_2/PricesBill';
+import PricingSummary from '../PricingSummary';
 
 const BookingSection3 = ({ onBack, onNext }) => {
   const [bookingData, setBookingData] = useState(null);
+  const [companyDetails, setCompanyDetails] = useState(null);
   const [villaDetails, setVillaDetails] = useState(null);
   const [roomsDetails, setRoomsDetails] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -18,7 +20,18 @@ const BookingSection3 = ({ onBack, onNext }) => {
       console.log('Loaded booking data:', data);
       setBookingData(data);
 
-      // Fetch villa details from roomSelection
+      // Fetch company details
+      if (data?.roomSelection?.companyId) {
+        try {
+          const response = await axios.get(`/api/companies/${data.roomSelection.companyId}`);
+          setCompanyDetails(response.data);
+        } catch (e) {
+          console.error('Error fetching company details:', e);
+          setCompanyDetails(null);
+        }
+      }
+
+      // Fetch villa details
       if (data?.roomSelection?.villaId) {
         try {
           const r = await axios.get(`/api/villas/${data.roomSelection.villaId}`);
@@ -29,7 +42,7 @@ const BookingSection3 = ({ onBack, onNext }) => {
         }
       }
 
-      // Fetch rooms details from roomSelection
+      // Fetch rooms details
       if (Array.isArray(data?.roomSelection?.rooms) && data.roomSelection.rooms.length > 0) {
         try {
           const promises = data.roomSelection.rooms.map(room => 
@@ -155,259 +168,290 @@ const BookingSection3 = ({ onBack, onNext }) => {
     );
   }
 
-  const { bookingDates, roomSelection, customer: customerData } = bookingData;
-
-  const renderAc = () => {
-    if (roomSelection?.acStatus === 1) return <span className="text-green-700 font-medium">AC</span>;
-    if (roomSelection?.acStatus === 0) return <span className="text-gray-700 font-medium">Non-AC</span>;
-    return <span className="text-gray-500">Not selected</span>;
-  };
+  const { bookingDates, roomSelection, customer: customerData, prices } = bookingData;
 
   return (
     <div className="w-full space-y-6">
       <div className="bg-white p-6 rounded-lg shadow-md">
         <div className="flex justify-between items-center mb-6">
-          <h3 className="text-2xl font-semibold text-gray-800">Booking Summary</h3>
+          <h3 className="text-xl font-semibold text-gray-800">Booking Summary</h3>
           <button 
             onClick={onBack} 
-            className="text-blue-600 hover:text-blue-800 underline text-sm font-medium"
+            className="text-blue-600 hover:text-blue-800 text-sm font-medium flex items-center gap-1"
           >
-            ← Edit Details
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+            </svg>
+            Edit Details
           </button>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Left Column: Dates & Villa */}
-          <div className="space-y-6">
-            {/* Dates Section */}
-            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-              <h4 className="font-semibold text-gray-800 mb-3 flex items-center gap-2">
-                <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                </svg>
-                Stay Duration
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+          {/* Dates Section */}
+          <div className="mb-6">
+            <h4 className="text-sm font-semibold text-gray-700 mb-3 flex items-center gap-2">
+              <Calendar className="w-4 h-4 text-blue-500" />
+              Booking Dates
+            </h4>
+            <div className="space-y-2 text-sm bg-sky-50 border border-sky-200 p-4 rounded-md">
+              <div className="flex justify-between">
+                <span className="text-gray-600">Check-in:</span>
+                <span className="font-medium text-gray-800">
+                  {bookingDates?.checkInDate 
+                    ? new Date(bookingDates.checkInDate).toLocaleDateString('en-US', { 
+                        weekday: 'short', 
+                        month: 'short', 
+                        day: 'numeric', 
+                        year: 'numeric' 
+                      })
+                    : '—'}
+                </span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-gray-600">Check-out:</span>
+                <span className="font-medium text-gray-800">
+                  {bookingDates?.checkOutDate 
+                    ? new Date(bookingDates.checkOutDate).toLocaleDateString('en-US', { 
+                        weekday: 'short', 
+                        month: 'short', 
+                        day: 'numeric', 
+                        year: 'numeric' 
+                      })
+                    : '—'}
+                </span>
+              </div>
+              <div className="flex justify-between pt-2 border-t border-gray-200">
+                <span className="text-gray-600">Total Nights:</span>
+                <span className="font-semibold text-blue-600">
+                  {bookingDates?.nights || 0} {bookingDates?.nights === 1 ? 'Night' : 'Nights'}
+                </span>
+              </div>
+            </div>
+          </div>
+
+          {/* Passengers Section */}
+          <div className="mb-6">
+            <h4 className="text-sm font-semibold text-gray-700 mb-3 flex items-center gap-2">
+              <Users className="w-4 h-4 text-purple-500" />
+              Passengers
+            </h4>
+            <div className="space-y-2 text-sm bg-sky-50 border border-sky-200 p-4 rounded-md">
+              <div className="flex justify-between">
+                <span className="text-gray-600">Adults:</span>
+                <span className="font-medium text-gray-800">{customerData?.passengers?.adults || 0}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-gray-600">Children:</span>
+                <span className="font-medium text-gray-800">{customerData?.passengers?.children || 0}</span>
+              </div>
+              <div className="flex justify-between pt-2 border-t border-gray-200">
+                <span className="text-gray-600">Total:</span>
+                <span className="font-semibold text-purple-600">
+                  {(customerData?.passengers?.adults || 0) + (customerData?.passengers?.children || 0)} Passengers
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+          {/* Company */}
+          <div>
+            <h4 className="text-sm font-semibold text-gray-700 mb-3 flex items-center gap-2">
+              <Building2 className="w-4 h-4 text-indigo-500" />
+              Company
+            </h4>
+            {companyDetails ? (
+              <div className="bg-sky-50 border border-sky-200 rounded-md p-3">
+                <p className="font-semibold text-gray-900">{companyDetails.companyName}</p>
+                <p className="text-xs text-gray-500 mt-1">{companyDetails.companyId}</p>
+              </div>
+            ) : (
+              <p className="text-sm text-gray-400">No company selected</p>
+            )}
+          </div>
+
+          {/* Villa */}
+          <div>
+            <h4 className="text-sm font-semibold text-gray-700 mb-3 flex items-center gap-2">
+              <Home className="w-4 h-4 text-green-500" />
+              Villa
+            </h4>
+            {villaDetails ? (
+              <div className="bg-sky-50 border border-sky-200 rounded-md p-3">
+                <div className="flex items-center justify-between">
+                  <p className="font-semibold text-gray-900">{villaDetails.villaName}</p>
+                  <p className="text-xs text-gray-600">
+                    {roomSelection?.acStatus === 1
+                      ? "AC"
+                      : roomSelection?.acStatus === 0
+                      ? "Non-AC"
+                      : "Not specified"}
+                  </p>
+                </div>
+                {villaDetails.villaLocation && (
+                  <p className="text-xs text-gray-600 mt-1">{villaDetails.villaLocation}</p>
+                )}
+              </div>
+            ) : (
+              <p className="text-sm text-gray-400">No villa selected</p>
+            )}
+          </div>
+        </div>
+
+        {/* Rooms Section */}
+        {(roomsDetails.length > 0 || (roomSelection?.rooms && roomSelection.rooms.length > 0)) && (
+          <div className="mb-6">
+            <div className="flex items-center justify-between mb-3">
+              <h4 className="text-sm font-semibold text-gray-700 flex items-center gap-2">
+                <Home className="w-4 h-4 text-green-500" />
+                Selected Rooms
               </h4>
-              <div className="space-y-2 text-sm">
-                <div>
-                  <p className="text-xs text-gray-600">Check-in</p>
-                  <p className="font-medium text-gray-800">
-                    {bookingDates?.checkInDate 
-                      ? new Date(bookingDates.checkInDate).toLocaleDateString('en-US', { 
-                          weekday: 'short', 
-                          month: 'short', 
-                          day: 'numeric',
-                          year: 'numeric'
-                        })
-                      : '—'}
-                  </p>
+              <span className="text-xs text-gray-600 bg-green-100 px-2 py-1 rounded-full">
+                {roomsDetails.length || roomSelection?.rooms?.length || 0} {(roomsDetails.length || roomSelection?.rooms?.length || 0) === 1 ? 'Room' : 'Rooms'}
+              </span>
+            </div>
+            
+            {roomsDetails.length > 0 ? (
+              <div className="overflow-x-auto">
+                <div className="flex gap-3 pb-2">
+                  {roomsDetails.map((room, idx) => (
+                    <div 
+                      key={room._id || idx} 
+                      className="bg-green-50 border border-green-200 rounded-md p-3 text-sm min-w-[200px] flex-shrink-0"
+                    >
+                      <div className="font-medium text-gray-800 mb-1">{room.roomName}</div>
+                      <div className="space-y-1">
+                        {room.capacity > 0 && (
+                          <div className="text-xs text-gray-600 flex items-center gap-1">
+                            <Users className="w-3 h-3" />
+                            <span>{room.capacity} {room.capacity === 1 ? 'person' : 'persons'}</span>
+                          </div>
+                        )}
+                        {room.type && (
+                          <div className="text-xs text-gray-600 capitalize">
+                            Type: {room.type}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  ))}
                 </div>
-                <div>
-                  <p className="text-xs text-gray-600">Check-out</p>
-                  <p className="font-medium text-gray-800">
-                    {bookingDates?.checkOutDate 
-                      ? new Date(bookingDates.checkOutDate).toLocaleDateString('en-US', { 
-                          weekday: 'short', 
-                          month: 'short', 
-                          day: 'numeric',
-                          year: 'numeric'
-                        })
-                      : '—'}
-                  </p>
+              </div>
+            ) : (
+              <div className="overflow-x-auto">
+                <div className="flex gap-3 pb-2">
+                  {roomSelection.rooms.map((room, idx) => (
+                    <div 
+                      key={room.roomId || idx} 
+                      className="bg-green-50 border border-green-200 rounded-md p-3 text-sm min-w-[200px] flex-shrink-0"
+                    >
+                      <div className="font-medium text-gray-800 mb-1">{room.roomName}</div>
+                      <div className="space-y-1">
+                        {room.capacity > 0 && (
+                          <div className="text-xs text-gray-600 flex items-center gap-1">
+                            <Users className="w-3 h-3" />
+                            <span>{room.capacity} {room.capacity === 1 ? 'person' : 'persons'}</span>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  ))}
                 </div>
-                <div className="pt-2 border-t border-blue-300">
-                  <p className="text-xs text-gray-600">Total Duration</p>
-                  <p className="text-xl font-bold text-blue-600">
-                    {bookingDates?.nights || 0} {bookingDates?.nights === 1 ? 'Night' : 'Nights'}
-                  </p>
-                </div>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Customer Details */}
+        <div className="mb-6">
+          <h4 className="text-sm font-semibold text-gray-700 mb-3 flex items-center gap-2">
+            <Users className="w-4 h-4 text-orange-500" />
+            Customer Details
+          </h4>
+          <div className="bg-orange-50 border border-orange-200 rounded-md p-3 text-sm space-y-2 grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <div>
+                <span className="text-xs text-gray-600">Name:</span>
+                <p className="font-medium text-gray-900">{customerData?.name || '—'}</p>
+              </div>
+              <div>
+                <span className="text-xs text-gray-600">Email:</span>
+                <p className="font-medium text-gray-700">{customerData?.email || '—'}</p>
+              </div>
+              <div>
+                <span className="text-xs text-gray-600">Contact:</span>
+                <p className="font-medium text-gray-700">{customerData?.contactNumber || '—'}</p>
               </div>
             </div>
 
-            {/* Villa Section */}
-            <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
-              <h4 className="font-semibold text-gray-800 mb-3 flex items-center gap-2">
-                <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
-                </svg>
-                Villa
-              </h4>
-              {villaDetails ? (
-                <div className="text-sm space-y-2">
-                  <p className="font-semibold text-gray-900 text-base">{villaDetails.villaName}</p>
-                  <p className="text-xs text-gray-500">{villaDetails.villaId}</p>
-                  {villaDetails.villaLocation && (
-                    <p className="text-xs text-gray-600 flex items-center gap-1">
-                      <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
-                        <path fillRule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clipRule="evenodd" />
-                      </svg>
-                      {villaDetails.villaLocation}
-                    </p>
-                  )}
-                  <div className="pt-2 border-t">
-                    <p className="text-xs text-gray-600 mb-1">AC Preference</p>
-                    {renderAc()}
-                  </div>
-                </div>
-              ) : (
-                <p className="text-sm text-gray-500">Villa details not available</p>
-              )}
-            </div>
-          </div>
-
-          {/* Middle Column: Rooms */}
-          <div className="space-y-4">
-            <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-              <h4 className="font-semibold text-gray-800 mb-3 flex items-center gap-2">
-                <svg className="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" />
-                </svg>
-                Selected Rooms ({roomSelection?.rooms?.length || 0})
-              </h4>
-              {roomsDetails.length > 0 ? (
-                <div className="space-y-3">
-                  {roomsDetails.map(room => (
-                    <div key={room._id} className="bg-white border border-green-300 rounded-md p-3">
-                      <p className="font-semibold text-gray-900 text-sm">{room.roomName}</p>
-                      <p className="text-xs text-gray-500">{room.roomId}</p>
-                      {room.type && (
-                        <span className="inline-block mt-1 text-xs bg-green-100 text-green-800 px-2 py-0.5 rounded capitalize">
-                          {room.type}
-                        </span>
-                      )}
-                      {room.capacity && (
-                        <p className="text-xs text-gray-600 mt-1">Capacity: {room.capacity} persons</p>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              ) : roomSelection?.rooms && roomSelection.rooms.length > 0 ? (
-                <div className="space-y-2">
-                  {roomSelection.rooms.map(room => (
-                    <div key={room.roomId} className="bg-white border border-green-300 rounded-md p-3">
-                      <p className="font-medium text-gray-900 text-sm">{room.roomName}</p>
-                      <p className="text-xs text-gray-500">ID: {room.roomId}</p>
-                      {room.capacity && (
-                        <p className="text-xs text-gray-600">Capacity: {room.capacity}</p>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <p className="text-sm text-gray-500">No rooms selected</p>
-              )}
-            </div>
-          </div>
-
-          {/* Right Column: Customer */}
-          <div className="space-y-4">
-            <div className="bg-purple-50 border border-purple-200 rounded-lg p-4">
-              <h4 className="font-semibold text-gray-800 mb-3 flex items-center gap-2">
-                <svg className="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                </svg>
-                Customer Details
-              </h4>
-              {customerData ? (
-                <div className="text-sm space-y-2">
-                  <div>
-                    <p className="text-xs text-gray-600">Name</p>
-                    <p className="font-medium text-gray-900">{customerData.name || '—'}</p>
-                  </div>
-                  <div>
-                    <p className="text-xs text-gray-600">Email</p>
-                    <p className="font-medium text-gray-700">{customerData.email || '—'}</p>
-                  </div>
-                  <div>
-                    <p className="text-xs text-gray-600">Contact</p>
-                    <p className="font-medium text-gray-700">{customerData.contactNumber || '—'}</p>
-                  </div>
-                  <div className="pt-2 border-t border-purple-300">
-                    <p className="text-xs text-gray-600 mb-1">Identification</p>
-                    {customerData.identification?.nic && (
-                      <p className="text-sm">
-                        <span className="text-xs text-gray-500">NIC:</span>{' '}
-                        <span className="font-medium text-gray-700">{customerData.identification.nic}</span>
-                      </p>
-                    )}
-                    {customerData.identification?.passport && (
-                      <p className="text-sm">
-                        <span className="text-xs text-gray-500">Passport:</span>{' '}
-                        <span className="font-medium text-gray-700">{customerData.identification.passport}</span>
-                      </p>
-                    )}
-                    {!customerData.identification?.nic && !customerData.identification?.passport && (
-                      <p className="text-sm text-gray-500">Not provided</p>
-                    )}
-                  </div>
-                  <div className="pt-2 border-t border-purple-300">
-                    <p className="text-xs text-gray-600 mb-1">Passengers</p>
-                    {customerData.passengers && (
-                      <div className="flex gap-3">
-                        <div className="bg-white px-3 py-1.5 rounded border border-purple-200">
-                          <span className="text-xs text-gray-500">Adults:</span>{' '}
-                          <span className="font-semibold text-purple-700">{customerData.passengers.adults || 0}</span>
-                        </div>
-                        <div className="bg-white px-3 py-1.5 rounded border border-purple-200">
-                          <span className="text-xs text-gray-500">Children:</span>{' '}
-                          <span className="font-semibold text-purple-700">{customerData.passengers.children || 0}</span>
-                        </div>
-                      </div>
-                    )}
-                    {customerData.passengers && (
-                      <p className="text-xs text-gray-600 mt-1">
-                        Total: <span className="font-semibold text-purple-600">
-                          {(customerData.passengers.adults || 0) + (customerData.passengers.children || 0)} passengers
-                        </span>
-                      </p>
-                    )}
-                  </div>
-                </div>
-              ) : (
-                <p className="text-sm text-gray-500">No customer details saved</p>
-              )}
-            </div>
+            {(customerData?.identification?.nic || customerData?.identification?.passport) && (
+              <div>
+                <div className="text-xs text-gray-600">Identification:</div>
+                {customerData?.identification?.nic && (
+                  <p className="text-xs text-gray-700">NIC: {customerData.identification.nic}</p>
+                )}
+                {customerData?.identification?.passport && (
+                  <p className="text-xs text-gray-700">Passport: {customerData.identification.passport}</p>
+                )}
+              </div>
+            )}
           </div>
         </div>
 
-        {/* Price Bill - Full Width */}
-        <div className="mt-6 pt-6 border-t">
-          <PricesBill />
-        </div>
+        {/* Pricing Details */}
+        <PricingSummary 
+          prices={prices}
+          nights={bookingDates?.nights}
+          totalAmount={prices?.totalPrice}
+        />
+
+        {/* Error Message */}
+        {saveError && (
+          <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg flex items-start gap-3">
+            <svg className="w-5 h-5 text-red-600 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <div className="text-sm text-red-800">
+              <p className="font-semibold mb-1">Error Creating Booking</p>
+              <p className="text-xs">{saveError}</p>
+            </div>
+          </div>
+        )}
 
         {/* Action Buttons */}
-        <div className="mt-6 pt-6 border-t flex justify-between items-center">
+        <div className="flex justify-between items-center">
           <button 
             onClick={onBack} 
-            className="px-6 py-2.5 border-2 border-gray-300 rounded-md text-gray-700 hover:bg-gray-100 transition-colors font-medium"
+            className="px-6 py-3 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 transition-colors font-medium flex items-center gap-2"
           >
-            ← Back
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 17l-5-5m0 0l5-5m-5 5h12" />
+            </svg>
+            Back
           </button>
-          <div className="flex items-center gap-3">
-            {saveError && (
-              <p className="text-sm text-red-600 bg-red-50 px-3 py-2 rounded">{saveError}</p>
+          
+          <button 
+            onClick={handleConfirm}
+            disabled={saving}
+            className={`px-8 py-3 rounded-md text-white font-medium transition-colors flex items-center gap-2 ${
+              saving ? 'bg-gray-400 cursor-not-allowed' : 'bg-green-600 hover:bg-green-700'
+            }`}
+          >
+            {saving ? (
+              <>
+                <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+                Creating Booking...
+              </>
+            ) : (
+              <>
+                Confirm & Continue to Payment
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                </svg>
+              </>
             )}
-            <button 
-              onClick={handleConfirm}
-              disabled={saving}
-              className={`px-8 py-2.5 rounded-md text-white font-medium transition-colors flex items-center gap-2 ${
-                saving ? 'bg-gray-400 cursor-not-allowed' : 'bg-green-600 hover:bg-green-700'
-              }`}
-            >
-              {saving ? (
-                <>
-                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                  Creating Booking...
-                </>
-              ) : (
-                <>
-                  Confirm & Continue to Payment
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
-                  </svg>
-                </>
-              )}
-            </button>
-          </div>
+          </button>
         </div>
       </div>
     </div>
