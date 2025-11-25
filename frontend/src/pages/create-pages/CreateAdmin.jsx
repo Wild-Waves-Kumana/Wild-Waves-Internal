@@ -25,7 +25,7 @@ const AdminCreation = () => {
 
   useEffect(() => {
     // Fetch companies for dropdown
-    axios.get('/api/company/all')
+    axios.get('/api/companies/all')
       .then(res => setCompanies(res.data))
       .catch(() => setCompanies([]));
   }, []);

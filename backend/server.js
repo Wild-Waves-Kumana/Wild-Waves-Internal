@@ -41,7 +41,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/protected', protectedRoutes); 
 app.use('/api/equipment', equipmentRoutes);
 app.use('/api/users', userRoutes);
-app.use('/api/company', companyRoutes);
+app.use('/api/companies', companyRoutes);
 app.use('/api/admin', adminRoutes); // Admin routes
 app.use('/api/rooms', roomRoutes);
 app.use('/api/villas', villaRoutes);

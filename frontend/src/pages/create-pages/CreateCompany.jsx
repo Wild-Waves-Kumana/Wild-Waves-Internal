@@ -12,7 +12,7 @@ const CreateCompany = () => {
     e.preventDefault();
     setMessage('');
     try {
-      const res = await axios.post('/api/company/create', {
+      const res = await axios.post('/api/companies/create', {
         companyName,
         companyId,
       });
