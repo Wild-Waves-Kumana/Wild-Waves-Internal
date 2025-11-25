@@ -125,20 +125,19 @@ const BookingSection4 = ({ onBack }) => {
         paymentStatus: 'paid'
       });
 
-      // Update villa bookings schema
-      await axios.post('/api/villa-bookings/update', {
-        bookingId: bookingData._id
-      });
-
       const ref = `PAY${Date.now().toString().slice(-8)}`;
       setConfirmation(ref);
       setPaid(true);
+      
+      // Save payment status and clear all booking data
+      bookingStorage.savePaymentStatus(true);
+      bookingStorage.clearAll();
       
       console.log('Payment successful!');
       console.log('Payment Reference:', ref);
       console.log('Booking ID:', savedBookingId);
       console.log('MongoDB ObjectId:', mongoId);
-      console.log('Villa bookings updated successfully');
+      console.log('✓ All booking data cleared from localStorage');
       
     } catch (err) {
       console.error('Error updating booking status:', err);

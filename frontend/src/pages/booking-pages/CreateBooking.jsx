@@ -1,20 +1,33 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import BookingSection1 from '../../components/bookings/section_1/BookingSection1';
 import BookingSection2 from '../../components/bookings/section_2/BookingSection2';
 import BookingSection3 from '../../components/bookings/section_3/BookingSection3';
 import BookingSection4 from '../../components/bookings/section4_payment/BookingSection4';
-import { bookingStorage } from '../../utils/bookingStorage'; // added import
+import { bookingStorage } from '../../utils/bookingStorage';
 
 const CreateBooking = () => {
-  // initialize section from saved booking id so refresh stays on payment
+  // Check if payment is completed - if so, start from section 1
   const [currentSection, setCurrentSection] = useState(() => {
     try {
+      // If payment is already completed, start fresh
+      if (bookingStorage.isPaymentCompleted()) {
+        bookingStorage.clearAll();
+        return 1;
+      }
+      // Otherwise, check if there's a saved booking ID to go to payment
       return bookingStorage.getSavedBookingId() ? 4 : 1;
     } catch (e) {
       console.error('Error accessing booking storage:', e);
       return 1;
     }
   });
+
+  // Clear payment status on component mount if starting fresh
+  useEffect(() => {
+    if (currentSection === 1 && bookingStorage.isPaymentCompleted()) {
+      bookingStorage.clearAll();
+    }
+  }, [currentSection]);
 
   const handleNext = () => {
     setCurrentSection(2);
