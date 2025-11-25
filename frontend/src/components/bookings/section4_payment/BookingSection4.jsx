@@ -24,7 +24,6 @@ const BookingSection4 = ({ onBack }) => {
       setError(null);
 
       try {
-        // Get booking ID from localStorage
         const bookingId = bookingStorage.getSavedBookingId();
         
         if (!bookingId) {
@@ -36,7 +35,6 @@ const BookingSection4 = ({ onBack }) => {
         setSavedBookingId(bookingId);
         console.log('Fetching booking data for ID:', bookingId);
 
-        // Fetch booking data from MongoDB (already populated)
         const response = await axios.get(`/api/bookings/id/${bookingId}`);
         console.log('Fetched booking data from MongoDB:', response.data);
 
@@ -47,14 +45,11 @@ const BookingSection4 = ({ onBack }) => {
         const booking = response.data.booking;
         setBookingData(booking);
         
-        // Set MongoDB ObjectId for QR code generation
         setMongoId(booking._id);
         console.log('MongoDB ObjectId for QR:', booking._id);
 
-        // Fetch additional details
         await fetchAdditionalDetails(booking);
 
-        // Clear all booking data from localStorage EXCEPT booking ID
         bookingStorage.clearBookingData();
         console.log('✓ Booking data cleared from localStorage (kept booking ID)');
 
@@ -68,7 +63,6 @@ const BookingSection4 = ({ onBack }) => {
 
     const fetchAdditionalDetails = async (booking) => {
       try {
-        // Fetch company details
         if (booking.roomSelection?.companyId) {
           const companyId = typeof booking.roomSelection.companyId === 'object'
             ? booking.roomSelection.companyId._id
@@ -79,7 +73,6 @@ const BookingSection4 = ({ onBack }) => {
           console.log('Fetched company details:', companyRes.data);
         }
 
-        // Fetch villa details
         if (booking.roomSelection?.villaId) {
           const villaId = typeof booking.roomSelection.villaId === 'object'
             ? booking.roomSelection.villaId._id
@@ -90,7 +83,6 @@ const BookingSection4 = ({ onBack }) => {
           console.log('Fetched villa details:', villaRes.data);
         }
 
-        // Fetch rooms details
         if (booking.roomSelection?.rooms && booking.roomSelection.rooms.length > 0) {
           const roomIds = booking.roomSelection.rooms.map(room => {
             if (typeof room.roomId === 'object' && room.roomId !== null) {
@@ -142,8 +134,6 @@ const BookingSection4 = ({ onBack }) => {
       console.log('Booking ID:', savedBookingId);
       console.log('MongoDB ObjectId:', mongoId);
       
-      // After successful payment, you could clear everything including booking ID
-      // bookingStorage.clearAll();
     } catch (err) {
       console.error('Error updating booking status:', err);
       setError('Payment processed but failed to update booking status');
@@ -199,6 +189,7 @@ const BookingSection4 = ({ onBack }) => {
         <BookingSummary 
           bookingData={bookingData}
           savedBookingId={savedBookingId}
+          paid={paid}
         />
 
         {/* Right Column - Payment Section */}

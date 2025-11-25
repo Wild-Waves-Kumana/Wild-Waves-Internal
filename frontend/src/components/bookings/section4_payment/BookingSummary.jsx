@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { Calendar, Home, Users, Building2 } from 'lucide-react';
 import axios from 'axios';
+import PricingDetails from './PricingDetails';
 
-const BookingSummary = ({ bookingData, savedBookingId }) => {
+const BookingSummary = ({ bookingData, savedBookingId , paid  }) => {
   const [companyDetails, setCompanyDetails] = useState(null);
   const [villaDetails, setVillaDetails] = useState(null);
   const [roomsDetails, setRoomsDetails] = useState([]);
@@ -353,12 +354,18 @@ const BookingSummary = ({ bookingData, savedBookingId }) => {
             </div>
 
             
-
-            
           )}
           
         </div>
       </div>
+
+      {paid && (
+        <PricingDetails 
+          prices={bookingData.prices}
+          nights={bookingData.bookingDates?.nights}
+          totalAmount={bookingData.prices?.totalPrice}
+        />
+      )}
     </div>
   );
 };
