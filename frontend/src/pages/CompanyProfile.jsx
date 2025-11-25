@@ -25,7 +25,7 @@ const CompanyProfile = () => {
   useEffect(() => {
     if (!companyId) return;
     setLoading(true);
-    axios.get(`/api/company/${companyId}`)
+    axios.get(`/api/companies/${companyId}`)
       .then(res => {
         setCompany(res.data);
         // Fetch admins for this company

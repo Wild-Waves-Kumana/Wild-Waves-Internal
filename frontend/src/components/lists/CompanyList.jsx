@@ -9,7 +9,7 @@ const CompanyList = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    axios.get('/api/company/all')
+    axios.get('/api/companies/all')
       .then(res => {
         setCompanies(res.data);
         setLoading(false);

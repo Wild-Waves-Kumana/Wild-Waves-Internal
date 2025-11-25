@@ -53,7 +53,7 @@ const SAdminFoodMenu = () => {
         await Promise.all(
           uniqueCompanyIds.map(async (id) => {
             try {
-              const companyRes = await axios.get(`/api/company/${id}`);
+              const companyRes = await axios.get(`/api/companies/${id}`);
               companyNameMap[id] = companyRes.data.companyName;
               companiesData.push({
                 _id: id,

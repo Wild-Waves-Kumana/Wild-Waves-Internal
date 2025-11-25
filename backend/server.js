@@ -15,6 +15,7 @@ import foodOrderRoutes from './routes/foodOrderRoutes.js';
 import foodCartRoutes from './routes/foodCartRoutes.js';
 import avatarRoutes from './routes/avatarRoutes.js';
 import faceRoutes from './routes/faceRoutes.js';
+import bookingRoutes from './routes/bookingRoutes.js';
 
 
 dotenv.config();
@@ -40,7 +41,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/protected', protectedRoutes); 
 app.use('/api/equipment', equipmentRoutes);
 app.use('/api/users', userRoutes);
-app.use('/api/company', companyRoutes);
+app.use('/api/companies', companyRoutes);
 app.use('/api/admin', adminRoutes); // Admin routes
 app.use('/api/rooms', roomRoutes);
 app.use('/api/villas', villaRoutes);
@@ -49,6 +50,8 @@ app.use('/api/food-orders', foodOrderRoutes);
 app.use('/api/food-cart', foodCartRoutes);
 app.use('/api/avatar', avatarRoutes);
 app.use('/api/face', faceRoutes);
+app.use('/api/bookings', bookingRoutes);
+
 
 app.listen(PORT, () => {
   console.log(`Server running on http://localhost:${PORT}`);

@@ -79,7 +79,7 @@ const Navbar = ({ setSidebarOpen }) => {
   useEffect(() => {
     if (!companyId || role === "superadmin") return;
     axios
-      .get(`/api/company/${companyId}`)
+      .get(`/api/companies/${companyId}`)
       .then((res) => setCompanyName(res.data.companyName || ""))
       .catch(() => setCompanyName(""));
   }, [companyId, role]);

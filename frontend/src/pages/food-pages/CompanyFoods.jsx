@@ -49,7 +49,7 @@ const CompanyFoods = () => {
         setIsSuperAdmin(true);
         // Fetch all companies for filter
         const companiesRes = await axios.get(
-          "/api/company/all"
+          "/api/companies/all"
         );
         setCompanies(companiesRes.data);
 

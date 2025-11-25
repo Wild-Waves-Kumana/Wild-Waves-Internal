@@ -57,6 +57,7 @@ export const createRoom = async (req, res) => {
       bedroomType,
       amenities,
       capacity,
+      roomBasePrice,
       status,
       villaId
     } = req.body;
@@ -131,8 +132,11 @@ export const createRoom = async (req, res) => {
       if (capacity !== undefined && capacity !== null && capacity !== '') {
         roomData.capacity = Number(capacity);
       }
+      if (roomBasePrice !== undefined && roomBasePrice !== null && roomBasePrice !== '') {
+        roomData.roomBasePrice = Number(roomBasePrice);
+      }
     }
-    // If type is not bedroom, explicitly leave out bedroomType and capacity
+    // If type is not bedroom, explicitly leave out bedroomType, capacity, and roomBasePrice
     // Mongoose will use schema defaults or undefined
 
     const room = new Room(roomData);
@@ -171,4 +175,21 @@ export const getAllRooms = async (req, res) => {
 export const getRoomsByUser =  async (req, res) => {
   const rooms = await Room.find({ villaId: req.params.userId });
   res.json(rooms);
+};
+
+// Add this new function
+export const getRoomById = async (req, res) => {
+  try {
+    const { roomId } = req.params;
+    const room = await Room.findById(roomId);
+    
+    if (!room) {
+      return res.status(404).json({ message: "Room not found" });
+    }
+    
+    res.status(200).json(room);
+  } catch (error) {
+    console.error("Error fetching room:", error);
+    res.status(500).json({ message: "Failed to fetch room", error: error.message });
+  }
 };

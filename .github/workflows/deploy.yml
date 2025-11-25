@@ -3,7 +3,7 @@ name: Deploy Docker to EC2
 on:
   push:
     branches:
-      - main
+      - dev-v2
 
 jobs:
   deploy:
@@ -36,7 +36,7 @@ jobs:
           port: 22
           script: |
             cd ${{ secrets.EC2_PATH }}/backend
-            git pull origin main
+            git pull origin dev-v2
             docker-compose down
             docker-compose build
             docker-compose up -d

@@ -1,7 +1,7 @@
 import React, { useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { UserContext } from '../context/UserContext';
-import { UserPlus, Home, Cpu, Utensils } from 'lucide-react'; // <-- Add Utensils icon
+import { UserPlus, Home, Cpu, Utensils, Calendar } from 'lucide-react'; // <-- Add Calendar icon
 
 const AdminDashboard = () => {
   const navigate = useNavigate();
@@ -19,7 +19,7 @@ const AdminDashboard = () => {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
+        <div className="grid grid-cols-1 md:grid-cols-5 gap-8">
           <button
             onClick={() => navigate('/create-user')}
             className="group bg-gradient-to-br from-cyan-500 to-blue-500 rounded-2xl shadow-xl p-8 flex flex-col items-center hover:scale-105 transition-transform duration-200"
@@ -51,6 +51,14 @@ const AdminDashboard = () => {
             <Utensils className="w-8 h-8 text-pink-100 mb-2" />
             <h2 className="text-xl font-semibold text-white mb-1">Create Food</h2>
             <p className="text-white/90 text-sm text-center">Add a new food item</p>
+          </button>
+          <button
+            onClick={() => navigate('/create-booking')}
+            className="group bg-gradient-to-br from-purple-500 to-pink-500 rounded-2xl shadow-xl p-8 flex flex-col items-center hover:scale-105 transition-transform duration-200"
+          >
+            <Calendar className="w-8 h-8 text-purple-100 mb-2" />
+            <h2 className="text-xl font-semibold text-white mb-1">Create Booking</h2>
+            <p className="text-white/90 text-sm text-center">Make a new reservation</p>
           </button>
         </div>
       </div>
