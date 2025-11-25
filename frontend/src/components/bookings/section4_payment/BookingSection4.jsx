@@ -125,6 +125,11 @@ const BookingSection4 = ({ onBack }) => {
         paymentStatus: 'paid'
       });
 
+      // Update villa bookings schema
+      await axios.post('/api/villa-bookings/update', {
+        bookingId: bookingData._id
+      });
+
       const ref = `PAY${Date.now().toString().slice(-8)}`;
       setConfirmation(ref);
       setPaid(true);
@@ -133,6 +138,7 @@ const BookingSection4 = ({ onBack }) => {
       console.log('Payment Reference:', ref);
       console.log('Booking ID:', savedBookingId);
       console.log('MongoDB ObjectId:', mongoId);
+      console.log('Villa bookings updated successfully');
       
     } catch (err) {
       console.error('Error updating booking status:', err);

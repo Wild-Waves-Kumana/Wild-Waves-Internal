@@ -1,9 +1,10 @@
-import React, { useRef } from 'react';
+import React, { useRef, useEffect, useState } from 'react';
 import { Download, QrCode, CheckCircle, FileText } from 'lucide-react';
 import html2canvas from 'html2canvas';
 import { generateBookingPDF } from '../../../utils/generateBookingPDF';
 import QRCode from 'qrcode';
 import QRGenerator from '../../common/QRGenerator';
+import axios from 'axios';
 
 const formatLKR = (val) => {
   if (val === null || val === undefined) return '0';
@@ -22,6 +23,28 @@ const PaymentSuccessful = ({
   prices
 }) => {
   const qrRef = useRef(null);
+  const [villaBookingUpdated, setVillaBookingUpdated] = useState(false);
+
+  useEffect(() => {
+    const updateVillaBooking = async () => {
+      try {
+        const response = await axios.post('/api/villa-bookings/update', {
+          bookingId: mongoId
+        });
+        
+        if (response.data.success) {
+          setVillaBookingUpdated(true);
+          console.log('Villa booking updated:', response.data.data);
+        }
+      } catch (error) {
+        console.error('Error updating villa booking:', error);
+      }
+    };
+
+    if (mongoId) {
+      updateVillaBooking();
+    }
+  }, [mongoId]);
 
   const handleDownloadQR = async () => {
     if (!qrRef.current) return;
@@ -78,7 +101,7 @@ const PaymentSuccessful = ({
     <div className="space-y-6">
       {/* Payment Success Header */}
       <div className="p-6 bg-green-50 border-2 border-green-200 rounded-lg">
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3 mb-4">
           <CheckCircle className="w-8 h-8 text-green-600" />
           <div>
             <h4 className="font-bold text-green-800 text-lg">Payment Successful!</h4>
@@ -86,7 +109,7 @@ const PaymentSuccessful = ({
           </div>
         </div>
         
-        <div className="space-y-2 text-sm bg-white rounded-md p-4 border border-green-200">
+        <div className="space-y-2 text-sm bg-white rounded-md p-4 border border-green-200 mb-3">
           <div className="flex justify-between">
             <span className="text-gray-600">Payment Reference:</span>
             <span className="font-mono font-semibold text-gray-900">{confirmation}</span>
@@ -101,16 +124,19 @@ const PaymentSuccessful = ({
           </div>
         </div>
 
-        {/* <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-md">
-          <p className="text-xs text-blue-800">
-            📧 A confirmation email has been sent to your registered email address with the booking details.
-          </p>
-        </div> */}
+        {/* Villa Booking Status */}
+        {villaBookingUpdated && (
+          <div className="p-3 bg-blue-50 border border-blue-200 rounded-md flex items-center gap-2">
+            <CheckCircle className="w-4 h-4 text-blue-600" />
+            <p className="text-xs text-blue-800">
+              Villa booking calendar updated successfully
+            </p>
+          </div>
+        )}
       </div>
 
       {/* QR Code Section */}
-      <div >
-        
+      <div>
         <div className="text-center">
           <div className="mb-6">
             <div className="flex items-center justify-center gap-2 mb-2">
@@ -130,7 +156,7 @@ const PaymentSuccessful = ({
             </div>
 
             <div className="mt-4 space-y-2">
-                {mongoId && (
+              {mongoId && (
                 <div>
                   <p className="font-mono text-xs text-gray-600 break-all">{mongoId}</p>
                 </div>
@@ -139,7 +165,6 @@ const PaymentSuccessful = ({
                 <p className="text-xs text-gray-600 mb-1">Booking ID</p>
                 <p className="font-mono font-bold text-blue-600 text-lg">{bookingId}</p>
               </div>
-              
             </div>
           </div>
 
