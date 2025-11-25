@@ -6,7 +6,7 @@ const formatLKR = (val) => {
   return Number(val).toLocaleString('en-US');
 };
 
-const PricingDetails = ({ prices, nights, totalAmount }) => {
+const PricingSummary = ({ prices, nights, totalAmount }) => {
   // Calculate per night total
   const perNightTotal = (prices?.villaPrice || 0) + 
     (prices?.roomPrices?.reduce((sum, rp) => sum + (rp.price || 0), 0) || 0);
@@ -65,4 +65,4 @@ const PricingDetails = ({ prices, nights, totalAmount }) => {
   );
 };
 
-export default PricingDetails;
+export default PricingSummary;

@@ -1,8 +1,8 @@
 import React from 'react';
 import { CreditCard } from 'lucide-react';
-import PricingDetails from './PricingDetails';
 import PaymentMethods from './PaymentMethods';
 import PaymentSuccessful from './PaymentSuccessful';
+import PricingSummary from '../PricingSummary';
 
 const formatLKR = (val) => {
   if (val === null || val === undefined) return '0';
@@ -46,7 +46,7 @@ const PaymentSection = ({
           <h3 className="text-xl font-semibold mb-6 text-gray-800">Payment</h3>
 
           {/* Pricing Section */}
-          <PricingDetails 
+          <PricingSummary 
             prices={prices}
             nights={nights}
             totalAmount={totalAmount}
