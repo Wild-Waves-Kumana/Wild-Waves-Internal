@@ -111,7 +111,7 @@ const BookingCalendar = ({ selectedDates, onDateToggle }) => {
 
       <div className="mt-4 p-3 bg-blue-50 rounded-lg">
         <p className="text-sm text-blue-800">
-          <strong>Tip:</strong> Click on dates to select multiple days for your booking. Past dates are disabled.
+          <strong>Tip:</strong> Click on dates to select multiple days for your booking. Past dates and Booked days are disabled.
         </p>
       </div>
     </div>
