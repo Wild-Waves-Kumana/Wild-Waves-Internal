@@ -1,7 +1,7 @@
 import React, { useState, useMemo, useEffect, useCallback } from 'react';
 import axios from 'axios';
 import BookingCalendar from './BookingCalender';
-import BookingPrices from './BookingPrices';
+import PricingSummary from '../PricingSummary';
 import SelectionPreview from './SelectionPreview';
 import VillaRoomSelection from './VillaRoomSelection';
 import { bookingStorage } from '../../../utils/bookingStorage';
@@ -242,7 +242,8 @@ const BookingSection1 = ({ onNext }) => {
     });
   };
 
-  useEffect(() => {
+  // Calculate prices and save to storage
+  const prices = useMemo(() => {
     const selectedRooms = getSelectedRooms();
     
     const villaPrice = (() => {
@@ -266,13 +267,18 @@ const BookingSection1 = ({ onNext }) => {
     const perNightTotal = villaPrice + roomsTotal;
     const totalPrice = perNightTotal * Math.max(0, Number(nights) || 0);
 
-    bookingStorage.savePrices({
+    return {
       villaPrice,
       roomPrices,
       nights,
       totalPrice
-    });
+    };
   }, [selectedVilla, selectedRoomIds, nights, acStatus, rooms]); // eslint-disable-line
+
+  // Save prices to storage whenever they change
+  useEffect(() => {
+    bookingStorage.savePrices(prices);
+  }, [prices]);
 
   const buildRange = (a, b) => {
     const start = new Date(Math.min(a, b));
@@ -435,12 +441,11 @@ const BookingSection1 = ({ onNext }) => {
             onDateToggle={toggleDateSelection}
           />
 
-          <div>
-            <BookingPrices
-              selectedVilla={selectedVilla}
-              selectedRooms={getSelectedRooms()}
+          <div className="bg-white p-4 rounded-lg shadow-md mt-6">
+            <PricingSummary
+              prices={prices}
               nights={nights}
-              acStatus={acStatus}
+              totalAmount={prices.totalPrice}
             />
           </div>
         </div>
