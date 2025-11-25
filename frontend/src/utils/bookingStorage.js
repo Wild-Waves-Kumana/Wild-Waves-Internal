@@ -12,7 +12,10 @@ export const BOOKING_STORAGE_KEYS = {
   CUSTOMER: 'customer',
   
   // Saved Booking ID (after successful creation)
-  SAVED_BOOKING_ID: 'saved_booking_id'
+  SAVED_BOOKING_ID: 'saved_booking_id',
+  
+  // Payment Status
+  PAYMENT_STATUS: 'payment_status'
 };
 
 export const bookingStorage = {
@@ -177,6 +180,28 @@ export const bookingStorage = {
     }
   },
 
+  // ==================== PAYMENT STATUS ====================
+  savePaymentStatus: (status) => {
+    try {
+      localStorage.setItem(BOOKING_STORAGE_KEYS.PAYMENT_STATUS, status ? 'paid' : 'pending');
+    } catch (e) {
+      console.error('Failed to save payment status:', e);
+    }
+  },
+
+  getPaymentStatus: () => {
+    try {
+      return localStorage.getItem(BOOKING_STORAGE_KEYS.PAYMENT_STATUS);
+    } catch (e) {
+      console.error('Failed to get payment status:', e);
+      return null;
+    }
+  },
+
+  isPaymentCompleted: () => {
+    return bookingStorage.getPaymentStatus() === 'paid';
+  },
+
   // ==================== GET ALL BOOKING DATA ====================
   getBookingData: () => {
     return {
@@ -200,6 +225,7 @@ export const bookingStorage = {
     Object.values(BOOKING_STORAGE_KEYS).forEach(key => {
       localStorage.removeItem(key);
     });
+    console.log('✓ All booking data cleared from localStorage');
   }
 };
 
