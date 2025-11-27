@@ -2,10 +2,12 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import axios from 'axios';
 import { Minus, Snowflake, Flame, Fan, Droplets, Wind, Power, ChevronLeft, ChevronRight } from 'lucide-react';
 
-const minTemp = 16;
-const maxTemp = 26;
+const MIN_TEMP = 16;
+const MAX_TEMP = 26;
+const ANGLE_RANGE = 270;
+const ANGLE_OFFSET = -135;
 
-const modeOptions = [
+const MODE_OPTIONS = [
   { mode: 'No Mode', icon: <Minus size={20} /> },
   { mode: 'Cool', icon: <Snowflake size={20} /> },
   { mode: 'Heat', icon: <Flame size={20} /> },
@@ -13,7 +15,7 @@ const modeOptions = [
   { mode: 'Dry', icon: <Droplets size={20} /> },
 ];
 
-const fanSpeedOptions = [
+const FAN_SPEED_OPTIONS = [
   { speed: 'Low', icon: <Wind size={16} /> },
   { speed: 'Medium', icon: <Wind size={18} /> },
   { speed: 'High', icon: <Wind size={20} /> },
@@ -35,121 +37,139 @@ const UserACController = ({ selectedRoom, onACUpdate }) => {
         setCurrentIdx(0);
         return;
       }
+
       try {
         const { data } = await axios.get('/api/equipment/air-conditioners');
         const roomACs = data.filter(
-          ac =>
-            selectedRoom.airConditioners?.includes(ac._id) &&
-            ac.access === true
+          ac => selectedRoom.airConditioners?.includes(ac._id) && ac.access === true
         );
         setAcs(roomACs);
         setCurrentIdx(0);
-      } catch {
+      } catch (err) {
+        console.error('Failed to fetch ACs:', err);
         setAcs([]);
         setCurrentIdx(0);
       }
     };
+
     fetchRoomACs();
   }, [selectedRoom]);
 
-  // Update AC field
-  const handleFieldChange = async (ac, idx, field, value) => {
-    const updated = { ...acs[idx], [field]: value };
-    setAcs(prev => prev.map((item, i) => (i === idx ? updated : item)));
-    try {
-      await axios.put(
-        `/api/equipment/air-conditioners/${ac._id}`,
-        { [field]: value }
-      );
-      onACUpdate && onACUpdate();
-    } catch {
-      console.error(`Failed to update ${field} for AC ${ac._id}`);
-      // Revert the change if update fails
-      setAcs(prev => prev.map((item, i) => (i === idx ? ac : item)));
-    }
-  };
+  // Update AC field with optimistic update
+  const handleFieldChange = useCallback(async (ac, idx, field, value) => {
+    // Optimistic update
+    setAcs(prev => prev.map((item, i) => 
+      i === idx ? { ...item, [field]: value } : item
+    ));
 
-  // Circular Temperature Controller Logic
-  const angleToTemp = (mouseAngle) => {
+    try {
+      await axios.put(`/api/equipment/air-conditioners/${ac._id}`, { [field]: value });
+      if (onACUpdate) onACUpdate();
+    } catch (err) {
+      console.error(`Failed to update ${field}:`, err);
+      alert(`Failed to update AC ${field}.`);
+      
+      // Revert optimistic update on error
+      setAcs(prev => prev.map((item, i) => 
+        i === idx ? ac : item
+      ));
+    }
+  }, [onACUpdate]);
+
+  // Convert mouse angle to temperature value
+  const angleToTemp = useCallback((mouseAngle) => {
+    // Normalize angle to range [-135, 135]
     let adjustedAngle = mouseAngle + 90;
     while (adjustedAngle > 180) adjustedAngle -= 360;
     while (adjustedAngle < -180) adjustedAngle += 360;
-    let clampedAngle = Math.max(-135, Math.min(135, adjustedAngle));
-    const progress = (clampedAngle + 135) / 270;
-    return Math.round(minTemp + (progress * (maxTemp - minTemp)));
-  };
+    
+    const clampedAngle = Math.max(ANGLE_OFFSET, Math.min(-ANGLE_OFFSET, adjustedAngle));
+    const progress = (clampedAngle - ANGLE_OFFSET) / ANGLE_RANGE;
+    
+    return Math.round(MIN_TEMP + (progress * (MAX_TEMP - MIN_TEMP)));
+  }, []);
 
-  const getAngleFromEvent = (e) => {
+  // Get angle from mouse/touch event
+  const getAngleFromEvent = useCallback((e) => {
     if (!containerRef.current) return 0;
+
     const rect = containerRef.current.getBoundingClientRect();
     const centerX = rect.left + rect.width / 2;
     const centerY = rect.top + rect.height / 2;
     const clientX = e.touches ? e.touches[0].clientX : e.clientX;
     const clientY = e.touches ? e.touches[0].clientY : e.clientY;
-    return Math.atan2(clientY - centerY, clientX - centerX) * (180 / Math.PI);
-  };
 
-  // Drag logic for circular temperature controller
-  const handleMouseDown = (e, ac, idx) => {
+    return Math.atan2(clientY - centerY, clientX - centerX) * (180 / Math.PI);
+  }, []);
+
+  // Start temperature drag
+  const handleMouseDown = useCallback((e, ac, idx) => {
     if (ac.access !== true || ac.status !== true) return;
+
     setDragIdx(idx);
     setDragging(true);
+
     const angle = getAngleFromEvent(e);
     const newTemp = angleToTemp(angle);
-    handleFieldChange(ac, idx, "temperaturelevel", Math.max(minTemp, Math.min(maxTemp, newTemp)));
-  };
+    handleFieldChange(ac, idx, 'temperaturelevel', Math.max(MIN_TEMP, Math.min(MAX_TEMP, newTemp)));
+  }, [getAngleFromEvent, angleToTemp, handleFieldChange]);
 
+  // Handle temperature drag movement
   const handleMouseMove = useCallback((e) => {
     if (dragIdx === null || !dragging) return;
+
     const ac = acs[dragIdx];
     if (!ac || ac.access !== true || ac.status !== true) return;
+
     const angle = getAngleFromEvent(e);
     const newTemp = angleToTemp(angle);
-    handleFieldChange(ac, dragIdx, "temperaturelevel", Math.max(minTemp, Math.min(maxTemp, newTemp)));
-  }, [dragIdx, dragging, acs]);
+    handleFieldChange(ac, dragIdx, 'temperaturelevel', Math.max(MIN_TEMP, Math.min(MAX_TEMP, newTemp)));
+  }, [dragIdx, dragging, acs, getAngleFromEvent, angleToTemp, handleFieldChange]);
 
+  // End temperature drag
   const handleMouseUp = useCallback(() => {
     setDragging(false);
     setDragIdx(null);
   }, []);
 
+  // Attach/detach drag event listeners
   useEffect(() => {
-    if (dragging) {
-      document.addEventListener('mousemove', handleMouseMove);
-      document.addEventListener('mouseup', handleMouseUp);
-      document.addEventListener('touchmove', handleMouseMove);
-      document.addEventListener('touchend', handleMouseUp);
-      return () => {
-        document.removeEventListener('mousemove', handleMouseMove);
-        document.removeEventListener('mouseup', handleMouseUp);
-        document.removeEventListener('touchmove', handleMouseMove);
-        document.removeEventListener('touchend', handleMouseUp);
-      };
-    }
+    if (!dragging) return;
+
+    document.addEventListener('mousemove', handleMouseMove);
+    document.addEventListener('mouseup', handleMouseUp);
+    document.addEventListener('touchmove', handleMouseMove);
+    document.addEventListener('touchend', handleMouseUp);
+
+    return () => {
+      document.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('mouseup', handleMouseUp);
+      document.removeEventListener('touchmove', handleMouseMove);
+      document.removeEventListener('touchend', handleMouseUp);
+    };
   }, [dragging, handleMouseMove, handleMouseUp]);
 
-  // Enhanced Navigation handlers
-  const handlePrev = () => {
+  // Navigation handlers
+  const handlePrev = useCallback(() => {
     if (currentIdx > 0) {
       setSlideDirection('slide-right');
       setCurrentIdx(currentIdx - 1);
     }
-  };
+  }, [currentIdx]);
 
-  const handleNext = () => {
+  const handleNext = useCallback(() => {
     if (currentIdx < acs.length - 1) {
       setSlideDirection('slide-left');
       setCurrentIdx(currentIdx + 1);
     }
-  };
+  }, [currentIdx, acs.length]);
 
-  // Navigate directly to specific AC
-  const goToAC = (index) => {
-    if (index !== currentIdx) {
+  const goToAC = useCallback((index) => {
+    if (index !== currentIdx && index >= 0 && index < acs.length) {
       setSlideDirection(index > currentIdx ? 'slide-left' : 'slide-right');
       setCurrentIdx(index);
     }
-  };
+  }, [currentIdx, acs.length]);
 
   // Reset slide animation after transition
   useEffect(() => {
@@ -161,16 +181,18 @@ const UserACController = ({ selectedRoom, onACUpdate }) => {
 
   // Keyboard navigation
   useEffect(() => {
-    const handleKeyDown = (e) => {
-      if (acs.length > 1) {
-        if (e.key === "ArrowLeft") handlePrev();
-        if (e.key === "ArrowRight") handleNext();
-      }
-    };
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [acs.length, currentIdx]);
+    if (acs.length <= 1) return;
 
+    const handleKeyDown = (e) => {
+      if (e.key === 'ArrowLeft') handlePrev();
+      if (e.key === 'ArrowRight') handleNext();
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [acs.length, handlePrev, handleNext]);
+
+  // Early return if no ACs
   if (acs.length === 0) {
     return (
       <div className="bg-white rounded-3xl shadow-2xl p-8 bg-gradient-to-br from-blue-100 to-cyan-100">
@@ -181,73 +203,65 @@ const UserACController = ({ selectedRoom, onACUpdate }) => {
   }
 
   const currentAC = acs[currentIdx];
+  const isDisabled = currentAC.access !== true || currentAC.status !== true;
+  const hasMultipleACs = acs.length > 1;
+  const tempProgress = (currentAC.temperaturelevel - MIN_TEMP) / (MAX_TEMP - MIN_TEMP);
+  const arcLength = tempProgress * (ANGLE_RANGE * (85 * 2 * Math.PI) / 360);
 
   return (
     <div className="bg-white rounded-3xl shadow-2xl p-8 bg-gradient-to-br from-blue-100 to-cyan-100">
       <div className="space-y-6">
-        {/* Enhanced Header with Navigation */}
+        {/* Header Section */}
         <div className="relative">
-          
-
-          {/* Main Header */}
           <div className="grid grid-cols-3 items-center mb-8">
             {/* AC Info - Left */}
             <div className={`flex flex-col transition-all duration-300 ${
               slideDirection === 'slide-left' ? 'transform -translate-x-full opacity-0' :
               slideDirection === 'slide-right' ? 'transform translate-x-full opacity-0' : ''
             }`}>
-              <h2 className="text-xl font-medium text-gray-700">
-                {currentAC.itemName}
-              </h2>
-              <p className="text-sm text-gray-500">
-                Code: {currentAC.itemCode}
-              </p>
+              <h2 className="text-xl font-medium text-gray-700">{currentAC.itemName}</h2>
+              <p className="text-sm text-gray-500">Code: {currentAC.itemCode}</p>
             </div>
 
-          <div className=''>
-            {/* AC Indicator Dots */}
-          {acs.length > 1 && (
-            <div className="flex justify-center">
-              <div className="flex space-x-2 bg-white/50 rounded-full px-4 py-2 backdrop-blur-sm ">
-                {acs.map((ac, idx) => (
-                  <button
-                    key={ac._id}
-                    onClick={() => goToAC(idx)}
-                    className={`w-2 h-2 rounded-full transition-all duration-300 transform hover:scale-125 ${
-                      idx === currentIdx
-                        ? 'bg-blue-500 w-6'
-                        : 'bg-gray-300 hover:bg-gray-400'
-                    }`}
-                    aria-label={`Go to ${ac.itemName}`}
-                  />
-                ))}
-              </div>
-            </div>
-          )}
-
-            {/* Counter - Center */}
-            {acs.length > 1 && (
-              <div className="flex justify-center">
-                <div className="text-xs text-blue-600 font-medium bg-blue-100 px-3 py-1 rounded-full">
-                  {currentIdx + 1} of {acs.length}
-                </div>
-              </div>
-            )}
+            {/* AC Indicators - Center */}
+            <div>
+              {hasMultipleACs && (
+                <>
+                  <div className="flex justify-center">
+                    <div className="flex space-x-2 bg-white/50 rounded-full px-4 py-2 backdrop-blur-sm">
+                      {acs.map((ac, idx) => (
+                        <button
+                          key={ac._id}
+                          onClick={() => goToAC(idx)}
+                          className={`w-2 h-2 rounded-full transition-all duration-300 transform hover:scale-125 ${
+                            idx === currentIdx
+                              ? 'bg-blue-500 w-6'
+                              : 'bg-gray-300 hover:bg-gray-400'
+                          }`}
+                          aria-label={`Go to ${ac.itemName}`}
+                        />
+                      ))}
+                    </div>
+                  </div>
+                  <div className="flex justify-center mt-2">
+                    <div className="text-xs text-blue-600 font-medium bg-blue-100 px-3 py-1 rounded-full">
+                      {currentIdx + 1} of {acs.length}
+                    </div>
+                  </div>
+                </>
+              )}
             </div>
 
             {/* Power Button - Right */}
             <div className="flex justify-end">
               <button
-                onClick={() =>
-                  currentAC.access === true &&
-                  handleFieldChange(currentAC, currentIdx, "status", !currentAC.status)
-                }
+                onClick={() => handleFieldChange(currentAC, currentIdx, 'status', !currentAC.status)}
+                disabled={currentAC.access !== true}
                 className={`w-12 h-12 rounded-full flex items-center justify-center transition-all duration-300 transform hover:scale-110 ${
                   currentAC.status
                     ? 'bg-gradient-to-r from-blue-500 to-blue-600 text-white shadow-lg hover:shadow-xl'
                     : 'bg-red-500 text-gray-200 shadow-md hover:bg-red-600'
                 } ${currentAC.access !== true ? 'opacity-50 cursor-not-allowed' : ''}`}
-                disabled={currentAC.access !== true}
                 aria-label="Toggle Power"
               >
                 <Power size={20} />
@@ -256,17 +270,17 @@ const UserACController = ({ selectedRoom, onACUpdate }) => {
           </div>
         </div>
 
-        {/* Temperature Controller with Side Navigation */}
+        {/* Temperature Controller with Navigation */}
         <div className="flex items-center justify-center gap-6">
           {/* Left Arrow */}
-          {acs.length > 1 && (
+          {hasMultipleACs && (
             <button
               onClick={handlePrev}
               disabled={currentIdx === 0}
               className={`w-12 h-12 rounded-full flex items-center justify-center transition-all duration-200 transform hover:scale-110 ${
                 currentIdx === 0
-                  ? "bg-gray-200 text-gray-400 cursor-not-allowed opacity-50"
-                  : "bg-white/90 text-blue-600 hover:bg-white shadow-lg hover:shadow-xl backdrop-blur-sm"
+                  ? 'bg-gray-200 text-gray-400 cursor-not-allowed opacity-50'
+                  : 'bg-white/90 text-blue-600 hover:bg-white shadow-lg hover:shadow-xl backdrop-blur-sm'
               }`}
               aria-label="Previous AC"
             >
@@ -277,19 +291,24 @@ const UserACController = ({ selectedRoom, onACUpdate }) => {
           {/* Temperature Controller */}
           <div
             ref={containerRef}
-            className={`relative w-48 h-48 cursor-pointer transition-all duration-300 ${
+            className={`relative w-48 h-48 transition-all duration-300 ${
+              isDisabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'
+            } ${
               slideDirection === 'slide-left' ? 'transform -translate-x-full opacity-0' :
               slideDirection === 'slide-right' ? 'transform translate-x-full opacity-0' : ''
             }`}
             onMouseDown={e => handleMouseDown(e, currentAC, currentIdx)}
             onTouchStart={e => handleMouseDown(e, currentAC, currentIdx)}
-            style={{ opacity: currentAC.access !== true || currentAC.status !== true ? 0.5 : 1 }}
           >
-            {/* Temperature labels */}
-            <div className="absolute text-sm text-gray-500 font-medium" style={{ left: '-10px', bottom: '20px' }}>{minTemp}°</div>
-            <div className="absolute text-sm text-gray-500 font-medium" style={{ right: '-10px', bottom: '20px' }}>{maxTemp}°</div>
-            
-            {/* Center circle */}
+            {/* Temperature Range Labels */}
+            <div className="absolute text-sm text-gray-500 font-medium" style={{ left: '-10px', bottom: '20px' }}>
+              {MIN_TEMP}°
+            </div>
+            <div className="absolute text-sm text-gray-500 font-medium" style={{ right: '-10px', bottom: '20px' }}>
+              {MAX_TEMP}°
+            </div>
+
+            {/* Center Display */}
             <div className="absolute inset-6 bg-gradient-to-br from-white to-gray-50 rounded-full shadow-xl flex flex-col items-center justify-center transition-all duration-300 hover:shadow-2xl">
               <div className="text-gray-500 text-xs font-semibold mb-1 tracking-wider">
                 {currentAC.status === true
@@ -303,14 +322,13 @@ const UserACController = ({ selectedRoom, onACUpdate }) => {
                 <span className="text-lg">°</span>
               </div>
               <div className="text-blue-500">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
-                  <path d="M17,8C8,10 5.9,16.17 3.82,21.34L5.71,22L6.66,19.7C7.14,19.87 7.64,20 8,20C19,20 22,3 22,3C21,5 14,5.25 9,6.25C4,7.25 2,11.5 2,13.5C2,15.5 3.75,17.25 3.75,17.25C7,8 17,8 17,8Z"/>
-                </svg>
+                <Snowflake size={24} />
               </div>
             </div>
-            
-            {/* Enhanced active arc indicator */}
+
+            {/* Temperature Arc Indicator */}
             <svg className="absolute inset-0 w-full h-full" viewBox="0 0 200 200" style={{ transform: 'rotate(-225deg)' }}>
+              {/* Background arc */}
               <circle
                 cx="100"
                 cy="100"
@@ -319,6 +337,7 @@ const UserACController = ({ selectedRoom, onACUpdate }) => {
                 stroke="rgba(59, 130, 246, 0.2)"
                 strokeWidth="4"
               />
+              {/* Active arc */}
               <circle
                 cx="100"
                 cy="100"
@@ -326,7 +345,7 @@ const UserACController = ({ selectedRoom, onACUpdate }) => {
                 fill="none"
                 stroke="url(#gradient)"
                 strokeWidth="6"
-                strokeDasharray={`${currentAC.status === true ? ((currentAC.temperaturelevel - minTemp) / (maxTemp - minTemp)) * (270 * (85 * 2 * Math.PI) / 360) : 0} ${85 * 2 * Math.PI}`}
+                strokeDasharray={`${currentAC.status === true ? arcLength : 0} ${85 * 2 * Math.PI}`}
                 strokeDashoffset={0}
                 strokeLinecap="round"
                 className="transition-all duration-500 drop-shadow-sm"
@@ -341,14 +360,14 @@ const UserACController = ({ selectedRoom, onACUpdate }) => {
           </div>
 
           {/* Right Arrow */}
-          {acs.length > 1 && (
+          {hasMultipleACs && (
             <button
               onClick={handleNext}
               disabled={currentIdx === acs.length - 1}
               className={`w-12 h-12 rounded-full flex items-center justify-center transition-all duration-200 transform hover:scale-110 ${
                 currentIdx === acs.length - 1
-                  ? "bg-gray-200 text-gray-400 cursor-not-allowed opacity-50"
-                  : "bg-white/90 text-blue-600 hover:bg-white shadow-lg hover:shadow-xl backdrop-blur-sm"
+                  ? 'bg-gray-200 text-gray-400 cursor-not-allowed opacity-50'
+                  : 'bg-white/90 text-blue-600 hover:bg-white shadow-lg hover:shadow-xl backdrop-blur-sm'
               }`}
               aria-label="Next AC"
             >
@@ -356,91 +375,101 @@ const UserACController = ({ selectedRoom, onACUpdate }) => {
             </button>
           )}
         </div>
-        
+
         {/* Mode Selection */}
-        <div className={`transition-all duration-300 ${
-          slideDirection === 'slide-left' ? 'transform -translate-x-full opacity-0' :
-          slideDirection === 'slide-right' ? 'transform translate-x-full opacity-0' : ''
-        }`}>
-          <h3 className="text-center text-sm font-semibold text-cyan-700 mb-4 tracking-wide">MODE</h3>
-          <div className="flex justify-center gap-3">
-            {modeOptions.map(({ mode: modeType, icon }) => {
-              const isDisabled = currentAC.access !== true || currentAC.status !== true;
-              return (
-                <div
-                  key={modeType}
-                  className={`flex flex-col items-center transition-all duration-200 ${
-                    isDisabled ? "opacity-40" : "opacity-100"
-                  }`}
-                >
-                  <button
-                    onClick={() =>
-                      !isDisabled && handleFieldChange(currentAC, currentIdx, "mode", modeType)
-                    }
-                    className={`w-12 h-12 rounded-xl flex items-center justify-center transition-all duration-300 transform hover:scale-110 ${
-                      currentAC.mode === modeType
-                        ? 'bg-gradient-to-r from-blue-500 to-blue-600 text-white shadow-lg shadow-blue-200'
-                        : 'bg-white/80 text-gray-400 hover:text-gray-600 shadow-md hover:shadow-lg backdrop-blur-sm'
-                    }`}
-                    disabled={isDisabled}
-                    style={{ pointerEvents: isDisabled ? "none" : "auto" }}
-                  >
-                    {icon}
-                  </button>
-                  <span className={`mt-2 text-xs font-medium transition-colors duration-200 ${
-                    currentAC.mode === modeType ? 'text-blue-600' : 'text-gray-500'
-                  }`}>
-                    {modeType}
-                  </span>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-        
+        <ModeSelector
+          currentMode={currentAC.mode}
+          isDisabled={isDisabled}
+          slideDirection={slideDirection}
+          onModeChange={(mode) => handleFieldChange(currentAC, currentIdx, 'mode', mode)}
+        />
+
         {/* Fan Speed Selection */}
-        <div className={`transition-all duration-300 ${
-          slideDirection === 'slide-left' ? 'transform -translate-x-full opacity-0' :
-          slideDirection === 'slide-right' ? 'transform translate-x-full opacity-0' : ''
-        }`}>
-          <h3 className="text-center text-sm font-semibold text-cyan-700 mb-4 tracking-wide">FAN SPEED</h3>
-          <div className="flex justify-center gap-4">
-            {fanSpeedOptions.map(({ speed, icon }) => {
-              const isDisabled = currentAC.access !== true || currentAC.status !== true;
-              return (
-                <div
-                  key={speed}
-                  className={`flex flex-col items-center transition-all duration-200 ${
-                    isDisabled ? "opacity-40" : "opacity-100"
-                  }`}
-                >
-                  <button
-                    onClick={() =>
-                      !isDisabled && handleFieldChange(currentAC, currentIdx, "fanSpeed", speed)
-                    }
-                    className={`w-12 h-12 rounded-xl flex items-center justify-center transition-all duration-300 transform hover:scale-110 ${
-                      currentAC.fanSpeed === speed
-                        ? 'bg-gradient-to-r from-cyan-500 to-cyan-600 text-white shadow-lg shadow-cyan-200'
-                        : 'bg-white/80 text-gray-400 hover:text-gray-600 shadow-md hover:shadow-lg backdrop-blur-sm'
-                    }`}
-                    disabled={isDisabled}
-                    style={{ pointerEvents: isDisabled ? "none" : "auto" }}
-                  >
-                    {icon}
-                  </button>
-                  <span className={`mt-2 text-xs font-medium transition-colors duration-200 ${
-                    currentAC.fanSpeed === speed ? 'text-cyan-600' : 'text-gray-500'
-                  }`}>
-                    {speed}
-                  </span>
-                </div>
-              );
-            })}
-          </div>
-        </div>
+        <FanSpeedSelector
+          currentSpeed={currentAC.fanSpeed}
+          isDisabled={isDisabled}
+          slideDirection={slideDirection}
+          onSpeedChange={(speed) => handleFieldChange(currentAC, currentIdx, 'fanSpeed', speed)}
+        />
       </div>
     </div>
   );
 };
+
+// Extracted Mode Selector Component
+const ModeSelector = ({ currentMode, isDisabled, slideDirection, onModeChange }) => (
+  <div className={`transition-all duration-300 ${
+    slideDirection === 'slide-left' ? 'transform -translate-x-full opacity-0' :
+    slideDirection === 'slide-right' ? 'transform translate-x-full opacity-0' : ''
+  }`}>
+    <h3 className="text-center text-sm font-semibold text-cyan-700 mb-4 tracking-wide">MODE</h3>
+    <div className="flex justify-center gap-3">
+      {MODE_OPTIONS.map(({ mode, icon }) => (
+        <div
+          key={mode}
+          className={`flex flex-col items-center transition-all duration-200 ${
+            isDisabled ? 'opacity-40' : 'opacity-100'
+          }`}
+        >
+          <button
+            onClick={() => !isDisabled && onModeChange(mode)}
+            disabled={isDisabled}
+            className={`w-12 h-12 rounded-xl flex items-center justify-center transition-all duration-300 transform hover:scale-110 ${
+              currentMode === mode
+                ? 'bg-gradient-to-r from-blue-500 to-blue-600 text-white shadow-lg shadow-blue-200'
+                : 'bg-white/80 text-gray-400 hover:text-gray-600 shadow-md hover:shadow-lg backdrop-blur-sm'
+            }`}
+            aria-label={`Set mode to ${mode}`}
+          >
+            {icon}
+          </button>
+          <span className={`mt-2 text-xs font-medium transition-colors duration-200 ${
+            currentMode === mode ? 'text-blue-600' : 'text-gray-500'
+          }`}>
+            {mode}
+          </span>
+        </div>
+      ))}
+    </div>
+  </div>
+);
+
+// Extracted Fan Speed Selector Component
+const FanSpeedSelector = ({ currentSpeed, isDisabled, slideDirection, onSpeedChange }) => (
+  <div className={`transition-all duration-300 ${
+    slideDirection === 'slide-left' ? 'transform -translate-x-full opacity-0' :
+    slideDirection === 'slide-right' ? 'transform translate-x-full opacity-0' : ''
+  }`}>
+    <h3 className="text-center text-sm font-semibold text-cyan-700 mb-4 tracking-wide">FAN SPEED</h3>
+    <div className="flex justify-center gap-4">
+      {FAN_SPEED_OPTIONS.map(({ speed, icon }) => (
+        <div
+          key={speed}
+          className={`flex flex-col items-center transition-all duration-200 ${
+            isDisabled ? 'opacity-40' : 'opacity-100'
+          }`}
+        >
+          <button
+            onClick={() => !isDisabled && onSpeedChange(speed)}
+            disabled={isDisabled}
+            className={`w-12 h-12 rounded-xl flex items-center justify-center transition-all duration-300 transform hover:scale-110 ${
+              currentSpeed === speed
+                ? 'bg-gradient-to-r from-cyan-500 to-cyan-600 text-white shadow-lg shadow-cyan-200'
+                : 'bg-white/80 text-gray-400 hover:text-gray-600 shadow-md hover:shadow-lg backdrop-blur-sm'
+            }`}
+            aria-label={`Set fan speed to ${speed}`}
+          >
+            {icon}
+          </button>
+          <span className={`mt-2 text-xs font-medium transition-colors duration-200 ${
+            currentSpeed === speed ? 'text-cyan-600' : 'text-gray-500'
+          }`}>
+            {speed}
+          </span>
+        </div>
+      ))}
+    </div>
+  </div>
+);
 
 export default UserACController;
