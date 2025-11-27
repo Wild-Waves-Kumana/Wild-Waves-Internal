@@ -309,6 +309,44 @@ const BookingSection1 = ({ onNext }) => {
     setSelectedDates(range);
   };
 
+  // Check if villa is available for selected dates
+  const isVillaAvailable = async (villaId, selectedDates) => {
+    try {
+      const response = await axios.get(`/api/villa-bookings/${villaId}`);
+      
+      if (!response.data.success || !response.data.data) {
+        // No bookings for this villa, it's available
+        return true;
+      }
+
+      const villaBooking = response.data.data;
+      const bookedDates = villaBooking.bookingDates || [];
+
+      // Normalize selected dates (excluding checkout date)
+      const normalizedSelectedDates = selectedDates.slice(0, -1).map(d => {
+        const normalized = new Date(d);
+        normalized.setHours(0, 0, 0, 0);
+        return normalized.getTime();
+      });
+
+      // Check if any selected date is already booked
+      const hasConflict = bookedDates.some(bookedDate => {
+        const normalizedBookedDate = new Date(bookedDate);
+        normalizedBookedDate.setHours(0, 0, 0, 0);
+        return normalizedSelectedDates.includes(normalizedBookedDate.getTime());
+      });
+
+      return !hasConflict;
+    } catch (error) {
+      // If 404, villa has no bookings yet, so it's available
+      if (error.response?.status === 404) {
+        return true;
+      }
+      console.error(`Error checking availability for villa ${villaId}:`, error);
+      return false;
+    }
+  };
+
   // Fetch villas when dates and company are selected
   useEffect(() => {
     if (selectedDates.length > 0 && selectedCompany) {
@@ -334,8 +372,8 @@ const BookingSection1 = ({ onNext }) => {
         ? response.data.filter(villa => villa.companyId === selectedCompany)
         : response.data;
       
-      // Fetch room capacities for each villa
-      const villasWithCapacity = await Promise.all(
+      // Fetch room capacities and check availability for each villa
+      const villasWithCapacityAndAvailability = await Promise.all(
         filteredVillas.map(async (villa) => {
           try {
             const roomsResponse = await axios.get(`/api/rooms/user/${villa._id}`);
@@ -348,22 +386,30 @@ const BookingSection1 = ({ onNext }) => {
               .filter(room => room.type === 'bedroom' && room.capacity)
               .reduce((sum, room) => sum + (room.capacity || 0), 0);
             
+            // Check availability
+            const isAvailable = await isVillaAvailable(villa._id, selectedDates);
+            
             return {
               ...villa,
-              maxCapacity: totalCapacity
+              maxCapacity: totalCapacity,
+              isAvailable: isAvailable
             };
           } catch (error) {
-            console.error(`Error fetching rooms for villa ${villa._id}:`, error);
+            console.error(`Error fetching data for villa ${villa._id}:`, error);
             return {
               ...villa,
-              maxCapacity: 0
+              maxCapacity: 0,
+              isAvailable: false
             };
           }
         })
       );
       
-      console.log('Filtered villas with capacity:', villasWithCapacity);
-      setVillas(villasWithCapacity);
+      // Filter to show only available villas
+      const availableVillas = villasWithCapacityAndAvailability.filter(villa => villa.isAvailable);
+      
+      console.log('Available villas with capacity:', availableVillas);
+      setVillas(availableVillas);
     } catch (error) {
       console.error('Error fetching villas:', error);
       setVillas([]);
