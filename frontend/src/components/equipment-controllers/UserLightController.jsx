@@ -301,7 +301,6 @@ const BrightnessSlider = ({ brightness, isDisabled, onChange }) => {
             height: 20px;
             border-radius: 50%;
             background: ${!isDisabled ? '#f59e0b' : '#9ca3af'};
-            cursor: ${!isDisabled ? 'pointer' : 'not-allowed'};
             box-shadow: 0 2px 8px rgba(0,0,0,0.2);
             border: 2px solid white;
             transition: all 0.3s ease;
