@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 import { Lock, Unlock, Power, ChevronLeft, ChevronRight } from 'lucide-react';
 
@@ -6,6 +6,16 @@ const UserDoorController = ({ selectedRoom, onDoorUpdate }) => {
   const [doors, setDoors] = useState([]);
   const [currentIdx, setCurrentIdx] = useState(0);
   const [slideDirection, setSlideDirection] = useState('');
+
+  // Ref to keep latest doors for timer closures
+  const doorsRef = useRef([]);
+  // Ref to store the auto-unlock timer id
+  const autoUnlockTimerRef = useRef(null);
+
+  // keep ref synced with state
+  useEffect(() => {
+    doorsRef.current = doors;
+  }, [doors]);
 
   // Fetch Doors for the selected room
   useEffect(() => {
@@ -35,6 +45,16 @@ const UserDoorController = ({ selectedRoom, onDoorUpdate }) => {
     fetchRoomDoors();
   }, [selectedRoom]);
 
+  // Clear any pending auto-unlock timer on unmount
+  useEffect(() => {
+    return () => {
+      if (autoUnlockTimerRef.current) {
+        clearTimeout(autoUnlockTimerRef.current);
+        autoUnlockTimerRef.current = null;
+      }
+    };
+  }, []);
+
   const handleFieldChange = async (door, idx, field, value) => {
     const updated = { ...doors[idx], [field]: value };
     setDoors(prev =>
@@ -42,11 +62,57 @@ const UserDoorController = ({ selectedRoom, onDoorUpdate }) => {
         i === idx ? updated : item
       )
     );
+
     try {
       await axios.put(
         `/api/equipment/doors/${door._id}`,
         { [field]: value }
       );
+
+      // If lockStatus was changed manually to false, cancel any auto-unlock timer
+      if (field === 'lockStatus' && value === false) {
+        if (autoUnlockTimerRef.current) {
+          clearTimeout(autoUnlockTimerRef.current);
+          autoUnlockTimerRef.current = null;
+        }
+      }
+
+      // If lockStatus was changed to true, schedule auto-unlock after 10s
+      if (field === 'lockStatus' && value === true) {
+        // Clear any previous timer to avoid duplicates
+        if (autoUnlockTimerRef.current) {
+          clearTimeout(autoUnlockTimerRef.current);
+          autoUnlockTimerRef.current = null;
+        }
+
+        // Schedule auto-unlock in 10 seconds
+        autoUnlockTimerRef.current = setTimeout(async () => {
+          try {
+            // Find latest door object from ref to ensure user didn't change it manually
+            const latestDoor = doorsRef.current.find(d => d._id === door._id);
+            if (!latestDoor) {
+              autoUnlockTimerRef.current = null;
+              return;
+            }
+
+            // If door is still locked (lockStatus === true), perform auto-unlock
+            if (latestDoor.lockStatus === true) {
+              await axios.put(`/api/equipment/doors/${door._id}`, { lockStatus: false });
+
+              // Update local state
+              setDoors(prev => prev.map(d => d._id === door._id ? { ...d, lockStatus: false } : d));
+
+              // notify parent if provided
+              if (onDoorUpdate) onDoorUpdate();
+            }
+          } catch (err) {
+            console.error('Auto-unlock failed:', err);
+          } finally {
+            autoUnlockTimerRef.current = null;
+          }
+        }, 10000); // 10 seconds
+      }
+
       if (onDoorUpdate) onDoorUpdate();
     } catch (err) {
       console.error('Failed to update Door:', err);
@@ -98,6 +164,22 @@ const UserDoorController = ({ selectedRoom, onDoorUpdate }) => {
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [doors.length, currentIdx]);
+
+  // inject keyframes for slow scale pulse once
+  useEffect(() => {
+    if (!document.getElementById('door-scale-keyframes')) {
+      const style = document.createElement('style');
+      style.id = 'door-scale-keyframes';
+      style.innerHTML = `
+        @keyframes doorScalePulse {
+          0% { transform: scale(1); }
+          50% { transform: scale(1.08); }
+          100% { transform: scale(1); }
+        }
+      `;
+      document.head.appendChild(style);
+    }
+  }, []);
 
   if (doors.length === 0) {
     return (
@@ -237,7 +319,9 @@ const UserDoorController = ({ selectedRoom, onDoorUpdate }) => {
                     ? currentDoor.lockStatus
                       ? 'conic-gradient(from 0deg, #10b981, #059669, #047857, #10b981)'
                       : 'conic-gradient(from 0deg, #ef4444, #dc2626, #b91c1c, #ef4444)'
-                    : undefined
+                    : undefined,
+                  // apply slow zoom in/out animation when lockStatus is true
+                  animation: currentDoor.lockStatus ? 'doorScalePulse 2.5s ease-in-out infinite' : undefined
                 }}
               >
                 {/* Inner highlight */}
