@@ -165,6 +165,22 @@ const UserDoorController = ({ selectedRoom, onDoorUpdate }) => {
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [doors.length, currentIdx]);
 
+  // inject keyframes for slow scale pulse once
+  useEffect(() => {
+    if (!document.getElementById('door-scale-keyframes')) {
+      const style = document.createElement('style');
+      style.id = 'door-scale-keyframes';
+      style.innerHTML = `
+        @keyframes doorScalePulse {
+          0% { transform: scale(1); }
+          50% { transform: scale(1.08); }
+          100% { transform: scale(1); }
+        }
+      `;
+      document.head.appendChild(style);
+    }
+  }, []);
+
   if (doors.length === 0) {
     return (
       <div className="bg-white rounded-3xl shadow-2xl p-8 bg-gradient-to-br from-fuchsia-100 to-red-100">
@@ -303,7 +319,9 @@ const UserDoorController = ({ selectedRoom, onDoorUpdate }) => {
                     ? currentDoor.lockStatus
                       ? 'conic-gradient(from 0deg, #10b981, #059669, #047857, #10b981)'
                       : 'conic-gradient(from 0deg, #ef4444, #dc2626, #b91c1c, #ef4444)'
-                    : undefined
+                    : undefined,
+                  // apply slow zoom in/out animation when lockStatus is true
+                  animation: currentDoor.lockStatus ? 'doorScalePulse 2.5s ease-in-out infinite' : undefined
                 }}
               >
                 {/* Inner highlight */}
