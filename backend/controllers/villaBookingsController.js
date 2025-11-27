@@ -139,13 +139,7 @@ export const getVillaBookings = async (req, res) => {
   try {
     const { villaId } = req.params;
 
-    const villaBooking = await VillaBookings.findOne({ villa: villaId })
-      .populate('villa', 'villaName villaId villaLocation')
-      .populate('company', 'companyName companyId')
-      .populate({
-        path: 'bookings',
-        select: 'bookingId bookingDates customer status paymentStatus'
-      });
+    const villaBooking = await VillaBookings.findOne({ villa: villaId });
 
     if (!villaBooking) {
       return res.status(404).json({
