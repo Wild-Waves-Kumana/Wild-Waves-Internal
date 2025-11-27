@@ -36,7 +36,14 @@ const UserLightController = ({ selectedRoom, onLightUpdate }) => {
   }, [selectedRoom]);
 
   const handleFieldChange = async (light, idx, field, value) => {
-    const updated = { ...lights[idx], [field]: value };
+    // If brightness, round to nearest 10 and clamp 0-100
+    let sendValue = value;
+    if (field === 'brightness') {
+      sendValue = Math.round(Number(value) / 10) * 10;
+      sendValue = Math.max(0, Math.min(100, sendValue));
+    }
+
+    const updated = { ...lights[idx], [field]: sendValue };
     setLights(prev =>
       prev.map((item, i) =>
         i === idx ? updated : item
@@ -46,7 +53,7 @@ const UserLightController = ({ selectedRoom, onLightUpdate }) => {
     try {
       await axios.put(
         `/api/equipment/lights/${light._id}`,
-        { [field]: value }
+        { [field]: sendValue }
       );
       if (onLightUpdate) onLightUpdate();
     } catch (err) {
