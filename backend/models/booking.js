@@ -53,9 +53,8 @@ const bookingSchema = new mongoose.Schema({
 
   // Booking Status
   status: {type: String, enum: ['pending', 'confirmed', 'cancelled', 'completed'], default: 'pending'},
-
-  // Payment Status
   paymentStatus: { type: String, enum: ['pending', 'partial', 'paid', 'refunded'], default: 'pending'},
+  userSignup:{type: Boolean, default: false},
 
   // Raw booking data (for reference)
   rawBookingData: {
