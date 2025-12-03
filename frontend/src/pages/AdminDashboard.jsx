@@ -61,6 +61,14 @@ const AdminDashboard = () => {
             <p className="text-white/90 text-sm text-center">Make a new reservation</p>
           </button>
         </div>
+        <button
+            onClick={() => navigate('/signup-options')}
+            className="group mt-5 bg-gradient-to-br from-yellow-500 to-red-500 rounded-2xl shadow-xl p-8 flex flex-col items-center hover:scale-105 transition-transform duration-200"
+          >
+            <UserPlus className="w-8 h-8 text-yellow-100 mb-2" />
+            <h2 className="text-xl font-semibold text-white mb-1">User Signup</h2>
+            <p className="text-white/90 text-sm text-center">Register a new user</p>
+          </button>
       </div>
     </div>
   );

@@ -35,6 +35,7 @@ import SuperAdminProfile from './pages/SAdminProfile';
 import SuperadminFoodOrdersHistory from './pages/food-pages/SAdminFoodOrders';
 import CompanyProfile from './pages/CompanyProfile';
 import CreateRoom from './pages/create-pages/CreateRoom';
+import SignupOptions from './pages/booking-signup-pages/SignupOptions';
 import Settings from './pages/Settings';
 
 function App() {
@@ -182,6 +183,17 @@ function App() {
               <CreateAdmin />
             </Layout>
             
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/signup-options"
+        element={
+          <ProtectedRoute allowedRoles={['admin', 'superadmin']}>
+            <Layout>
+              <SignupOptions />
+            </Layout>
           </ProtectedRoute>
         }
       />
