@@ -268,9 +268,6 @@ const BookingDetails = ({ data }) => (
     <h4 className="font-semibold text-gray-900 mb-3">Booking Details:</h4>
     <div className="space-y-2 text-sm">
       <DetailRow label="Booking ID" value={data.bookingId} />
-      <DetailRow label="Villa" value={data.villaName} />
-      <DetailRow label="Check-in" value={data.checkIn} />
-      <DetailRow label="Check-out" value={data.checkOut} />
     </div>
   </div>
 );
