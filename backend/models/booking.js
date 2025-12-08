@@ -30,7 +30,7 @@ const bookingSchema = new mongoose.Schema({
     roomPrices: [{
       roomId: {type: mongoose.Schema.Types.ObjectId, ref: 'Room'},
       roomName: String,
-      price: {ype: Number, default: 0}
+      price: {type: Number, default: 0}
     }],
     nights: {type: Number, required: true},
     totalPrice: {type: Number, required: true, default: 0}
