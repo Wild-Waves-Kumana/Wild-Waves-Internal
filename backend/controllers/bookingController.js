@@ -264,11 +264,7 @@ export const getBookingByMongoId = async (req, res) => {
   try {
     const { id } = req.params;
     
-    const booking = await Booking.findById(id)
-      .populate('roomSelection.companyId', 'companyName companyId')
-      .populate('roomSelection.villaId', 'villaName villaId villaLocation villaBasePrice')
-      .populate('roomSelection.rooms.roomId', 'roomName roomId type capacity roomBasePrice')
-      .lean();
+    const booking = await Booking.findById(id);
 
     if (!booking) {
       return res.status(404).json({ 
