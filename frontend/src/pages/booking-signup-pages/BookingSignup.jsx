@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback  } from 'react';
 import { Trash2 } from 'lucide-react';
-import { useLocation } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import BookingSignupSec1 from '../../components/booking-signup/section_1/BookingSignupSec1';
 import BookingSignupSec2 from '../../components/booking-signup/section_2/BookingSignupSec2';
 import BookingSignupSec3 from '../../components/booking-signup/section_3/BookingSignupSec3';
@@ -25,8 +25,9 @@ const PROGRESS_STEPS = [
 const BookingSignup = () => {
   const [currentSection, setCurrentSection] = useState(SECTIONS.SCAN);
   const [scannedData, setScannedData] = useState(null);
+  const [bookingId, setBookingId] = useState(null); // Add bookingId state
   const [showClearModal, setShowClearModal] = useState(false);
-  
+  const navigate = useNavigate();
   const location = useLocation();
 
   // Load scanned data from navigation state
@@ -46,6 +47,7 @@ const BookingSignup = () => {
   // Handle QR scan completion
   const handleScanComplete = useCallback((data) => {
     setScannedData(data);
+    setBookingId(data.bookingId); // Set bookingId from scanned data
     setCurrentSection(SECTIONS.DETAILS);
     scrollToTop();
   }, [scrollToTop]);
@@ -83,6 +85,7 @@ const BookingSignup = () => {
 
   // Show clear button when not on first section
   const showClearButton = currentSection > SECTIONS.SCAN;
+  const sectionTitle = SECTION_TITLES[currentSection] || 'Booking Signup';
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 p-6">
@@ -92,7 +95,9 @@ const BookingSignup = () => {
 
         {/* Page Header */}
         <div className="flex items-center justify-between mb-6">
-
+          <h2 className="text-2xl md:text-3xl font-bold text-gray-800">
+            {sectionTitle}
+          </h2>
           {showClearButton && (
             <button
               onClick={toggleClearModal}
@@ -112,7 +117,7 @@ const BookingSignup = () => {
           )}
           {currentSection === SECTIONS.DETAILS && (
             <BookingSignupSec2 
-              bookingData={scannedData} 
+              bookingId={bookingId} 
               onBack={handleBackToScan} 
               onNext={handleContinueToVerify} 
             />
