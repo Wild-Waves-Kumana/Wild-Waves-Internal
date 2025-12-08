@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Calendar, Home, Users, Building2, Loader, DollarSign, Mail, Phone, CreditCard } from 'lucide-react';
+import { Calendar, Home, Users, Building2, Loader } from 'lucide-react';
 import axios from 'axios';
 
 const UserBookingSummary = ({ bookingId }) => {
@@ -9,6 +9,9 @@ const UserBookingSummary = ({ bookingId }) => {
   const [companyDetails, setCompanyDetails] = useState(null);
   const [villaDetails, setVillaDetails] = useState(null);
   const [roomsDetails, setRoomsDetails] = useState([]);
+  const [loadingCompany, setLoadingCompany] = useState(false);
+  const [loadingVilla, setLoadingVilla] = useState(false);
+  const [loadingRooms, setLoadingRooms] = useState(false);
 
   // Fetch booking details
   useEffect(() => {
@@ -19,23 +22,26 @@ const UserBookingSummary = ({ bookingId }) => {
       setError(null);
 
       try {
-        // Fetch booking by ID
         const response = await axios.get(`/api/bookings/${bookingId}`);
         const booking = response.data.booking;
         setBookingDetails(booking);
 
         // Fetch company details
         if (booking.roomSelection?.companyId) {
+          setLoadingCompany(true);
           try {
             const companyRes = await axios.get(`/api/companies/${booking.roomSelection.companyId}`);
             setCompanyDetails(companyRes.data);
           } catch (err) {
             console.error('Error fetching company:', err);
+          } finally {
+            setLoadingCompany(false);
           }
         }
 
         // Fetch villa details
         if (booking.roomSelection?.villaId) {
+          setLoadingVilla(true);
           try {
             const villaId = typeof booking.roomSelection.villaId === 'object'
               ? booking.roomSelection.villaId._id
@@ -44,11 +50,14 @@ const UserBookingSummary = ({ bookingId }) => {
             setVillaDetails(villaRes.data);
           } catch (err) {
             console.error('Error fetching villa:', err);
+          } finally {
+            setLoadingVilla(false);
           }
         }
 
         // Fetch room details
         if (booking.roomSelection?.rooms?.length > 0) {
+          setLoadingRooms(true);
           try {
             const roomIds = booking.roomSelection.rooms.map(room => {
               if (typeof room.roomId === 'object' && room.roomId !== null) {
@@ -71,6 +80,8 @@ const UserBookingSummary = ({ bookingId }) => {
             setRoomsDetails(validRooms);
           } catch (err) {
             console.error('Error fetching rooms:', err);
+          } finally {
+            setLoadingRooms(false);
           }
         }
       } catch (err) {
@@ -86,10 +97,10 @@ const UserBookingSummary = ({ bookingId }) => {
 
   if (loading) {
     return (
-      <div className="bg-gray-50 rounded-xl p-12">
-        <div className="flex flex-col items-center justify-center">
+      <div className="bg-white p-6 rounded-lg shadow-md">
+        <div className="flex flex-col items-center justify-center py-12">
           <Loader className="w-12 h-12 animate-spin text-blue-600 mb-4" />
-          <p className="text-gray-600">Loading booking details...</p>
+          <p className="text-gray-600 text-sm">Loading booking details...</p>
         </div>
       </div>
     );
@@ -97,67 +108,49 @@ const UserBookingSummary = ({ bookingId }) => {
 
   if (error) {
     return (
-      <div className="bg-red-50 border border-red-200 rounded-xl p-6">
-        <p className="text-red-600 text-center">{error}</p>
+      <div className="bg-white p-6 rounded-lg shadow-md">
+        <div className="bg-red-50 border border-red-200 rounded-md p-4">
+          <p className="text-red-600 text-sm text-center">{error}</p>
+        </div>
       </div>
     );
   }
 
   if (!bookingDetails) {
     return (
-      <div className="bg-gray-50 rounded-xl p-6">
-        <p className="text-gray-500 text-center">No booking data available</p>
+      <div className="bg-white p-6 rounded-lg shadow-md">
+        <p className="text-gray-500 text-sm text-center">No booking data available</p>
       </div>
     );
   }
 
   return (
-    <div className="space-y-6">
-      {/* Booking ID and Status Badge */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
-          <div className="text-xs text-blue-600 mb-1 font-medium">Booking ID</div>
-          <div className="font-mono font-bold text-blue-800 text-xl">
-            {bookingDetails.bookingId}
-          </div>
+    <div>
+      {/* Booking ID Badge */}
+      {bookingDetails.bookingId && (
+        <div className="mb-6 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+          <div className="text-xs text-blue-600 mb-1">Booking ID</div>
+          <div className="font-mono font-semibold text-blue-800 text-lg">{bookingDetails.bookingId}</div>
+          {bookingDetails.status && (
+            <div className="text-xs text-gray-600 mt-2 flex gap-3">
+              <span>Status: <span className="capitalize font-medium text-gray-800">{bookingDetails.status}</span></span>
+              <span>Payment: <span className="capitalize font-medium text-gray-800">{bookingDetails.paymentStatus}</span></span>
+            </div>
+          )}
         </div>
-        <div className="p-4 bg-gray-50 border border-gray-200 rounded-lg">
-          <div className="text-xs text-gray-600 mb-1 font-medium">Booking Status</div>
-          <div className="flex items-center gap-3">
-            <span className={`px-3 py-1 rounded-full font-semibold text-sm ${
-              bookingDetails.status === 'confirmed' 
-                ? 'bg-green-100 text-green-700'
-                : bookingDetails.status === 'pending'
-                ? 'bg-yellow-100 text-yellow-700'
-                : 'bg-gray-100 text-gray-700'
-            }`}>
-              {bookingDetails.status}
-            </span>
-            <span className={`px-3 py-1 rounded-full font-semibold text-sm ${
-              bookingDetails.paymentStatus === 'paid' 
-                ? 'bg-green-100 text-green-700'
-                : bookingDetails.paymentStatus === 'pending'
-                ? 'bg-yellow-100 text-yellow-700'
-                : 'bg-red-100 text-red-700'
-            }`}>
-              {bookingDetails.paymentStatus}
-            </span>
-          </div>
-        </div>
-      </div>
+      )}
 
-      {/* Dates and Passengers Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
         {/* Dates Section */}
-        <div className="bg-sky-50 border border-sky-200 rounded-lg p-4">
-          <h4 className="text-sm font-bold text-gray-800 mb-3 flex items-center gap-2">
-            <Calendar className="w-5 h-5 text-blue-500" />
+        <div className="mb-6">
+          <h4 className="text-sm font-semibold text-gray-700 mb-3 flex items-center gap-2">
+            <Calendar className="w-4 h-4 text-blue-500" />
             Booking Dates
           </h4>
-          <div className="space-y-3 text-sm">
-            <div className="flex justify-between items-center">
+          <div className="space-y-2 text-sm bg-sky-50 border border-sky-200 p-4 rounded-md">
+            <div className="flex justify-between">
               <span className="text-gray-600">Check-in:</span>
-              <span className="font-semibold text-gray-900">
+              <span className="font-medium text-gray-800">
                 {bookingDetails.bookingDates?.checkInDate
                   ? new Date(bookingDetails.bookingDates.checkInDate).toLocaleDateString('en-US', {
                       weekday: 'short',
@@ -168,9 +161,9 @@ const UserBookingSummary = ({ bookingId }) => {
                   : '—'}
               </span>
             </div>
-            <div className="flex justify-between items-center">
+            <div className="flex justify-between">
               <span className="text-gray-600">Check-out:</span>
-              <span className="font-semibold text-gray-900">
+              <span className="font-medium text-gray-800">
                 {bookingDetails.bookingDates?.checkOutDate
                   ? new Date(bookingDetails.bookingDates.checkOutDate).toLocaleDateString('en-US', {
                       weekday: 'short',
@@ -181,218 +174,211 @@ const UserBookingSummary = ({ bookingId }) => {
                   : '—'}
               </span>
             </div>
-            <div className="flex justify-between items-center pt-2 border-t border-sky-300">
-              <span className="text-gray-600 font-medium">Total Nights:</span>
-              <span className="font-bold text-blue-600 text-lg">
-                {bookingDetails.bookingDates?.nights || 0}
+            <div className="flex justify-between pt-2 border-t border-gray-200">
+              <span className="text-gray-600">Total Nights:</span>
+              <span className="font-semibold text-blue-600">
+                {bookingDetails.bookingDates?.nights || 0} {bookingDetails.bookingDates?.nights === 1 ? 'Night' : 'Nights'}
               </span>
             </div>
           </div>
         </div>
 
         {/* Passengers Section */}
-        <div className="bg-purple-50 border border-purple-200 rounded-lg p-4">
-          <h4 className="text-sm font-bold text-gray-800 mb-3 flex items-center gap-2">
-            <Users className="w-5 h-5 text-purple-500" />
+        <div className="mb-6">
+          <h4 className="text-sm font-semibold text-gray-700 mb-3 flex items-center gap-2">
+            <Users className="w-4 h-4 text-purple-500" />
             Passengers
           </h4>
-          <div className="space-y-3 text-sm">
-            <div className="flex justify-between items-center">
+          <div className="space-y-2 text-sm bg-sky-50 border border-sky-200 p-4 rounded-md">
+            <div className="flex justify-between">
               <span className="text-gray-600">Adults:</span>
-              <span className="font-semibold text-gray-900">
-                {bookingDetails.customer?.passengers?.adults || 0}
-              </span>
+              <span className="font-medium text-gray-800">{bookingDetails.customer?.passengers?.adults || 0}</span>
             </div>
-            <div className="flex justify-between items-center">
+            <div className="flex justify-between">
               <span className="text-gray-600">Children:</span>
-              <span className="font-semibold text-gray-900">
-                {bookingDetails.customer?.passengers?.children || 0}
-              </span>
+              <span className="font-medium text-gray-800">{bookingDetails.customer?.passengers?.children || 0}</span>
             </div>
-            <div className="flex justify-between items-center pt-2 border-t border-purple-300">
-              <span className="text-gray-600 font-medium">Total Passengers:</span>
-              <span className="font-bold text-purple-600 text-lg">
-                {(bookingDetails.customer?.passengers?.adults || 0) + (bookingDetails.customer?.passengers?.children || 0)}
+            <div className="flex justify-between pt-2 border-t border-gray-200">
+              <span className="text-gray-600">Total:</span>
+              <span className="font-semibold text-purple-600">
+                {(bookingDetails.customer?.passengers?.adults || 0) + (bookingDetails.customer?.passengers?.children || 0)} Passengers
               </span>
             </div>
           </div>
         </div>
       </div>
 
-      {/* Company and Villa Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
         {/* Company */}
-        <div className="bg-indigo-50 border border-indigo-200 rounded-lg p-4">
-          <h4 className="text-sm font-bold text-gray-800 mb-3 flex items-center gap-2">
-            <Building2 className="w-5 h-5 text-indigo-500" />
+        <div>
+          <h4 className="text-sm font-semibold text-gray-700 mb-3 flex items-center gap-2">
+            <Building2 className="w-4 h-4 text-indigo-500" />
             Company
           </h4>
-          {companyDetails ? (
-            <div>
-              <p className="font-bold text-gray-900 text-lg">{companyDetails.companyName}</p>
-              <p className="text-xs text-gray-600 mt-1 font-mono">{companyDetails.companyId}</p>
-              {companyDetails.location && (
-                <p className="text-sm text-gray-700 mt-2">{companyDetails.location}</p>
-              )}
+
+          {loadingCompany ? (
+            <div className="bg-sky-50 border border-sky-200 rounded-md p-3">
+              <p className="text-sm text-gray-500 italic">Loading company details...</p>
+            </div>
+          ) : companyDetails ? (
+            <div className="bg-sky-50 border border-sky-200 rounded-md p-3">
+              <p className="font-semibold text-gray-900">{companyDetails.companyName}</p>
+              <p className="text-xs text-gray-500 mt-1">{companyDetails.companyId}</p>
             </div>
           ) : (
-            <p className="text-sm text-gray-500 italic">Loading company...</p>
+            <p className="text-sm text-gray-400">No company selected</p>
           )}
         </div>
 
         {/* Villa */}
-        <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-          <h4 className="text-sm font-bold text-gray-800 mb-3 flex items-center gap-2">
-            <Home className="w-5 h-5 text-green-500" />
+        <div>
+          <h4 className="text-sm font-semibold text-gray-700 mb-3 flex items-center gap-2">
+            <Home className="w-4 h-4 text-green-500" />
             Villa
           </h4>
-          {villaDetails ? (
-            <div>
-              <div className="flex items-center justify-between mb-2">
-                <p className="font-bold text-gray-900 text-lg">{villaDetails.villaName}</p>
-                <span className={`text-xs px-2 py-1 rounded-full font-medium ${
-                  bookingDetails.roomSelection?.acStatus === 1
-                    ? 'bg-blue-100 text-blue-700'
-                    : 'bg-gray-100 text-gray-700'
-                }`}>
-                  {bookingDetails.roomSelection?.acStatus === 1 ? 'AC' : 'Non-AC'}
-                </span>
+
+          {loadingVilla ? (
+            <div className="bg-sky-50 border border-sky-200 rounded-md p-3">
+              <p className="text-sm text-gray-500 italic">Loading villa details...</p>
+            </div>
+          ) : villaDetails ? (
+            <div className="bg-sky-50 border border-sky-200 rounded-md p-3">
+              <div className="flex items-center justify-between">
+                <p className="font-semibold text-gray-900">{villaDetails.villaName}</p>
+                <p className="text-xs text-gray-600">
+                  {bookingDetails.roomSelection?.acStatus === 1
+                    ? "AC"
+                    : bookingDetails.roomSelection?.acStatus === 0
+                    ? "Non-AC"
+                    : "Not specified"}
+                </p>
               </div>
+
               {villaDetails.villaLocation && (
-                <p className="text-sm text-gray-700">{villaDetails.villaLocation}</p>
-              )}
-              {villaDetails.villaId && (
-                <p className="text-xs text-gray-600 mt-1 font-mono">{villaDetails.villaId}</p>
+                <p className="text-xs text-gray-600 mt-1">{villaDetails.villaLocation}</p>
               )}
             </div>
           ) : (
-            <p className="text-sm text-gray-500 italic">Loading villa...</p>
+            <p className="text-sm text-gray-400">No villa selected</p>
           )}
         </div>
       </div>
 
       {/* Rooms Section */}
-      {roomsDetails.length > 0 && (
-        <div className="bg-emerald-50 border border-emerald-200 rounded-lg p-4">
+      {(loadingRooms || roomsDetails.length > 0) && (
+        <div className="mb-6">
           <div className="flex items-center justify-between mb-3">
-            <h4 className="text-sm font-bold text-gray-800 flex items-center gap-2">
-              <Home className="w-5 h-5 text-emerald-500" />
+            <h4 className="text-sm font-semibold text-gray-700 flex items-center gap-2">
+              <Home className="w-4 h-4 text-green-500" />
               Selected Rooms
             </h4>
-            <span className="text-xs bg-emerald-200 text-emerald-700 px-3 py-1 rounded-full font-semibold">
-              {roomsDetails.length} {roomsDetails.length === 1 ? 'Room' : 'Rooms'}
-            </span>
+            {!loadingRooms && roomsDetails.length > 0 && (
+              <span className="text-xs text-gray-600 bg-green-100 px-2 py-1 rounded-full">
+                {roomsDetails.length} {roomsDetails.length === 1 ? 'Room' : 'Rooms'}
+              </span>
+            )}
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-            {roomsDetails.map((room, idx) => (
-              <div
-                key={room._id || idx}
-                className="bg-white border border-emerald-300 rounded-lg p-3 hover:shadow-md transition-shadow"
-              >
-                <div className="font-semibold text-gray-900 mb-2">{room.roomName}</div>
-                <div className="space-y-1 text-xs text-gray-600">
-                  {room.capacity > 0 && (
-                    <div className="flex items-center gap-1">
-                      <Users className="w-3 h-3" />
-                      <span>Capacity: {room.capacity} persons</span>
+
+          {loadingRooms ? (
+            <div className="bg-green-50 border border-green-200 rounded-md p-3">
+              <p className="text-sm text-gray-500 italic">Loading room details...</p>
+            </div>
+          ) : roomsDetails.length > 0 ? (
+            <div className="overflow-x-auto">
+              <div className="flex gap-3 pb-2">
+                {roomsDetails.map((room, idx) => (
+                  <div
+                    key={room._id || idx}
+                    className="bg-green-50 border border-green-200 rounded-md p-3 text-sm min-w-[200px] flex-shrink-0"
+                  >
+                    <div className="font-medium text-gray-800 mb-1">{room.roomName}</div>
+                    <div className="space-y-1">
+                      {room.capacity > 0 && (
+                        <div className="text-xs text-gray-600 flex items-center gap-1">
+                          <Users className="w-3 h-3" />
+                          <span>{room.capacity} {room.capacity === 1 ? 'person' : 'persons'}</span>
+                        </div>
+                      )}
+                      {room.type && (
+                        <div className="text-xs text-gray-600 capitalize">
+                          Type: {room.type}
+                        </div>
+                      )}
                     </div>
-                  )}
-                  {room.type && (
-                    <div className="capitalize">Type: {room.type}</div>
-                  )}
-                  {room.roomCode && (
-                    <div className="font-mono text-gray-500">Code: {room.roomCode}</div>
-                  )}
-                </div>
+                  </div>
+                ))}
               </div>
-            ))}
-          </div>
+            </div>
+          ) : (
+            <p className="text-sm text-gray-400">No rooms available</p>
+          )}
         </div>
       )}
 
       {/* Customer Details */}
-      <div className="bg-orange-50 border border-orange-200 rounded-lg p-4">
-        <h4 className="text-sm font-bold text-gray-800 mb-3 flex items-center gap-2">
-          <Users className="w-5 h-5 text-orange-500" />
-          Customer Information
+      <div className="mb-6">
+        <h4 className="text-sm font-semibold text-gray-700 mb-3 flex items-center gap-2">
+          <Users className="w-4 h-4 text-orange-500" />
+          Customer Details
         </h4>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div className="space-y-3">
+        <div className="bg-orange-50 border border-orange-200 rounded-md p-3 text-sm space-y-2 grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
             <div>
-              <label className="text-xs text-gray-600 font-medium">Full Name</label>
-              <p className="font-semibold text-gray-900">{bookingDetails.customer?.name || '—'}</p>
+              <span className="text-xs text-gray-600">Name:</span>
+              <p className="font-medium text-gray-900">{bookingDetails.customer?.name || '—'}</p>
             </div>
-            <div>
-              <label className="text-xs text-gray-600 font-medium flex items-center gap-1">
-                <Mail className="w-3 h-3" /> Email
-              </label>
-              <p className="font-medium text-gray-800 text-sm">{bookingDetails.customer?.email || '—'}</p>
+            <div className="mt-2">
+              <span className="text-xs text-gray-600">Email:</span>
+              <p className="font-medium text-gray-700">{bookingDetails.customer?.email || '—'}</p>
             </div>
-            <div>
-              <label className="text-xs text-gray-600 font-medium flex items-center gap-1">
-                <Phone className="w-3 h-3" /> Contact Number
-              </label>
-              <p className="font-medium text-gray-800">{bookingDetails.customer?.contactNumber || '—'}</p>
+            <div className="mt-2">
+              <span className="text-xs text-gray-600">Contact:</span>
+              <p className="font-medium text-gray-700">{bookingDetails.customer?.contactNumber || '—'}</p>
             </div>
           </div>
-          
-          <div className="space-y-3">
-            {(bookingDetails.customer?.identification?.nic || bookingDetails.customer?.identification?.passport) && (
-              <div>
-                <label className="text-xs text-gray-600 font-medium flex items-center gap-1">
-                  <CreditCard className="w-3 h-3" /> Identification
-                </label>
-                <div className="space-y-1 mt-1">
-                  {bookingDetails.customer?.identification?.nic && (
-                    <p className="text-sm font-mono text-gray-800">NIC: {bookingDetails.customer.identification.nic}</p>
-                  )}
-                  {bookingDetails.customer?.identification?.passport && (
-                    <p className="text-sm font-mono text-gray-800">Passport: {bookingDetails.customer.identification.passport}</p>
-                  )}
-                </div>
-              </div>
-            )}
-            {bookingDetails.customer?.address && (
-              <div>
-                <label className="text-xs text-gray-600 font-medium">Address</label>
-                <p className="text-sm text-gray-800 mt-1">{bookingDetails.customer.address}</p>
-              </div>
-            )}
-          </div>
+
+          {(bookingDetails.customer?.identification?.nic || bookingDetails.customer?.identification?.passport) && (
+            <div>
+              <div className="text-xs text-gray-600 mb-1">Identification:</div>
+              {bookingDetails.customer?.identification?.nic && (
+                <p className="text-xs text-gray-700">NIC: {bookingDetails.customer.identification.nic}</p>
+              )}
+              {bookingDetails.customer?.identification?.passport && (
+                <p className="text-xs text-gray-700 mt-1">Passport: {bookingDetails.customer.identification.passport}</p>
+              )}
+            </div>
+          )}
         </div>
       </div>
 
       {/* Pricing Summary */}
       {bookingDetails.prices && (
-        <div className="bg-gradient-to-br from-blue-50 to-purple-50 border-2 border-blue-200 rounded-lg p-5">
-          <h4 className="text-sm font-bold text-gray-800 mb-4 flex items-center gap-2">
-            <DollarSign className="w-5 h-5 text-blue-600" />
-            Pricing Summary
-          </h4>
-          <div className="space-y-3">
-            <div className="flex justify-between items-center text-sm">
-              <span className="text-gray-700">Villa Price (per night):</span>
-              <span className="font-semibold text-gray-900">
+        <div className="bg-gradient-to-br from-blue-50 to-indigo-50 border border-blue-200 rounded-lg p-4">
+          <h4 className="text-sm font-semibold text-gray-800 mb-3">Pricing Summary</h4>
+          <div className="space-y-2">
+            <div className="flex justify-between text-sm">
+              <span className="text-gray-600">Villa Price (per night):</span>
+              <span className="font-medium text-gray-900">
                 LKR {bookingDetails.prices.villaPrice?.toLocaleString() || 0}
               </span>
             </div>
-            <div className="flex justify-between items-center text-sm">
-              <span className="text-gray-700">Number of Nights:</span>
-              <span className="font-semibold text-gray-900">
+            <div className="flex justify-between text-sm">
+              <span className="text-gray-600">Number of Nights:</span>
+              <span className="font-medium text-gray-900">
                 {bookingDetails.prices.nights || 0} {bookingDetails.prices.nights === 1 ? 'night' : 'nights'}
               </span>
             </div>
             {bookingDetails.prices.discount > 0 && (
-              <div className="flex justify-between items-center text-sm">
-                <span className="text-gray-700">Discount:</span>
-                <span className="font-semibold text-green-600">
+              <div className="flex justify-between text-sm">
+                <span className="text-gray-600">Discount:</span>
+                <span className="font-medium text-green-600">
                   - LKR {bookingDetails.prices.discount?.toLocaleString() || 0}
                 </span>
               </div>
             )}
-            <div className="pt-3 border-t-2 border-blue-300 flex justify-between items-center">
-              <span className="font-bold text-gray-900 text-lg">Total Amount:</span>
-              <span className="font-bold text-blue-600 text-2xl">
+            <div className="pt-2 border-t border-blue-300 flex justify-between items-center">
+              <span className="font-semibold text-gray-900">Total Amount:</span>
+              <span className="font-bold text-blue-600 text-lg">
                 LKR {bookingDetails.prices.totalPrice?.toLocaleString() || 0}
               </span>
             </div>
