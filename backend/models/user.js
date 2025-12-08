@@ -12,6 +12,7 @@ const userSchema = new mongoose.Schema({
   checkinDate: { type: Date, required: true },
   checkoutDate: { type: Date, required: true },
   faceRegistration: { type: Boolean, default: false },
+  bookingId: { type: mongoose.Schema.Types.ObjectId, ref: 'Booking' }, // <-- Add this line for booking reference
   villaId: { type: mongoose.Schema.Types.ObjectId, ref: 'Villa' }, // <-- Add this line for villa reference
   adminId: { type: mongoose.Schema.Types.ObjectId, ref: 'Admin' }, // <-- added
   companyId: { type: mongoose.Schema.Types.ObjectId, ref: 'Company' },
