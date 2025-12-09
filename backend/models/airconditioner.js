@@ -6,6 +6,7 @@ const airConditionerSchema = new mongoose.Schema({
   temperaturelevel: { type: Number, default: 24 },
   mode: { type: String, enum: ['No Mode', 'Cool', 'Heat', 'Fan', 'Dry'], default: 'No Mode' },
   fanSpeed: { type: String, enum: ['Low', 'Medium', 'High'], default: 'Medium' },
+  swing: { type: Boolean, default: false },
   access: { type: Boolean, default: true },
   status: { type: Boolean, default: false },
   roomId: { type: mongoose.Schema.Types.ObjectId, ref: 'Room' }, // <-- added
