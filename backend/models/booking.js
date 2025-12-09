@@ -3,6 +3,7 @@ import mongoose from "mongoose";
 const bookingSchema = new mongoose.Schema({
   // Booking ID
   bookingId: {type: String, required: true, unique: true, index: true},
+  userId: {type: mongoose.Schema.Types.ObjectId, ref: 'User'},
 
   // Booking Dates Section
   bookingDates: {

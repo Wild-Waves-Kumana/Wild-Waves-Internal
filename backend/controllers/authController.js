@@ -79,9 +79,10 @@ export const registerUser = async (req, res) => {
         }
 
         // Verify booking exists if bookingId is provided
+        let bookingDoc = null;
         if (bookingId) {
-          const booking = await Booking.findById(bookingId);
-          if (!booking) {
+          bookingDoc = await Booking.findById(bookingId);
+          if (!bookingDoc) {
             return res.status(400).json({ message: 'Booking not found' });
           }
         }
@@ -111,11 +112,12 @@ export const registerUser = async (req, res) => {
           { $push: { users: newUser._id } }
         );
 
-        // Update booking to mark user signup complete
+        // Update booking to mark user signup complete and set userId
         if (bookingId) {
           await Booking.findByIdAndUpdate(
             bookingId,
-            { userSignup: true }
+            { userSignup: true, userId: newUser._id },
+            { new: true }
           );
         }
 
