@@ -1,31 +1,33 @@
-import React, { useState, useEffect, useCallback  } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Trash2 } from 'lucide-react';
 import { useLocation } from 'react-router-dom';
 import BookingSignupSec1 from '../../components/booking-signup/section_1/BookingSignupSec1';
 import BookingSignupSec2 from '../../components/booking-signup/section_2/BookingSignupSec2';
-import BookingSignupSec3 from '../../components/booking-signup/section_3/BookingSignupSec3';
 
 const SECTIONS = {
   SCAN: 1,
-  DETAILS: 2,
-  VERIFY: 3
-};
-
-const SECTION_TITLES = {
-  [SECTIONS.DETAILS]: 'Complete Your Details',
-  [SECTIONS.VERIFY]: 'Verify & Create Account'
+  DETAILS: 2
 };
 
 const PROGRESS_STEPS = [
   { id: SECTIONS.SCAN, label: 'Scan QR Code' },
-  { id: SECTIONS.DETAILS, label: 'Your Details' },
-  { id: SECTIONS.VERIFY, label: 'Verify & Complete' }
+  { id: SECTIONS.DETAILS, label: 'Complete Signup' }
 ];
+
+const SECTION_INFO = {
+  [SECTIONS.SCAN]: {
+    title: 'Scan Your Booking QR Code',
+    description: 'Use your device camera to scan the QR code from your booking confirmation'
+  },
+  [SECTIONS.DETAILS]: {
+    title: 'Review & Create Account',
+    description: 'Review your booking details and create your account to complete the signup process'
+  }
+};
 
 const BookingSignup = () => {
   const [currentSection, setCurrentSection] = useState(SECTIONS.SCAN);
-  const [scannedData, setScannedData] = useState(null);
-  const [bookingId, setBookingId] = useState(null); // Add bookingId state
+  const [bookingId, setBookingId] = useState(null);
   const [showClearModal, setShowClearModal] = useState(false);
   const location = useLocation();
 
@@ -33,7 +35,7 @@ const BookingSignup = () => {
   useEffect(() => {
     const bookingData = location.state?.bookingData;
     if (bookingData) {
-      setScannedData(bookingData);
+      setBookingId(bookingData.bookingId || bookingData._id);
       setCurrentSection(SECTIONS.DETAILS);
     }
   }, [location.state]);
@@ -45,8 +47,7 @@ const BookingSignup = () => {
 
   // Handle QR scan completion
   const handleScanComplete = useCallback((data) => {
-    setScannedData(data);
-    setBookingId(data.bookingId); // Set bookingId from scanned data
+    setBookingId(data.bookingId || data._id);
     setCurrentSection(SECTIONS.DETAILS);
     scrollToTop();
   }, [scrollToTop]);
@@ -54,23 +55,19 @@ const BookingSignup = () => {
   // Navigation handlers
   const handleBackToScan = useCallback(() => {
     setCurrentSection(SECTIONS.SCAN);
-    setScannedData(null);
+    setBookingId(null);
     scrollToTop();
   }, [scrollToTop]);
 
-  const handleContinueToVerify = useCallback(() => {
-    setCurrentSection(SECTIONS.VERIFY);
-    scrollToTop();
-  }, [scrollToTop]);
-
-  const handleBackToDetails = useCallback(() => {
-    setCurrentSection(SECTIONS.DETAILS);
-    scrollToTop();
-  }, [scrollToTop]);
+  // Handle account creation
+  const handleAccountCreated = useCallback((userData) => {
+    console.log('Account created successfully:', userData);
+    // Modal will handle navigation to signup-options
+  }, []);
 
   // Clear all data and reset
   const handleClearData = useCallback(() => {
-    setScannedData(null);
+    setBookingId(null);
     setCurrentSection(SECTIONS.SCAN);
     setShowClearModal(false);
     scrollToTop();
@@ -78,13 +75,12 @@ const BookingSignup = () => {
 
   // Toggle clear modal
   const toggleClearModal = useCallback(() => {
-    setShowClearModal(prev => !prev);
-  }, []);
-
+    setShowClearModal(!showClearModal);
+  }, [showClearModal]);
 
   // Show clear button when not on first section
   const showClearButton = currentSection > SECTIONS.SCAN;
-  const sectionTitle = SECTION_TITLES[currentSection] || 'Booking Signup';
+  const currentInfo = SECTION_INFO[currentSection];
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 p-6">
@@ -92,19 +88,24 @@ const BookingSignup = () => {
         {/* Progress Indicator */}
         <ProgressIndicator currentSection={currentSection} steps={PROGRESS_STEPS} />
 
-        {/* Page Header */}
-        <div className="flex items-center justify-between mb-6">
-          <h2 className="text-2xl md:text-3xl font-bold text-gray-800">
-            {sectionTitle}
-          </h2>
+        {/* Page Header with Title, Description and Clear Button */}
+        <div className="flex items-start justify-between mb-6 gap-4">
+          <div className="flex-1">
+            <h2 className="text-2xl md:text-3xl font-bold text-gray-800 mb-1">
+              {currentInfo.title}
+            </h2>
+            <p className="text-gray-600 text-sm md:text-base">
+              {currentInfo.description}
+            </p>
+          </div>
           {showClearButton && (
             <button
               onClick={toggleClearModal}
-              className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-red-600 bg-red-50 hover:bg-red-100 border border-red-200 rounded-lg transition-colors"
+              className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-red-600 bg-red-50 hover:bg-red-100 border border-red-200 rounded-lg transition-colors flex-shrink-0"
               title="Clear all signup data"
             >
               <Trash2 className="w-4 h-4" />
-              Start Over
+              <span className="hidden sm:inline">Start Over</span>
             </button>
           )}
         </div>
@@ -114,17 +115,11 @@ const BookingSignup = () => {
           {currentSection === SECTIONS.SCAN && (
             <BookingSignupSec1 onScanComplete={handleScanComplete} />
           )}
-          {currentSection === SECTIONS.DETAILS && (
+          {currentSection === SECTIONS.DETAILS && bookingId && (
             <BookingSignupSec2 
               bookingId={bookingId} 
-              onBack={handleBackToScan} 
-              onNext={handleContinueToVerify} 
-            />
-          )}
-          {currentSection === SECTIONS.VERIFY && (
-            <BookingSignupSec3 
-              bookingData={scannedData} 
-              onBack={handleBackToDetails} 
+              onBack={handleBackToScan}
+              onAccountCreated={handleAccountCreated}
             />
           )}
         </div>
@@ -143,7 +138,7 @@ const BookingSignup = () => {
 
 // Progress Indicator Component
 const ProgressIndicator = ({ currentSection, steps }) => (
-  <div className="mb-6">
+  <div className="mb-8">
     <div className="flex items-center justify-center space-x-4">
       {steps.map((step, index) => (
         <React.Fragment key={step.id}>

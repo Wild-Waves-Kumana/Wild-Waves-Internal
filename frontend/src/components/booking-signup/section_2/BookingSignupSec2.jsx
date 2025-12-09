@@ -5,12 +5,12 @@ import UserAccountCreation from './UserAccountCreation';
 const BookingSignupSec2 = ({ bookingId}) => {
   return (
     <div className="max-w-7xl mx-auto">
-      <div className="mb-6">
+      {/* <div className="mb-6">
         <h3 className="text-2xl font-bold text-gray-800 mb-2">Review & Create Account</h3>
         <p className="text-gray-600">
           Review your booking details and create your account to complete the signup process.
         </p>
-      </div>
+      </div> */}
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Left Side - Booking Summary */}
