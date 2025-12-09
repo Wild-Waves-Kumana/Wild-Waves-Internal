@@ -1,8 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
 import { jwtDecode } from 'jwt-decode';
 import RandomAvatar from '../../common/RandomAvatar';
-import { User, Key, RefreshCw, Eye, EyeOff, CheckCircle, AlertCircle } from 'lucide-react';
+import UserSignupResultModal from './UserSignupResultModal';
+import { User, Key, RefreshCw, Eye, EyeOff, AlertCircle } from 'lucide-react';
 
 const UserAccountCreation = ({ bookingId, onAccountCreated }) => {
   const [username, setUsername] = useState('');
@@ -19,12 +20,50 @@ const UserAccountCreation = ({ bookingId, onAccountCreated }) => {
   const [error, setError] = useState('');
   const [adminId, setAdminId] = useState(null);
   const [companyId, setCompanyId] = useState(null);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [createdUserData, setCreatedUserData] = useState(null);
+
+  // Generate username: user-ddmmyy-xxx
+  const generateUsername = useCallback(() => {
+    const now = new Date();
+    const dd = String(now.getDate()).padStart(2, '0');
+    const mm = String(now.getMonth() + 1).padStart(2, '0');
+    const yy = String(now.getFullYear()).slice(-2);
+    const random = Math.floor(100 + Math.random() * 900);
+    return `user-${dd}${mm}${yy}-${random}`;
+  }, []);
+
+  // Generate a unique username by checking with backend
+  const generateUniqueUsername = useCallback(async () => {
+    setLoading(true);
+    let unique = false;
+    let newUsername = '';
+    let attempts = 0;
+    const maxAttempts = 10;
+
+    while (!unique && attempts < maxAttempts) {
+      newUsername = generateUsername();
+      try {
+        const checkRes = await axios.get(`/api/auth/check-username/${newUsername}`);
+        if (checkRes.data.available) {
+          unique = true;
+        }
+      } catch (err) {
+        console.error('Error checking username:', err);
+      }
+      attempts++;
+    }
+    
+    setUsername(newUsername);
+    setLoading(false);
+    return newUsername;
+  }, [generateUsername]);
 
   // Get token and decode to get adminId
-  const token = localStorage.getItem('token');
-
   useEffect(() => {
     const fetchAdminAndCompanyData = async () => {
+      const token = localStorage.getItem('token');
+      
       if (!token) {
         setError('Authentication required. Please log in.');
         return;
@@ -48,7 +87,7 @@ const UserAccountCreation = ({ bookingId, onAccountCreated }) => {
     };
 
     fetchAdminAndCompanyData();
-  }, [token]);
+  }, []);
 
   // Fetch booking data
   useEffect(() => {
@@ -67,63 +106,26 @@ const UserAccountCreation = ({ bookingId, onAccountCreated }) => {
     fetchBookingData();
   }, [bookingId]);
 
-  // Generate username: user-ddmmyy-xxx
-  const generateUsername = () => {
-    const now = new Date();
-    const dd = String(now.getDate()).padStart(2, '0');
-    const mm = String(now.getMonth() + 1).padStart(2, '0');
-    const yy = String(now.getFullYear()).slice(-2);
-    const random = Math.floor(100 + Math.random() * 900); // 3 digits
-    return `user-${dd}${mm}${yy}-${random}`;
-  };
-
-  // Generate a unique username by checking with backend
-  const generateUniqueUsername = async () => {
-    setLoading(true);
-    let unique = false;
-    let newUsername = '';
-    let attempts = 0;
-    const maxAttempts = 10;
-
-    while (!unique && attempts < maxAttempts) {
-      newUsername = generateUsername();
-      try {
-        const checkRes = await axios.get(`/api/auth/check-username/${newUsername}`);
-        if (checkRes.data.available) {
-          unique = true;
-        }
-      } catch (err) {
-        console.error('Error checking username:', err);
-        attempts++;
-      }
-      attempts++;
-    }
-    
-    setUsername(newUsername);
-    setLoading(false);
-    return newUsername;
-  };
-
   // Generate unique username on mount
   useEffect(() => {
     generateUniqueUsername();
-  }, []);
+  }, [generateUniqueUsername]);
 
   // Handle avatar selection from RandomAvatar
-  const handleAvatarSelect = (url) => {
+  const handleAvatarSelect = useCallback((url) => {
     setAvatarUrl(url);
-  };
+  }, []);
 
   // Password validation
-  const isPasswordValid = (pwd) => {
+  const isPasswordValid = useCallback((pwd) => {
     const lengthCheck = pwd.length >= 8;
     const numberCheck = /\d/.test(pwd);
     const symbolCheck = /[!@#$%^&*(),.?":{}|<>]/.test(pwd);
     return { lengthCheck, numberCheck, symbolCheck, isValid: lengthCheck && numberCheck && symbolCheck };
-  };
+  }, []);
 
   // Handle password change
-  const handlePasswordChange = (e) => {
+  const handlePasswordChange = useCallback((e) => {
     const pwd = e.target.value;
     setPassword(pwd);
     
@@ -141,10 +143,10 @@ const UserAccountCreation = ({ bookingId, onAccountCreated }) => {
     } else {
       setPasswordError('');
     }
-  };
+  }, [isPasswordValid]);
 
   // Handle confirm password change
-  const handleConfirmPasswordChange = (e) => {
+  const handleConfirmPasswordChange = useCallback((e) => {
     const confirmPwd = e.target.value;
     setConfirmPassword(confirmPwd);
     
@@ -162,7 +164,7 @@ const UserAccountCreation = ({ bookingId, onAccountCreated }) => {
         setPasswordError('');
       }
     }
-  };
+  }, [password, isPasswordValid]);
 
   // Create user account
   const handleCreateAccount = async () => {
@@ -220,32 +222,41 @@ const UserAccountCreation = ({ bookingId, onAccountCreated }) => {
         ? bookingData.roomSelection.villaId._id
         : bookingData.roomSelection?.villaId;
 
-      // Prepare user data (matching CreateUser.jsx format)
+      // Prepare user data
       const userData = {
         username,
         password,
         avatarUrl,
         role: 'user',
-        adminId, // From token (like CreateUser)
+        adminId,
         checkinDate: bookingData.bookingDates?.checkInDate,
         checkoutDate: bookingData.bookingDates?.checkOutDate,
         villaId: villaId,
-        rooms: roomIds, // Array of room ObjectIds
-        bookingId: bookingData._id, // MongoDB _id of booking
+        rooms: roomIds,
+        bookingId: bookingData._id,
       };
 
       console.log('Creating user with data:', userData);
 
-      // Create user via API (same endpoint as CreateUser)
+      // Create user via API
       const response = await axios.post('/api/auth/register', userData);
 
-      // Update booking to mark user signup complete
-      await axios.patch(`/api/bookings/${bookingData._id}`, {
-        userSignup: true
-      });
-
+      // Mark success
       setSuccess(true);
-      
+      setCreatedUserData(response.data.user);
+
+      // Try to update booking
+      try {
+        await axios.patch(`/api/bookings/${bookingData._id}`, {
+          userSignup: true
+        });
+      } catch (patchErr) {
+        console.error('Booking update failed (non-fatal):', patchErr);
+      }
+
+      // Show success modal
+      setShowSuccessModal(true);
+
       // Call callback if provided
       if (onAccountCreated) {
         onAccountCreated(response.data.user);
@@ -254,7 +265,6 @@ const UserAccountCreation = ({ bookingId, onAccountCreated }) => {
     } catch (err) {
       console.error('Error creating account:', err);
       setError(err.response?.data?.message || 'Failed to create account. Please try again.');
-      // Regenerate username on error
       generateUniqueUsername();
     } finally {
       setCreating(false);
@@ -262,7 +272,7 @@ const UserAccountCreation = ({ bookingId, onAccountCreated }) => {
   };
 
   // Check if form is valid
-  const isFormValid = () => {
+  const isFormValid = useCallback(() => {
     return (
       username &&
       avatarUrl &&
@@ -275,21 +285,10 @@ const UserAccountCreation = ({ bookingId, onAccountCreated }) => {
       companyId &&
       bookingData
     );
-  };
+  }, [username, avatarUrl, password, confirmPassword, passwordError, adminId, companyId, bookingData, isPasswordValid]);
 
   return (
     <div className="space-y-6">
-      {/* Success Message */}
-      {success && (
-        <div className="bg-green-50 border border-green-200 rounded-lg p-4 flex items-start gap-3">
-          <CheckCircle className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" />
-          <div>
-            <h6 className="font-semibold text-green-800 mb-1">Account Created Successfully!</h6>
-            <p className="text-sm text-green-700">Your account has been created and linked to your booking.</p>
-          </div>
-        </div>
-      )}
-
       {/* Error Message */}
       {error && (
         <div className="bg-red-50 border border-red-200 rounded-lg p-4 flex items-start gap-3">
@@ -303,7 +302,7 @@ const UserAccountCreation = ({ bookingId, onAccountCreated }) => {
 
       {/* Generated Username */}
       <div>
-        <label className="block text-sm font-semibold text-gray-700 mb-2 flex items-center gap-2">
+        <label className="text-sm font-semibold text-gray-700 mb-2 flex items-center gap-2">
           <User className="w-4 h-4 text-blue-500" />
           Generated Username
         </label>
@@ -501,7 +500,15 @@ const UserAccountCreation = ({ bookingId, onAccountCreated }) => {
         </div>
       )}
 
-      
+      {/* Success Modal */}
+      {showSuccessModal && bookingData && (
+        <UserSignupResultModal
+          isVisible={showSuccessModal}
+          onClose={() => setShowSuccessModal(false)}
+          bookingData={bookingData}
+          userData={createdUserData}
+        />
+      )}
     </div>
   );
 };
