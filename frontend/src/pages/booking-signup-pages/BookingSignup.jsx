@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback  } from 'react';
 import { Trash2 } from 'lucide-react';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useLocation } from 'react-router-dom';
 import BookingSignupSec1 from '../../components/booking-signup/section_1/BookingSignupSec1';
 import BookingSignupSec2 from '../../components/booking-signup/section_2/BookingSignupSec2';
 import BookingSignupSec3 from '../../components/booking-signup/section_3/BookingSignupSec3';
@@ -27,7 +27,6 @@ const BookingSignup = () => {
   const [scannedData, setScannedData] = useState(null);
   const [bookingId, setBookingId] = useState(null); // Add bookingId state
   const [showClearModal, setShowClearModal] = useState(false);
-  const navigate = useNavigate();
   const location = useLocation();
 
   // Load scanned data from navigation state
