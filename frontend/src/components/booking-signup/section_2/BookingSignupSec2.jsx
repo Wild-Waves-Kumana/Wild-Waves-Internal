@@ -2,7 +2,7 @@ import React from 'react';
 import UserBookingSummary from './UserBookingSummary';
 import UserAccountCreation from './UserAccountCreation';
 
-const BookingSignupSec2 = ({ bookingId, onBack, onNext }) => {
+const BookingSignupSec2 = ({ bookingId}) => {
   return (
     <div className="max-w-7xl mx-auto">
       <div className="mb-6">
@@ -28,21 +28,7 @@ const BookingSignupSec2 = ({ bookingId, onBack, onNext }) => {
         </div>
       </div>
 
-      {/* Action Buttons */}
-      <div className="flex gap-3 mt-6">
-        <button
-          onClick={onBack}
-          className="flex-1 bg-gray-200 text-gray-700 px-6 py-3 rounded-xl hover:bg-gray-300 transition-colors font-medium"
-        >
-          Back to Scan
-        </button>
-        <button
-          onClick={onNext}
-          className="flex-1 bg-gradient-to-r from-blue-500 to-purple-600 text-white px-6 py-3 rounded-xl hover:from-blue-600 hover:to-purple-700 transition-all duration-300 shadow-md hover:shadow-lg font-medium"
-        >
-          Continue to Verify
-        </button>
-      </div>
+
     </div>
   );
 };

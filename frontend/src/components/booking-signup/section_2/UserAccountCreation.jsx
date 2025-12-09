@@ -335,16 +335,6 @@ const UserAccountCreation = ({ bookingId, onAccountCreated }) => {
           Select Avatar <span className="text-red-500">*</span>
         </label>
         <RandomAvatar onSelect={handleAvatarSelect} disabled={success} />
-        {avatarUrl && (
-          <div className="mt-3 flex items-center gap-2">
-            <span className="text-sm text-gray-600">Selected avatar:</span>
-            <img
-              src={avatarUrl}
-              alt="Selected Avatar"
-              className="w-12 h-12 rounded-full border-2 border-blue-500 shadow-md"
-            />
-          </div>
-        )}
       </div>
 
       {/* Password Section */}
@@ -437,29 +427,6 @@ const UserAccountCreation = ({ bookingId, onAccountCreated }) => {
         </div>
       </div>
 
-      {/* Create Account Button */}
-      {!success && (
-        <div className="pt-4">
-          <button
-            onClick={handleCreateAccount}
-            disabled={!isFormValid() || creating}
-            className="w-full bg-gradient-to-r from-blue-500 to-purple-600 text-white px-6 py-3 rounded-xl hover:from-blue-600 hover:to-purple-700 transition-all duration-300 shadow-md hover:shadow-lg font-semibold disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-          >
-            {creating ? (
-              <>
-                <RefreshCw className="w-5 h-5 animate-spin" />
-                Creating Account...
-              </>
-            ) : (
-              <>
-                <User className="w-5 h-5" />
-                Create Account
-              </>
-            )}
-          </button>
-        </div>
-      )}
-
       {/* Account Summary */}
       <div className="pt-4 border-t border-gray-200">
         <h5 className="text-sm font-bold text-gray-800 mb-3">Account Summary</h5>
@@ -510,6 +477,31 @@ const UserAccountCreation = ({ bookingId, onAccountCreated }) => {
           )}
         </div>
       </div>
+
+      {/* Create Account Button */}
+      {!success && (
+        <div className="pt-4">
+          <button
+            onClick={handleCreateAccount}
+            disabled={!isFormValid() || creating}
+            className="w-full bg-gradient-to-r from-blue-500 to-purple-600 text-white px-6 py-3 rounded-xl hover:from-blue-600 hover:to-purple-700 transition-all duration-300 shadow-md hover:shadow-lg font-semibold disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+          >
+            {creating ? (
+              <>
+                <RefreshCw className="w-5 h-5 animate-spin" />
+                Creating Account...
+              </>
+            ) : (
+              <>
+                <User className="w-5 h-5" />
+                Create Account
+              </>
+            )}
+          </button>
+        </div>
+      )}
+
+      
     </div>
   );
 };
