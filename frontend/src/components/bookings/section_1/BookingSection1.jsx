@@ -478,6 +478,11 @@ const BookingSection1 = ({ onNext }) => {
           selectedCompany={selectedCompany}
           handleCompanyChange={handleCompanyChange}
           loadingCompanies={loadingCompanies}
+          villas={villas}
+          loading={loading}
+          handleVillaSelect={handleVillaSelect}
+          rooms={rooms}
+          loadingRooms={loadingRooms}
         />
 
         {/* Right Column - Calendar and Prices */}
