@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { FaUserFriends, FaBuilding } from 'react-icons/fa';
-import { Folder, Edit } from 'lucide-react';
+import { Folder, Edit, Home } from 'lucide-react';
 import SelectVillaModal from './SelectVillaModal';
 import SelectRoomModal from './SelectRoomModal';
 
@@ -13,7 +13,6 @@ const SelectionPreview = ({
   selectedVilla,
   acStatus,
   handleAcToggle,
-  handleBackToVillas,
   selectedRoomIds,
   getSelectedRooms,
   handleRoomToggle,
@@ -24,8 +23,8 @@ const SelectionPreview = ({
   villas,
   loading,
   handleVillaSelect,
-  rooms, // Add this prop
-  loadingRooms // Add this prop
+  rooms,
+  loadingRooms
 }) => {
   const [showVillaModal, setShowVillaModal] = useState(false);
   const [showRoomModal, setShowRoomModal] = useState(false);
@@ -175,109 +174,143 @@ const SelectionPreview = ({
           </div>
         </div>
 
-        {/* Villa and Rooms Section */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 bg-white p-4 rounded-lg border border-slate-400">
-          {/* LEFT COLUMN — Villa + AC/Non AC + Prices */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+        {/* Villa Selection Section - ROW 1 */}
+        <div className="bg-white border border-slate-400 rounded-xl p-4">
+          
+          <div className="flex justify-between items-center mb-3">
+            <h4 className="text-sm font-semibold text-gray-800 flex items-center gap-2">
+              <FaBuilding className="w-5 h-5 text-blue-500" />
               Selected Villa
-            </label>
+            </h4>
+            {selectedVilla && (
+              <button
+                onClick={openVillaModal}
+                className="flex items-center gap-1 text-xs text-blue-600 hover:text-blue-800 font-medium transition-colors"
+              >
+                <Edit className="w-3 h-3" />
+                Change Villa
+              </button>
+            )}
+          </div>
+         
 
-            {selectedVilla ? (
-              <div className="bg-blue-50 border border-blue-200 rounded-md p-3">
-                <div className="flex justify-between items-center">
-                  <div>
-                    <p className="font-semibold text-blue-900">{selectedVilla.villaName}</p>
-                    <p className="text-xs text-blue-600">{selectedVilla.villaId}</p>
-                  </div>
-
-                  <button
-                    onClick={openVillaModal}
-                    className="flex items-center gap-1 text-xs text-blue-600 hover:text-blue-800 font-medium"
-                  >
-                    <Edit className="w-3 h-3" />
-                    Change
-                  </button>
+          {selectedVilla ? (
+             
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              <div className="flex justify-between items-start mb-3">
+                <div className="flex-1">
+                  <p className="font-semibold text-blue-900 text-base">{selectedVilla.villaName}</p>
+                  <p className="text-xs text-blue-600 mt-1">{selectedVilla.villaId}</p>
+                  {selectedVilla.villaLocation && (
+                    <p className="text-xs text-gray-600 mt-1">{selectedVilla.villaLocation}</p>
+                  )}
                 </div>
+              </div>
 
-                {/* Selected AC Status Display */}
-                {acStatus !== null && (
-                  <div className="mt-3 p-2 bg-white border border-blue-200 rounded-md">
-                    <div className="flex justify-between items-center">
-                      <span className="text-sm font-medium text-gray-700">Room Type:</span>
-                      <span className="text-sm font-semibold text-blue-600">
-                        {acStatus === 1 ? 'AC' : 'Non-AC'}
-                      </span>
-                    </div>
-                    <div className="flex justify-between items-center mt-1">
-                      <span className="text-xs text-gray-600">Price per night:</span>
-                      <span className="text-sm font-bold text-blue-700">
-                        LKR {acStatus === 1 
-                          ? selectedVilla.villaBasePrice?.withAC 
-                          : selectedVilla.villaBasePrice?.withoutAC}
+              {/* AC/Non-AC Status Display */}
+              {acStatus !== null && (
+                <div className="">
+                  <div className="bg-white border border-blue-200 rounded-md p-2 mb-1">
+                    <div className="flex justify-between items-center mb-1">
+                      <span className="text-xs font-medium text-gray-600">Room Type:</span>
+                      <span className={`text-sm font-bold ${acStatus === 1 ? 'text-blue-600' : 'text-green-600'}`}>
+                        {acStatus === 1 ? 'Air Conditioned' : 'Non-AC'}
                       </span>
                     </div>
                   </div>
-                )}
+                  <div className="bg-white border border-blue-200 rounded-md p-2">
+                    <div className="flex justify-between items-center mb-1">
+                      <span className="text-xs font-medium text-gray-600">Price per night:</span>
+                      <span className="text-base font-bold text-blue-700">
+                        LKR {acStatus === 1 
+                          ? selectedVilla.villaBasePrice?.withAC?.toLocaleString()
+                          : selectedVilla.villaBasePrice?.withoutAC?.toLocaleString()}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              )}
               </div>
-            ) : (
-              <div className="rounded-md p-4 text-center cursor-pointer hover:bg-gray-50 transition-colors" onClick={openVillaModal}>
-                <Folder className="w-10 h-10 text-yellow-500 mx-auto mb-2" />
-                <p className="text-sm text-yellow-700 font-medium">No villa selected</p>
-                <p className="text-xs text-yellow-600 mt-1">
-                  {selectedCompany ? 'Click to select a villa' : 'Please select a company first'}
-                </p>
-              </div>
+
+              
+            </div>
+          ) : (
+            <div 
+              className="rounded-lg border-2 border-dashed border-yellow-300 bg-yellow-50 p-6 text-center cursor-pointer hover:bg-yellow-100 transition-colors"
+              onClick={openVillaModal}
+            >
+              <Folder className="w-12 h-12 text-yellow-500 mx-auto mb-2" />
+              <p className="text-sm text-yellow-700 font-medium">No villa selected</p>
+              <p className="text-xs text-yellow-600 mt-1">
+                {selectedCompany ? 'Click to select a villa' : 'Please select a company first'}
+              </p>
+            </div>
+          )}
+        </div>
+
+        {/* Rooms Selection Section - ROW 2 */}
+        <div className="bg-white border border-slate-400 rounded-xl p-4">
+          <div className="flex justify-between items-center mb-3">
+            <h4 className="text-sm font-semibold text-gray-800 flex items-center gap-2">
+              <Home className="w-5 h-5 text-purple-500" />
+              Selected Bedrooms
+              {selectedRoomIds.length > 0 && (
+                <span className="bg-purple-100 text-purple-700 text-xs px-2 py-0.5 rounded-full font-medium">
+                  {selectedRoomIds.length}
+                </span>
+              )}
+            </h4>
+            {selectedVilla && (
+              <button
+                onClick={openRoomModal}
+                disabled={!selectedVilla}
+                className="flex items-center gap-1 text-xs text-purple-600 hover:text-purple-800 font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                <Edit className="w-3 h-3" />
+                {selectedRoomIds.length > 0 ? 'Edit Rooms' : 'Select Rooms'}
+              </button>
             )}
           </div>
 
-          {/* RIGHT COLUMN — Selected Rooms */}
-          <div>
-            <div className="flex justify-between items-center mb-1">
-              <label className="block text-sm font-medium text-gray-700">
-                Selected Rooms ({selectedRoomIds.length})
-              </label>
-              {selectedVilla && (
-                <button
-                  onClick={openRoomModal}
-                  className="flex items-center gap-1 text-xs text-purple-600 hover:text-purple-800 font-medium"
+          {selectedRoomIds.length > 0 ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+              {getSelectedRooms().map((room) => (
+                <div
+                  key={room._id}
+                  className="bg-green-50 border border-green-200 rounded-lg p-3 hover:shadow-md transition-shadow"
                 >
-                  <Edit className="w-3 h-3" />
-                  {selectedRoomIds.length > 0 ? 'Edit' : 'Select'}
-                </button>
-              )}
-            </div>
-
-            {selectedRoomIds.length > 0 ? (
-              <div className="space-y-2 max-h-48 overflow-y-auto">
-                {getSelectedRooms().map((room) => (
-                  <div
-                    key={room._id}
-                    className="bg-green-50 border border-green-200 rounded-lg p-2 flex justify-between items-center"
-                  >
+                  <div className="flex items-start justify-between mb-2">
                     <div className="flex-1">
-                      <p className="text-sm font-medium text-green-900">{room.roomName}</p>
-                      <p className="text-xs text-green-600">{room.roomId}</p>
+                      <p className="text-sm font-semibold text-green-900">{room.roomName}</p>
+                      <p className="text-xs text-green-600 mt-0.5">{room.roomId}</p>
                     </div>
                     {room.capacity && (
-                      <span className="text-xs text-green-700 mr-2">
-                        {room.capacity} persons
+                      <span className="bg-green-100 text-green-700 text-xs px-2 py-0.5 rounded-full font-medium ml-2">
+                        {room.capacity}p
                       </span>
                     )}
                   </div>
-                ))}
-              </div>
-            ) : (
-              <div className="rounded-md p-4 text-center cursor-pointer hover:bg-gray-50 transition-colors" onClick={openRoomModal}>
-                <Folder className="w-10 h-10 text-gray-400 mx-auto mb-2" />
-                <p className="text-sm text-gray-500">No rooms selected</p>
-                <p className="text-xs text-gray-400 mt-1">
-                  {selectedVilla ? 'Click to select rooms' : 'Select a villa first'}
-                </p>
-              </div>
-            )}
-          </div>
+                  {room.bedroomType && (
+                    <p className="text-xs text-gray-600 capitalize">{room.bedroomType}</p>
+                  )}
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div 
+              className="rounded-lg border-2 border-dashed border-gray-300 bg-gray-50 p-6 text-center cursor-pointer hover:bg-gray-100 transition-colors"
+              onClick={openRoomModal}
+            >
+              <Folder className="w-12 h-12 text-gray-400 mx-auto mb-2" />
+              <p className="text-sm text-gray-500 font-medium">No rooms selected</p>
+              <p className="text-xs text-gray-400 mt-1">
+                {selectedVilla ? 'Click to select bedrooms' : 'Select a villa first'}
+              </p>
+            </div>
+          )}
         </div>
+        
       </div>
 
       {/* Villa Selection Modal */}
