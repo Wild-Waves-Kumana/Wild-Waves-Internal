@@ -432,9 +432,6 @@ const BookingSection1 = ({ onNext }) => {
     });
   };
 
-  const isRoomSelected = (roomId) => {
-    return selectedRoomIds.includes(roomId);
-  };
 
   const handleNext = () => {
     if (isSelectionComplete && onNext) {
@@ -478,6 +475,11 @@ const BookingSection1 = ({ onNext }) => {
           selectedCompany={selectedCompany}
           handleCompanyChange={handleCompanyChange}
           loadingCompanies={loadingCompanies}
+          villas={villas}
+          loading={loading}
+          handleVillaSelect={handleVillaSelect}
+          rooms={rooms}
+          loadingRooms={loadingRooms}
         />
 
         {/* Right Column - Calendar and Prices */}
@@ -498,7 +500,7 @@ const BookingSection1 = ({ onNext }) => {
       </div>
 
       {/* Villa and Room Selection Section */}
-      <VillaRoomSelection
+      {/* <VillaRoomSelection
         selectedDates={selectedDates}
         selectedCompany={selectedCompany}
         selectedVilla={selectedVilla}
@@ -511,7 +513,7 @@ const BookingSection1 = ({ onNext }) => {
         isRoomSelected={isRoomSelected}
         handleRoomToggle={handleRoomToggle}
         handleBackToVillas={handleBackToVillas}
-      />
+      /> */}
 
       {/* Next Button Section */}
       {selectedDates.length > 0 && selectedVilla && selectedRoomIds.length > 0 && (
