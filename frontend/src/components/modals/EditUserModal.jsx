@@ -56,17 +56,33 @@ const EditUserModal = ({
           onChange={handleEditChange}
           className="w-full border px-3 py-2 rounded"
         />
-        <div className="flex items-center">
-          <label className="mr-2 font-medium">Access:</label>
-          <input
-            type="checkbox"
-            name="access"
-            checked={!!editForm.access}
-            onChange={handleEditChange}
-            className="mr-2"
-          />
-          <span>{editForm.access ? "Enabled" : "Disabled"}</span>
+
+        <div className="flex items-center gap-6">
+          <div className="flex items-center">
+            <label className="mr-2 font-medium">Access:</label>
+            <input
+              type="checkbox"
+              name="access"
+              checked={!!editForm.access}
+              onChange={handleEditChange}
+              className="mr-2"
+            />
+            <span>{editForm.access ? "Enabled" : "Disabled"}</span>
+          </div>
+
+          <div className="flex items-center">
+            <label className="mr-2 font-medium">Administrator Update:</label>
+            <input
+              type="checkbox"
+              name="administrator"
+              checked={!!editForm.administrator}
+              onChange={handleEditChange}
+              className="mr-2"
+            />
+            <span>{editForm.administrator ? "Yes" : "No"}</span>
+          </div>
         </div>
+
         <div className="flex justify-end gap-2">
           <button
             type="button"
