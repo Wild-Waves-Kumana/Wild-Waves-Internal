@@ -27,11 +27,15 @@ const computeAccess = (checkinDate, checkoutDate) => {
 
 export const getAllUsers = async (req, res) => {
   try {
-    // Select companyId as well for filtering
-    const users = await User.find({}, ' villaId username companyId checkinDate checkoutDate access');
+    // include administratorMode so we can skip access updates for admins
+    const users = await User.find({}, 'villaId username companyId checkinDate checkoutDate access administratorMode');
 
-    // Ensure access flag reflects current date/time window; update DB only if value differs
+    // Ensure access flag reflects current date/time window; skip update when administratorMode is true
     const updated = await Promise.all(users.map(async (u) => {
+      if (u.administratorMode) {
+        // do not modify access for administratorMode users
+        return u;
+      }
       const shouldAccess = computeAccess(u.checkinDate, u.checkoutDate);
       if (u.access !== shouldAccess) {
         await User.findByIdAndUpdate(u._id, { $set: { access: shouldAccess } });
@@ -51,11 +55,13 @@ export const getUser =  async (req, res) => {
     const user = await User.findById(req.params.userId);
     if (!user) return res.status(404).json({ message: 'User not found' });
 
-    // compute and persist access if needed
-    const shouldAccess = computeAccess(user.checkinDate, user.checkoutDate);
-    if (user.access !== shouldAccess) {
-      user.access = shouldAccess;
-      await user.save();
+    // if user is in administratorMode, do not compute/persist access; otherwise compute and persist if needed
+    if (!user.administratorMode) {
+      const shouldAccess = computeAccess(user.checkinDate, user.checkoutDate);
+      if (user.access !== shouldAccess) {
+        user.access = shouldAccess;
+        await user.save();
+      }
     }
 
     res.json(user);
@@ -237,7 +243,7 @@ export const deleteFaceImages = async (req, res) => {
   }
 };
 
-// Add adminUpdateUser to toggle administratorMode flag
+// Add adminUpdateUser to toggle administratorMode flagy
 export const adminUpdateUser = async (req, res) => {
   try {
     const { userId } = req.params;
