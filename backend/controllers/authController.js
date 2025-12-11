@@ -33,6 +33,11 @@ export const loginUser = async (req, res) => {
       return res.status(401).json({ message: 'Invalid credentials' });
     }
 
+    // For normal users, require access === true
+    if (userType === 'user' && !user.access) {
+      return res.status(403).json({ message: 'Access not granted' });
+    }
+
     // Generate token
     const token = jwt.sign(
       { id: user._id, username: user.username, role: user.role },

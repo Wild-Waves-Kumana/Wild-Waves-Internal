@@ -6,11 +6,45 @@ import { PutObjectCommand, ListObjectsV2Command, DeleteObjectsCommand } from '@a
 import { s3Client, S3_BUCKET } from '../config/s3.js';
 import mqttService from '../config/mqtt.js';
 
+// compute access based on checkinDate 13:00 to checkoutDate 11:00
+const computeAccess = (checkinDate, checkoutDate) => {
+  if (!checkinDate || !checkoutDate) return false;
+  try {
+    const now = new Date();
+
+    const start = new Date(checkinDate);
+    start.setHours(13, 0, 0, 0); // 1 PM local time on checkin date
+
+    const end = new Date(checkoutDate);
+    end.setHours(11, 0, 0, 0); // 11 AM local time on checkout date
+
+    return now >= start && now <= end;
+  } catch (e) {
+    console.error('computeAccess error', e);
+    return false;
+  }
+};
+
 export const getAllUsers = async (req, res) => {
   try {
-    // Select companyId as well for filtering
-    const users = await User.find({}, ' villaId username companyId checkinDate checkoutDate access');
-    res.json(users);
+    // include administratorMode so we can skip access updates for admins
+    const users = await User.find({}, 'villaId username companyId checkinDate checkoutDate access administratorMode');
+
+    // Ensure access flag reflects current date/time window; skip update when administratorMode is true
+    const updated = await Promise.all(users.map(async (u) => {
+      if (u.administratorMode) {
+        // do not modify access for administratorMode users
+        return u;
+      }
+      const shouldAccess = computeAccess(u.checkinDate, u.checkoutDate);
+      if (u.access !== shouldAccess) {
+        await User.findByIdAndUpdate(u._id, { $set: { access: shouldAccess } });
+        u.access = shouldAccess;
+      }
+      return u;
+    }));
+
+    res.json(updated);
   } catch (err) {
     res.status(500).json({ message: 'Server error' });
   }
@@ -20,6 +54,16 @@ export const getUser =  async (req, res) => {
   try {
     const user = await User.findById(req.params.userId);
     if (!user) return res.status(404).json({ message: 'User not found' });
+
+    // if user is in administratorMode, do not compute/persist access; otherwise compute and persist if needed
+    if (!user.administratorMode) {
+      const shouldAccess = computeAccess(user.checkinDate, user.checkoutDate);
+      if (user.access !== shouldAccess) {
+        user.access = shouldAccess;
+        await user.save();
+      }
+    }
+
     res.json(user);
   } catch (err) {
     res.status(500).json({ message: 'Server error' });
@@ -196,5 +240,33 @@ export const deleteFaceImages = async (req, res) => {
   } catch (err) {
     console.error(err);
     return res.status(500).json({ message: 'Server error' });
+  }
+};
+
+// Add adminUpdateUser to toggle administratorMode flagy
+export const adminUpdateUser = async (req, res) => {
+  try {
+    const { userId } = req.params;
+    // accept administratorMode in request body
+    const { administratorMode } = req.body;
+
+    if (administratorMode === undefined) {
+      return res.status(400).json({ message: 'administratorMode field is required' });
+    }
+
+    const updatedUser = await User.findByIdAndUpdate(
+      userId,
+      { $set: { administratorMode: Boolean(administratorMode) } },
+      { new: true, runValidators: true }
+    );
+
+    if (!updatedUser) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    res.json({ message: 'Administrator mode updated', user: updatedUser });
+  } catch (err) {
+    console.error('adminUpdateUser error', err);
+    res.status(500).json({ message: 'Server error' });
   }
 };

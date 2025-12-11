@@ -29,6 +29,7 @@ const UserProfile = () => {
     checkinDate: "",
     checkoutDate: "",
     access: false,
+    administratorMode: false, // renamed field
   });
   const [selectedRoomId, setSelectedRoomId] = useState(""); // for room filter
   const [userOrders, setUserOrders] = useState([]);
@@ -133,6 +134,7 @@ const UserProfile = () => {
       checkinDate: user.checkinDate ? user.checkinDate.split('T')[0] : "",
       checkoutDate: user.checkoutDate ? user.checkoutDate.split('T')[0] : "",
       access: user.access,
+      administratorMode: !!user.administratorMode, // populate administratorMode
     });
     setShowEditModal(true);
   };
@@ -148,7 +150,21 @@ const UserProfile = () => {
   const handleEditSubmit = async (e) => {
     e.preventDefault();
     try {
+      // Update main user fields
       await axios.put(`/api/users/${userId}`, editForm);
+
+      // If administratorMode changed, call admin endpoint to update flag
+      if (('administratorMode' in editForm) && editForm.administratorMode !== !!user.administratorMode) {
+        try {
+          await axios.put(`/api/users/${userId}/administrator`, {
+            administratorMode: editForm.administratorMode,
+          });
+        } catch (adminErr) {
+          console.error('Failed to update administrator mode:', adminErr);
+          showToast('Failed to update administrator mode.', 'error');
+        }
+      }
+
       setShowEditModal(false);
       // Refetch user data
       const res = await axios.get(`/api/users/${userId}`);
