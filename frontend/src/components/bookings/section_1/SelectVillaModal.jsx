@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import Modal from '../../common/Modal';
-import { Users, MapPin, Home, ChevronLeft, ChevronRight, X } from 'lucide-react';
+import { Users, MapPin } from 'lucide-react';
 import { FaBuilding } from 'react-icons/fa';
 import { bookingStorage } from '../../../utils/bookingStorage';
 
@@ -14,31 +14,36 @@ const SelectVillaModal = ({
   onAcToggle,
   loading 
 }) => {
-  const [currentIndex, setCurrentIndex] = useState(0);
+  const [selectedVillaId, setSelectedVillaId] = useState(null);
   const [tempAcSelection, setTempAcSelection] = useState(null);
 
-  // Initialize carousel position when modal opens
+  // Initialize selection when modal opens
   useEffect(() => {
-    if (isVisible && villas.length > 0) {
+    if (isVisible) {
       if (selectedVilla) {
-        const index = villas.findIndex(v => v._id === selectedVilla._id);
-        setCurrentIndex(index >= 0 ? index : 0);
+        setSelectedVillaId(selectedVilla._id);
         setTempAcSelection(acStatus);
       } else {
-        setCurrentIndex(0);
+        setSelectedVillaId(null);
         setTempAcSelection(null);
       }
     }
-  }, [isVisible, villas, selectedVilla, acStatus]);
+  }, [isVisible, selectedVilla, acStatus]);
 
-  const handlePrevious = () => {
-    setCurrentIndex((prev) => (prev > 0 ? prev - 1 : villas.length - 1));
-    setTempAcSelection(null);
-  };
-
-  const handleNext = () => {
-    setCurrentIndex((prev) => (prev < villas.length - 1 ? prev + 1 : 0));
-    setTempAcSelection(null);
+  const handleVillaClick = (villa) => {
+    setSelectedVillaId(villa._id);
+    
+    // Auto-select AC option if villa has only one
+    const hasWithAC = villa.villaBasePrice?.withAC !== undefined;
+    const hasWithoutAC = villa.villaBasePrice?.withoutAC !== undefined;
+    
+    if (hasWithAC && !hasWithoutAC) {
+      setTempAcSelection(1);
+    } else if (!hasWithAC && hasWithoutAC) {
+      setTempAcSelection(0);
+    } else {
+      setTempAcSelection(null);
+    }
   };
 
   const handleAcSelect = (value) => {
@@ -46,27 +51,21 @@ const SelectVillaModal = ({
   };
 
   const handleConfirmSelection = () => {
-    const villa = villas[currentIndex];
-    
-    // If villa has only one price option, auto-select it
-    const hasWithAC = villa.villaBasePrice?.withAC !== undefined;
-    const hasWithoutAC = villa.villaBasePrice?.withoutAC !== undefined;
-    
-    let finalAcStatus = tempAcSelection;
-    
-    if (hasWithAC && !hasWithoutAC) {
-      finalAcStatus = 1;
-    } else if (!hasWithAC && hasWithoutAC) {
-      finalAcStatus = 0;
+    if (!selectedVillaId) {
+      alert('Please select a villa');
+      return;
     }
 
-    if (finalAcStatus === null) {
+    const villa = villas.find(v => v._id === selectedVillaId);
+    if (!villa) return;
+
+    if (tempAcSelection === null) {
       alert('Please select AC or Non-AC option');
       return;
     }
 
     // Update parent state
-    onAcToggle(finalAcStatus);
+    onAcToggle(tempAcSelection);
     onVillaSelect(villa);
 
     // Save to localStorage
@@ -74,229 +73,211 @@ const SelectVillaModal = ({
     bookingStorage.saveRoomSelection({
       ...currentRoomSelection,
       villaId: villa._id,
-      acStatus: finalAcStatus
+      acStatus: tempAcSelection
     });
 
     console.log('✓ Villa and AC status saved to localStorage:', {
       villaId: villa._id,
       villaName: villa.villaName,
-      acStatus: finalAcStatus
+      acStatus: tempAcSelection
     });
 
     onClose();
   };
 
-  const currentVilla = villas[currentIndex];
-
-  if (!isVisible) return null;
+  const currentSelectedVilla = villas.find(v => v._id === selectedVillaId);
 
   return (
-    <Modal isVisible={isVisible} onClose={onClose} width="max-w-4xl">
+    <Modal isVisible={isVisible} onClose={onClose} width="max-w-4xl w-full">
       <div className="relative">
-        {/* Close Button */}
-        <button
-          onClick={onClose}
-          className="absolute -top-2 -right-2 z-10 bg-red-500 text-white rounded-full p-2 hover:bg-red-600 transition-colors shadow-lg"
-          title="Close"
-        >
-          <X className="w-5 h-5" />
-        </button>
-
         {/* Modal Header */}
-        <div className="mb-6 border-b pb-4">
-          <h3 className="text-2xl font-bold text-gray-800 flex items-center gap-3">
-            <FaBuilding className="w-6 h-6 text-blue-500" />
+        <div className="mb-4 pb-3 border-b border-gray-200">
+          <h3 className="text-lg font-semibold text-gray-800 flex items-center gap-2">
+            <FaBuilding className="w-5 h-5 text-blue-600" />
             Select Your Villa
           </h3>
-          <p className="text-sm text-gray-600 mt-1">
-            Browse through available villas and select AC/Non-AC preference
+          <p className="text-xs text-gray-600 mt-1">
+            Choose a villa and select AC/Non-AC preference
           </p>
         </div>
 
         {loading ? (
-          <div className="flex items-center justify-center py-12">
-            <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-blue-600"></div>
-            <span className="ml-3 text-gray-600">Loading villas...</span>
+          <div className="flex items-center justify-center py-8">
+            <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
+            <span className="ml-2 text-sm text-gray-600">Loading villas...</span>
           </div>
         ) : villas.length === 0 ? (
-          <div className="text-center py-12">
-            <FaBuilding className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-            <p className="text-gray-500 font-medium">No villas available</p>
-            <p className="text-sm text-gray-400 mt-2">Please check your date selection or company</p>
+          <div className="text-center py-8">
+            <FaBuilding className="w-10 h-10 text-gray-400 mx-auto mb-2" />
+            <p className="text-sm text-gray-500 font-medium">No villas available</p>
+            <p className="text-xs text-gray-400 mt-1">Please check your date selection or company</p>
           </div>
         ) : (
           <>
-            {/* Carousel Navigation Counter */}
-            <div className="text-center mb-4">
-              <span className="text-sm font-medium text-gray-600">
-                Villa {currentIndex + 1} of {villas.length}
-              </span>
-            </div>
+            {/* Villa Grid */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 max-h-[50vh] overflow-y-auto pr-2 mb-4">
+              {villas.map((villa) => (
+                <div
+                  key={villa._id}
+                  onClick={() => handleVillaClick(villa)}
+                  className={`border-2 rounded-lg p-3 cursor-pointer transition-all ${
+                    selectedVillaId === villa._id
+                      ? 'border-blue-600 bg-blue-50 shadow-md'
+                      : 'border-gray-300 bg-white hover:border-blue-400 hover:shadow-sm'
+                  }`}
+                >
+                  {/* Villa Header */}
+                  <div className="flex justify-between items-start mb-2">
+                    <div className="flex-1 min-w-0">
+                      <h4 className="text-sm font-bold text-gray-800 truncate">
+                        {villa.villaName}
+                      </h4>
+                      <p className="text-xs text-gray-500 font-mono">{villa.villaId}</p>
+                    </div>
 
-            {/* Carousel Container */}
-            <div className="relative">
-              {/* Previous Button */}
-              <button
-                onClick={handlePrevious}
-                disabled={villas.length <= 1}
-                className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-4 z-10 bg-white border-2 border-gray-300 rounded-full p-3 hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg transition-all"
-              >
-                <ChevronLeft className="w-6 h-6 text-gray-700" />
-              </button>
-
-              {/* Villa Card */}
-              <div className="bg-gradient-to-br from-blue-50 to-purple-50 rounded-2xl p-6 border-2 border-blue-200 shadow-xl">
-                {/* Villa Header */}
-                <div className="flex justify-between items-start mb-4">
-                  <div className="flex-1">
-                    <h4 className="text-2xl font-bold text-gray-800 mb-1">
-                      {currentVilla.villaName}
-                    </h4>
-                    <p className="text-sm text-gray-500 font-mono">{currentVilla.villaId}</p>
+                    {/* Selection Indicator */}
+                    {selectedVillaId === villa._id && (
+                      <div className="bg-blue-600 text-white text-xs px-2 py-1 rounded-full font-medium ml-2">
+                        ✓
+                      </div>
+                    )}
                   </div>
 
-                  {/* Capacity Badge */}
-                  {currentVilla.maxCapacity !== undefined && (
-                    <div className="flex items-center gap-2 bg-purple-100 border border-purple-300 rounded-lg px-3 py-2">
-                      <Users className="w-5 h-5 text-purple-600" />
-                      <span className="font-semibold text-purple-900">
-                        {currentVilla.maxCapacity} {currentVilla.maxCapacity === 1 ? 'Person' : 'Persons'}
+                  {/* Villa Location */}
+                  {villa.villaLocation && (
+                    <div className="flex items-center gap-1 text-gray-700 mb-2">
+                      <MapPin className="w-3 h-3 text-red-500 flex-shrink-0" />
+                      <span className="text-xs truncate">{villa.villaLocation}</span>
+                    </div>
+                  )}
+
+                  {/* Capacity */}
+                  {villa.maxCapacity !== undefined && (
+                    <div className="flex items-center gap-1 bg-gray-100 border border-gray-300 rounded-md px-2 py-1 w-fit">
+                      <Users className="w-3 h-3 text-gray-600" />
+                      <span className="text-xs font-semibold text-gray-800">
+                        {villa.maxCapacity} {villa.maxCapacity === 1 ? 'Person' : 'Persons'}
                       </span>
                     </div>
                   )}
-                </div>
 
-                {/* Villa Location */}
-                {currentVilla.villaLocation && (
-                  <div className="flex items-center gap-2 mb-3 text-gray-700">
-                    <MapPin className="w-5 h-5 text-red-500" />
-                    <span className="text-base">{currentVilla.villaLocation}</span>
-                  </div>
-                )}
-
-                {/* Villa Description */}
-                {currentVilla.description && (
-                  <p className="text-gray-700 mb-4 leading-relaxed">
-                    {currentVilla.description}
-                  </p>
-                )}
-
-                {/* AC/Non-AC Selection */}
-                <div className="bg-white rounded-xl p-4 shadow-md border border-gray-200 mt-4">
-                  <h5 className="text-lg font-semibold text-gray-800 mb-3 flex items-center gap-2">
-                    <Home className="w-5 h-5 text-blue-500" />
-                    Select Room Type <span className="text-red-500">*</span>
-                  </h5>
-
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                    {/* AC Option */}
-                    {currentVilla.villaBasePrice?.withAC !== undefined && (
-                      <button
-                        onClick={() => handleAcSelect(1)}
-                        className={`p-4 rounded-lg border-2 transition-all text-left ${
-                          tempAcSelection === 1
-                            ? 'border-blue-600 bg-blue-50 shadow-lg scale-105'
-                            : 'border-gray-300 bg-white hover:border-blue-400 hover:shadow-md'
-                        }`}
-                      >
-                        <div className="flex justify-between items-center mb-2">
-                          <span className="font-semibold text-gray-800 flex items-center gap-2">
-                            <Home className="w-4 h-4 text-blue-500" />
-                            Air Conditioned
+                  {/* Pricing Preview */}
+                  <div className="mt-2 pt-2 border-t border-gray-200">
+                    <div className="text-xs text-gray-600 space-y-0.5">
+                      {villa.villaBasePrice?.withAC !== undefined && (
+                        <div className="flex justify-between">
+                          <span>AC:</span>
+                          <span className="font-semibold text-blue-600">
+                            LKR {villa.villaBasePrice.withAC.toLocaleString()}
                           </span>
-                          {tempAcSelection === 1 && (
-                            <span className="bg-blue-600 text-white text-xs px-2 py-1 rounded-full font-medium">
-                              ✓ Selected
-                            </span>
-                          )}
                         </div>
-                        <p className="text-2xl font-bold text-blue-600">
-                          LKR {currentVilla.villaBasePrice.withAC}
-                        </p>
-                        <p className="text-xs text-gray-500 mt-1">per night</p>
-                      </button>
-                    )}
-
-                    {/* Non-AC Option */}
-                    {currentVilla.villaBasePrice?.withoutAC !== undefined && (
-                      <button
-                        onClick={() => handleAcSelect(0)}
-                        className={`p-4 rounded-lg border-2 transition-all text-left ${
-                          tempAcSelection === 0
-                            ? 'border-green-600 bg-green-50 shadow-lg scale-105'
-                            : 'border-gray-300 bg-white hover:border-green-400 hover:shadow-md'
-                        }`}
-                      >
-                        <div className="flex justify-between items-center mb-2">
-                          <span className="font-semibold text-gray-800 flex items-center gap-2">
-                            <Home className="w-4 h-4 text-green-500" />
-                            Non-AC
+                      )}
+                      {villa.villaBasePrice?.withoutAC !== undefined && (
+                        <div className="flex justify-between">
+                          <span>Non-AC:</span>
+                          <span className="font-semibold text-green-600">
+                            LKR {villa.villaBasePrice.withoutAC.toLocaleString()}
                           </span>
-                          {tempAcSelection === 0 && (
-                            <span className="bg-green-600 text-white text-xs px-2 py-1 rounded-full font-medium">
-                              ✓ Selected
-                            </span>
-                          )}
                         </div>
-                        <p className="text-2xl font-bold text-green-600">
-                          LKR {currentVilla.villaBasePrice.withoutAC}
-                        </p>
-                        <p className="text-xs text-gray-500 mt-1">per night</p>
-                      </button>
-                    )}
+                      )}
+                    </div>
                   </div>
-
-                  {tempAcSelection === null && (
-                    <p className="text-sm text-red-600 mt-3 flex items-center gap-2">
-                      <span className="text-red-500">⚠️</span>
-                      Please select a room type to continue
-                    </p>
-                  )}
                 </div>
-              </div>
-
-              {/* Next Button */}
-              <button
-                onClick={handleNext}
-                disabled={villas.length <= 1}
-                className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-4 z-10 bg-white border-2 border-gray-300 rounded-full p-3 hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg transition-all"
-              >
-                <ChevronRight className="w-6 h-6 text-gray-700" />
-              </button>
+              ))}
             </div>
 
-            {/* Carousel Dots Indicator */}
-            {villas.length > 1 && (
-              <div className="flex justify-center gap-2 mt-6">
-                {villas.map((_, index) => (
-                  <button
-                    key={index}
-                    onClick={() => {
-                      setCurrentIndex(index);
-                      setTempAcSelection(null);
-                    }}
-                    className={`w-3 h-3 rounded-full transition-all ${
-                      index === currentIndex
-                        ? 'bg-blue-600 w-8'
-                        : 'bg-gray-300 hover:bg-gray-400'
-                    }`}
-                  />
-                ))}
+            {/* AC/Non-AC Selection Panel */}
+            {currentSelectedVilla && (
+              <div className="bg-gray-50 border border-gray-300 rounded-lg p-4 mb-4">
+                <h5 className="text-sm font-semibold text-gray-800 mb-3">
+                  Select Room Type for {currentSelectedVilla.villaName} <span className="text-red-500">*</span>
+                </h5>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  {/* AC Option */}
+                  {currentSelectedVilla.villaBasePrice?.withAC !== undefined && (
+                    <label
+                      className={`flex items-center justify-between p-3 rounded-lg border-2 cursor-pointer transition-all ${
+                        tempAcSelection === 1
+                          ? 'border-blue-600 bg-blue-50'
+                          : 'border-gray-300 bg-white hover:border-blue-400'
+                      }`}
+                    >
+                      <div className="flex items-center gap-2">
+                        <input
+                          type="radio"
+                          name="acSelection"
+                          checked={tempAcSelection === 1}
+                          onChange={() => handleAcSelect(1)}
+                          className="w-4 h-4 text-blue-600 focus:ring-blue-500"
+                        />
+                        <div>
+                          <div className="font-semibold text-gray-800 text-sm">AC</div>
+                          <div className="text-xs text-gray-500">Air Conditioned</div>
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <div className="text-base font-bold text-blue-600">
+                          {currentSelectedVilla.villaBasePrice.withAC.toLocaleString()}
+                        </div>
+                        <div className="text-xs text-gray-500">LKR/night</div>
+                      </div>
+                    </label>
+                  )}
+
+                  {/* Non-AC Option */}
+                  {currentSelectedVilla.villaBasePrice?.withoutAC !== undefined && (
+                    <label
+                      className={`flex items-center justify-between p-3 rounded-lg border-2 cursor-pointer transition-all ${
+                        tempAcSelection === 0
+                          ? 'border-green-600 bg-green-50'
+                          : 'border-gray-300 bg-white hover:border-green-400'
+                      }`}
+                    >
+                      <div className="flex items-center gap-2">
+                        <input
+                          type="radio"
+                          name="acSelection"
+                          checked={tempAcSelection === 0}
+                          onChange={() => handleAcSelect(0)}
+                          className="w-4 h-4 text-green-600 focus:ring-green-500"
+                        />
+                        <div>
+                          <div className="font-semibold text-gray-800 text-sm">Non-AC</div>
+                          <div className="text-xs text-gray-500">Natural ventilation</div>
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <div className="text-base font-bold text-green-600">
+                          {currentSelectedVilla.villaBasePrice.withoutAC.toLocaleString()}
+                        </div>
+                        <div className="text-xs text-gray-500">LKR/night</div>
+                      </div>
+                    </label>
+                  )}
+                </div>
+
+                {tempAcSelection === null && (
+                  <p className="text-xs text-red-600 mt-2 flex items-center gap-1">
+                    <span>⚠️</span>
+                    Please select a room type to continue
+                  </p>
+                )}
               </div>
             )}
 
             {/* Action Buttons */}
-            <div className="flex gap-3 mt-6">
+            <div className="flex gap-2 pt-3 border-t border-gray-200">
               <button
                 onClick={onClose}
-                className="flex-1 bg-gray-200 text-gray-700 px-6 py-3 rounded-xl hover:bg-gray-300 transition-colors font-medium"
+                className="flex-1 bg-gray-200 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-300 transition-colors text-sm font-medium"
               >
                 Cancel
               </button>
               <button
                 onClick={handleConfirmSelection}
-                disabled={tempAcSelection === null}
-                className="flex-1 bg-gradient-to-r from-blue-500 to-purple-600 text-white px-6 py-3 rounded-xl hover:from-blue-600 hover:to-purple-700 transition-all duration-300 shadow-md hover:shadow-lg font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                disabled={!selectedVillaId || tempAcSelection === null}
+                className="flex-1 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed shadow-sm"
               >
                 Confirm Selection
               </button>
