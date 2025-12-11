@@ -7,6 +7,7 @@ const userSchema = new mongoose.Schema({
   avatarUrl: { type: String, default: 'No Avatar' }, // <-- Add this line for avatar URL
   role: { type: String, required: true,  default: 'user' },
   access: { type: Boolean, default: false },
+  administrator: { type: Boolean, default: false },
   rooms: [{ type: mongoose.Schema.Types.ObjectId, ref: "Room" }], // <-- Array of Room ObjectIds 
   totalFoodPrice: { type: Number, default: 0 },
   checkinDate: { type: Date, required: true },
