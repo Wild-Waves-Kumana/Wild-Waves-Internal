@@ -29,7 +29,7 @@ const UserProfile = () => {
     checkinDate: "",
     checkoutDate: "",
     access: false,
-    administrator: false, // added administrator
+    administratorMode: false, // renamed field
   });
   const [selectedRoomId, setSelectedRoomId] = useState(""); // for room filter
   const [userOrders, setUserOrders] = useState([]);
@@ -134,7 +134,7 @@ const UserProfile = () => {
       checkinDate: user.checkinDate ? user.checkinDate.split('T')[0] : "",
       checkoutDate: user.checkoutDate ? user.checkoutDate.split('T')[0] : "",
       access: user.access,
-      administrator: !!user.administrator, // populate administrator
+      administratorMode: !!user.administratorMode, // populate administratorMode
     });
     setShowEditModal(true);
   };
@@ -153,15 +153,15 @@ const UserProfile = () => {
       // Update main user fields
       await axios.put(`/api/users/${userId}`, editForm);
 
-      // If administrator changed, call admin endpoint to update flag
-      if (('administrator' in editForm) && editForm.administrator !== !!user.administrator) {
+      // If administratorMode changed, call admin endpoint to update flag
+      if (('administratorMode' in editForm) && editForm.administratorMode !== !!user.administratorMode) {
         try {
           await axios.put(`/api/users/${userId}/administrator`, {
-            administrator: editForm.administrator,
+            administratorMode: editForm.administratorMode,
           });
         } catch (adminErr) {
-          console.error('Failed to update administrator flag:', adminErr);
-          showToast('Failed to update administrator flag.', 'error');
+          console.error('Failed to update administrator mode:', adminErr);
+          showToast('Failed to update administrator mode.', 'error');
         }
       }
 

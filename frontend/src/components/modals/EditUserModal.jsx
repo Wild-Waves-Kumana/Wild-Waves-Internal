@@ -29,7 +29,7 @@ const EditUserModal = ({
         >
           <option value="">Select Villa</option>
           {villas.map((villa) => (
-            <option key={villa._id} value={villa._id}>
+            <option key={villa._id} value={villa._1d}>
               {villa.villaName} ({villa.villaId})
             </option>
           ))}
@@ -71,15 +71,15 @@ const EditUserModal = ({
           </div>
 
           <div className="flex items-center">
-            <label className="mr-2 font-medium">Administrator Update:</label>
+            <label className="mr-2 font-medium">Administrator Mode:</label>
             <input
               type="checkbox"
-              name="administrator"
-              checked={!!editForm.administrator}
+              name="administratorMode"
+              checked={!!editForm.administratorMode}
               onChange={handleEditChange}
               className="mr-2"
             />
-            <span>{editForm.administrator ? "Yes" : "No"}</span>
+            <span>{editForm.administratorMode ? "Yes" : "No"}</span>
           </div>
         </div>
 

@@ -237,19 +237,20 @@ export const deleteFaceImages = async (req, res) => {
   }
 };
 
-// Add adminUpdateUser to toggle administrator flag
+// Add adminUpdateUser to toggle administratorMode flag
 export const adminUpdateUser = async (req, res) => {
   try {
     const { userId } = req.params;
-    const { administrator } = req.body;
+    // accept administratorMode in request body
+    const { administratorMode } = req.body;
 
-    if (administrator === undefined) {
-      return res.status(400).json({ message: 'administrator field is required' });
+    if (administratorMode === undefined) {
+      return res.status(400).json({ message: 'administratorMode field is required' });
     }
 
     const updatedUser = await User.findByIdAndUpdate(
       userId,
-      { $set: { administrator: Boolean(administrator) } },
+      { $set: { administratorMode: Boolean(administratorMode) } },
       { new: true, runValidators: true }
     );
 
@@ -257,7 +258,7 @@ export const adminUpdateUser = async (req, res) => {
       return res.status(404).json({ message: 'User not found' });
     }
 
-    res.json({ message: 'Administrator flag updated', user: updatedUser });
+    res.json({ message: 'Administrator mode updated', user: updatedUser });
   } catch (err) {
     console.error('adminUpdateUser error', err);
     res.status(500).json({ message: 'Server error' });
