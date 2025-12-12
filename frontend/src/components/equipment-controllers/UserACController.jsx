@@ -11,8 +11,8 @@ const MODE_OPTIONS = [
   { mode: 'No Mode', icon: <Minus size={20} /> },
   { mode: 'Cool', icon: <Snowflake size={20} /> },
   { mode: 'Heat', icon: <Flame size={20} /> },
-  { mode: 'Fan', icon: <Fan size={20} /> },
-  { mode: 'Dry', icon: <Droplets size={20} /> },
+  // { mode: 'Fan', icon: <Fan size={20} /> },
+  // { mode: 'Dry', icon: <Droplets size={20} /> },
 ];
 
 const FAN_SPEED_OPTIONS = [
