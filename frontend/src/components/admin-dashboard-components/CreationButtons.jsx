@@ -6,50 +6,70 @@ const CreationButtons = () => {
   const navigate = useNavigate();
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-5 gap-8">
+    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4">
+      {/* Create User */}
       <button
         onClick={() => navigate('/signup-options')}
-        className="group bg-gradient-to-br from-cyan-500 to-blue-500 rounded-2xl shadow-xl p-8 flex flex-col items-center hover:scale-105 transition-transform duration-200"
+        className="group relative flex items-center gap-3 p-4 rounded-xl bg-white border-2 border-cyan-400 hover:border-cyan-500 hover:shadow-[0_0_20px_rgba(34,211,238,0.4)] transition-all duration-300 transform hover:-translate-y-1"
       >
-        <UserPlus className="w-8 h-8 text-cyan-100 mb-2" />
-        <h2 className="text-xl font-semibold text-white mb-1">Create User</h2>
-        <p className="text-white/90 text-sm text-center">Add a new user to your company</p>
+        <div className="absolute inset-0 bg-gradient-to-r from-cyan-400/10 to-blue-400/10 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity"></div>
+        <UserPlus className="w-5 h-5 text-cyan-600 relative z-10" />
+        <div className="text-left relative z-10">
+          <div className="text-sm font-semibold text-gray-800">Create User</div>
+          <div className="text-xs text-gray-500 hidden sm:block">Add new user</div>
+        </div>
       </button>
 
+      {/* Create Equipment */}
       <button
         onClick={() => navigate('/create-equipment')}
-        className="group bg-gradient-to-br from-emerald-500 to-cyan-500 rounded-2xl shadow-xl p-8 flex flex-col items-center hover:scale-105 transition-transform duration-200"
+        className="group relative flex items-center gap-3 p-4 rounded-xl bg-white border-2 border-emerald-400 hover:border-emerald-500 hover:shadow-[0_0_20px_rgba(16,185,129,0.4)] transition-all duration-300 transform hover:-translate-y-1"
       >
-        <Cpu className="w-8 h-8 text-emerald-100 mb-2" />
-        <h2 className="text-xl font-semibold text-white mb-1">Create Equipment</h2>
-        <p className="text-white/90 text-sm text-center">Register new equipment</p>
+        <div className="absolute inset-0 bg-gradient-to-r from-emerald-400/10 to-green-400/10 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity"></div>
+        <Cpu className="w-5 h-5 text-emerald-600 relative z-10" />
+        <div className="text-left relative z-10">
+          <div className="text-sm font-semibold text-gray-800">Create Equipment</div>
+          <div className="text-xs text-gray-500 hidden sm:block">Register device</div>
+        </div>
       </button>
 
+      {/* Create Room */}
       <button
         onClick={() => navigate('/create-room')}
-        className="group bg-gradient-to-br from-indigo-500 to-blue-400 rounded-2xl shadow-xl p-8 flex flex-col items-center hover:scale-105 transition-transform duration-200"
+        className="group relative flex items-center gap-3 p-4 rounded-xl bg-white border-2 border-indigo-400 hover:border-indigo-500 hover:shadow-[0_0_20px_rgba(99,102,241,0.4)] transition-all duration-300 transform hover:-translate-y-1"
       >
-        <Home className="w-8 h-8 text-indigo-100 mb-2" />
-        <h2 className="text-xl font-semibold text-white mb-1">Create Room</h2>
-        <p className="text-white/90 text-sm text-center">Add a new room</p>
+        <div className="absolute inset-0 bg-gradient-to-r from-indigo-400/10 to-blue-400/10 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity"></div>
+        <Home className="w-5 h-5 text-indigo-600 relative z-10" />
+        <div className="text-left relative z-10">
+          <div className="text-sm font-semibold text-gray-800">Create Room</div>
+          <div className="text-xs text-gray-500 hidden sm:block">Add a room</div>
+        </div>
       </button>
 
+      {/* Create Food */}
       <button
         onClick={() => navigate('/create-foods')}
-        className="group bg-gradient-to-br from-pink-500 to-orange-400 rounded-2xl shadow-xl p-8 flex flex-col items-center hover:scale-105 transition-transform duration-200"
+        className="group relative flex items-center gap-3 p-4 rounded-xl bg-white border-2 border-pink-400 hover:border-pink-500 hover:shadow-[0_0_20px_rgba(236,72,153,0.4)] transition-all duration-300 transform hover:-translate-y-1"
       >
-        <Utensils className="w-8 h-8 text-pink-100 mb-2" />
-        <h2 className="text-xl font-semibold text-white mb-1">Create Food</h2>
-        <p className="text-white/90 text-sm text-center">Add a new food item</p>
+        <div className="absolute inset-0 bg-gradient-to-r from-pink-400/10 to-rose-400/10 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity"></div>
+        <Utensils className="w-5 h-5 text-pink-600 relative z-10" />
+        <div className="text-left relative z-10">
+          <div className="text-sm font-semibold text-gray-800">Create Food</div>
+          <div className="text-xs text-gray-500 hidden sm:block">Add food item</div>
+        </div>
       </button>
 
+      {/* Create Booking */}
       <button
         onClick={() => navigate('/create-booking')}
-        className="group bg-gradient-to-br from-purple-500 to-pink-500 rounded-2xl shadow-xl p-8 flex flex-col items-center hover:scale-105 transition-transform duration-200"
+        className="group relative flex items-center gap-3 p-4 rounded-xl bg-white border-2 border-purple-400 hover:border-purple-500 hover:shadow-[0_0_20px_rgba(168,85,247,0.4)] transition-all duration-300 transform hover:-translate-y-1"
       >
-        <Calendar className="w-8 h-8 text-purple-100 mb-2" />
-        <h2 className="text-xl font-semibold text-white mb-1">Create Booking</h2>
-        <p className="text-white/90 text-sm text-center">Make a new reservation</p>
+        <div className="absolute inset-0 bg-gradient-to-r from-purple-400/10 to-violet-400/10 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity"></div>
+        <Calendar className="w-5 h-5 text-purple-600 relative z-10" />
+        <div className="text-left relative z-10">
+          <div className="text-sm font-semibold text-gray-800">Create Booking</div>
+          <div className="text-xs text-gray-500 hidden sm:block">Make reservation</div>
+        </div>
       </button>
     </div>
   );
