@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import axios from 'axios';
-import { Minus, Snowflake, Flame, Fan, Droplets, Wind, Power, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Minus, Snowflake, Flame, Fan, RotateCw, Wind, Power, ChevronLeft, ChevronRight } from 'lucide-react';
 
 const MIN_TEMP = 16;
 const MAX_TEMP = 26;
@@ -8,9 +8,9 @@ const ANGLE_RANGE = 270;
 const ANGLE_OFFSET = -135;
 
 const MODE_OPTIONS = [
-  { mode: 'No Mode', icon: <Minus size={20} /> },
-  { mode: 'Cool', icon: <Snowflake size={20} /> },
-  { mode: 'Heat', icon: <Flame size={20} /> },
+  //{ mode: 'No Mode', icon: <Minus size={20} /> },
+  { mode: 'Swing', icon: <RotateCw size={20} /> },
+  { mode: 'Fix', icon: <Fan size={20} /> },
   // { mode: 'Fan', icon: <Fan size={20} /> },
   // { mode: 'Dry', icon: <Droplets size={20} /> },
 ];
