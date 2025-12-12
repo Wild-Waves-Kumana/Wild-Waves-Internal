@@ -9,8 +9,8 @@ const ANGLE_OFFSET = -135;
 
 const MODE_OPTIONS = [
   //{ mode: 'No Mode', icon: <Minus size={20} /> },
-  { mode: 'Swing', icon: <RotateCw size={20} /> },
-  { mode: 'Fix', icon: <Fan size={20} /> },
+  { mode: 'Cool', icon: <RotateCw size={20} /> },
+  { mode: 'Heat', icon: <Fan size={20} /> },
   // { mode: 'Fan', icon: <Fan size={20} /> },
   // { mode: 'Dry', icon: <Droplets size={20} /> },
 ];
