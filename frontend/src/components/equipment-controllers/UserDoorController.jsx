@@ -92,7 +92,7 @@ const UserDoorController = ({ selectedRoom, onDoorUpdate }) => {
       } finally {
         autoUnlockTimerRef.current = null;
       }
-    }, 10000);
+    }, 3000);
   }, [onDoorUpdate]);
 
   // Handle field changes (status, lockStatus)
