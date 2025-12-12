@@ -1,6 +1,6 @@
 import React, { useContext } from 'react';
 import { UserContext } from '../context/UserContext';
-import CreationButtons from '../components/admin/CreationButtons';
+import CreationButtons from '../components/admin-dashboard-components/CreationButtons';
 
 const AdminDashboard = () => {
   const { username } = useContext(UserContext);
